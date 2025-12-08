@@ -122,7 +122,15 @@ document.addEventListener('DOMContentLoaded', () => {
                 })
                 .catch(err => {
                     console.error(err);
-                    if (errorEl) errorEl.innerText = "Error: " + err.message;
+                    if (errorEl) {
+                        if (err.code === 'auth/invalid-credential' || err.code === 'auth/wrong-password' || err.code === 'auth/user-not-found') {
+                            errorEl.innerText = "❌ Correo o contraseña incorrectos.";
+                        } else if (err.code === 'auth/too-many-requests') {
+                            errorEl.innerText = "⚠️ Muchos intentos fallidos. Intenta más tarde.";
+                        } else {
+                            errorEl.innerText = "Error: " + err.message;
+                        }
+                    }
                 });
         });
     }
@@ -201,42 +209,58 @@ const initialStock = {
 };
 
 // Load stock from localStorage or use initial values
-let stockState = JSON.parse(localStorage.getItem('stockState')) || initialStock;
+// Load stock from Firestore (Real-time)
+let stockState = { ...initialStock }; // Default while loading
+
+// Listen for updates
+db.collection('stock').doc('main').onSnapshot((doc) => {
+    if (doc.exists) {
+        stockState = doc.data();
+        updateStockUI();
+        // Also update Admin Inputs if open
+        if (document.getElementById('stock-modal').style.display === 'block') {
+            // Optional: refresh admin UI logic if needed, but might disturb user editing.
+        }
+    } else {
+        // Initialize if empty
+        db.collection('stock').doc('main').set(initialStock);
+    }
+});
 
 function updateStockUI() {
     // Canvas Pro
     const stockCanva = document.getElementById('stock-canva');
     if (stockCanva) {
-        stockCanva.innerText = `Stock: ${stockState['canva-pro']}`;
-        updateStockClass(stockCanva, stockState['canva-pro']);
+        stockCanva.innerText = `Stock: ${stockState['canva-pro'] || 0}`;
+        updateStockClass(stockCanva, stockState['canva-pro'] || 0);
     }
 
     // Panel Canva
     const stockPanel = document.getElementById('stock-panel');
     if (stockPanel) {
-        stockPanel.innerText = `Stock: ${stockState['panel-canva']}`;
-        updateStockClass(stockPanel, stockState['panel-canva']);
+        stockPanel.innerText = `Stock: ${stockState['panel-canva'] || 0}`;
+        updateStockClass(stockPanel, stockState['panel-canva'] || 0);
     }
 
     // Perplexity
     const stockPerplexity = document.getElementById('stock-perplexity');
     if (stockPerplexity) {
-        stockPerplexity.innerText = `Stock: ${stockState['perplexity']}`;
-        updateStockClass(stockPerplexity, stockState['perplexity']);
+        stockPerplexity.innerText = `Stock: ${stockState['perplexity'] || 0}`;
+        updateStockClass(stockPerplexity, stockState['perplexity'] || 0);
     }
 
     // Gemini
     const stockGemini = document.getElementById('stock-gemini');
     if (stockGemini) {
-        stockGemini.innerText = `Stock: ${stockState['gemini']}`;
-        updateStockClass(stockGemini, stockState['gemini']);
+        stockGemini.innerText = `Stock: ${stockState['gemini'] || 0}`;
+        updateStockClass(stockGemini, stockState['gemini'] || 0);
     }
 
     // Google One
     const stockGoogle = document.getElementById('stock-google');
     if (stockGoogle) {
-        stockGoogle.innerText = `Stock: ${stockState['google-one']}`;
-        updateStockClass(stockGoogle, stockState['google-one']);
+        stockGoogle.innerText = `Stock: ${stockState['google-one'] || 0}`;
+        updateStockClass(stockGoogle, stockState['google-one'] || 0);
     }
 }
 
@@ -251,7 +275,7 @@ function updateStockClass(element, quantity) {
     }
 }
 
-function decrementStock(productName, quantity) {
+async function decrementStock(productName, quantity) {
     // Map product names to keys
     let key = '';
     if (productName.includes('Canva PRO') && !productName.includes('Panel')) key = 'canva-pro';
@@ -261,14 +285,30 @@ function decrementStock(productName, quantity) {
     else if (productName.includes('Google One')) key = 'google-one';
     else if (productName.includes('CapCut')) key = 'capcut';
 
-    if (key && stockState[key] >= quantity) {
-        stockState[key] -= quantity;
-        localStorage.setItem('stockState', JSON.stringify(stockState));
-        updateStockUI();
-        console.log(`Stock decremented for ${key}: -${quantity}`);
-        return true;
+    // Check custom products mapping if needed or use ID based approach in future
+    // For now, this covers the hardcoded items.
+
+    if (key) {
+        const ref = db.collection('stock').doc('main');
+        try {
+            await db.runTransaction(async (transaction) => {
+                const doc = await transaction.get(ref);
+                if (!doc.exists) return; // Should not happen
+
+                const currentStock = doc.data()[key] || 0;
+                if (currentStock >= quantity) {
+                    transaction.update(ref, { [key]: currentStock - quantity });
+                } else {
+                    throw new Error(`Stock insuficiente para ${productName}`);
+                }
+            });
+            console.log(`Stock decremented in Cloud for ${key}`);
+            return true;
+        } catch (e) {
+            console.error(e);
+            return false;
+        }
     }
-    console.warn(`Failed to decrement stock for ${productName} (Key: ${key})`);
     return false;
 }
 
@@ -687,12 +727,11 @@ document.addEventListener('DOMContentLoaded', () => {
                     // Decrement Stock
                     try {
                         console.log("Starting stock decrement...");
-                        cart.forEach(item => {
+                        // Use for...of to await async operations
+                        for (const item of cart) {
                             const qty = item.quantity || 1;
-                            console.log(`Processing item: ${item.name}, Qty: ${qty}`);
-                            decrementStock(item.name, qty);
-                        });
-                        alert("¡Stock actualizado! Recarga la página si no ves el cambio inmediatamente.");
+                            await decrementStock(item.name, qty);
+                        }
                     } catch (stockError) {
                         console.error("Error decrementing stock:", stockError);
                     }
@@ -829,6 +868,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 errorMsg.innerText = "Solo se permiten correos Gmail, Outlook o Educativos (.edu)";
                 return;
             }
+
+
 
             try {
                 await auth.createUserWithEmailAndPassword(email, password);
@@ -1254,6 +1295,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (btnSaveStock) {
         btnSaveStock.addEventListener('click', () => {
             const inputs = document.querySelectorAll('.stock-input');
+            const updates = {};
             let changesMade = false;
 
             inputs.forEach(input => {
@@ -1261,16 +1303,19 @@ document.addEventListener('DOMContentLoaded', () => {
                 const newValue = parseInt(input.value);
 
                 if (!isNaN(newValue) && newValue >= 0) {
-                    stockState[key] = newValue;
+                    updates[key] = newValue;
                     changesMade = true;
                 }
             });
 
             if (changesMade) {
-                localStorage.setItem('stockState', JSON.stringify(stockState));
-                updateStockUI();
-                alert('¡Stock actualizado correctamente! 📦✅');
-                stockModal.style.display = 'none';
+                // Update Firestore
+                db.collection('stock').doc('main').set(updates, { merge: true })
+                    .then(() => {
+                        alert('¡Stock Global actualizado! ☁️✅');
+                        stockModal.style.display = 'none';
+                    })
+                    .catch(err => alert("Error guardando stock: " + err.message));
             }
         });
     }
