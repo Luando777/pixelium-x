@@ -1,0 +1,466 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PIXELIUM X | Digital Services</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&family=Orbitron:wght@400;500;700&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+    <div class="bg-grid"></div>
+
+    <nav class="navbar">
+        <div class="logo">
+            <img src="logo.png" alt="Pixelium X Logo" class="nav-logo">
+            PIXELIUM <span class="highlight">X</span>
+        </div>
+        <div class="menu-toggle" id="mobile-menu">
+            <span class="bar"></span>
+            <span class="bar"></span>
+            <span class="bar"></span>
+        </div>
+        <ul class="nav-links">
+            <li><a href="#home">Inicio</a></li>
+            <li><a href="#products">Productos</a></li>
+            <li><a href="#about">Nosotros</a></li>
+            <li id="admin-btn-container" style="display: none;">
+                <button id="btn-admin" class="btn-admin">👑 Admin</button>
+            </li>
+            <li id="stock-admin-btn-container" style="display: none;">
+                <button id="btn-stock-admin" class="btn-admin" style="border-color: #39ff14; color: #39ff14;">📦
+                    Stock</button>
+            </li>
+            <li id="products-admin-btn-container" style="display: none;">
+                <button id="btn-products-admin" class="btn-admin" style="border-color: #ff00ff; color: #ff00ff;">🛠️
+                    Productos</button>
+            </li>
+            <li id="prices-admin-btn-container" style="display: none;">
+                <button id="btn-prices-admin" class="btn-admin" style="border-color: #ff9900; color: #ff9900;">💲
+                    Precios</button>
+            </li>
+            <li><a href="#" id="cart-btn" class="cart-link">🛒 <span id="cart-count">0</span></a></li>
+            <li id="auth-buttons">
+                <button class="btn-login" onclick="openAuthModal('login')">Ingresar</button>
+                <button class="btn-register" onclick="openAuthModal('register')">Registro</button>
+            </li>
+            <li id="user-info" style="display: none;">
+                <div class="profile-container">
+                    <img id="user-avatar" src="https://ui-avatars.com/api/?name=User&background=00f3ff&color=000"
+                        alt="User Avatar" class="user-avatar">
+                    <input type="file" id="avatar-input" hidden accept="image/*">
+                    <button class="btn-orders" id="orders-btn" style="display: none;">📦 Mis Compras</button>
+                    <button class="btn-logout" id="logout-btn">Salir</button>
+                </div>
+            </li>
+        </ul>
+    </nav>
+
+    <section id="home" class="hero">
+        <div class="hero-content">
+            <img src="logo.png" alt="Pixelium X Hero Logo" class="hero-logo">
+            <h2 class="hero-brand">PIXELIUM <span class="brand-x">X</span></h2>
+            <h1 class="glitch" data-text="FUTURO DIGITAL">FUTURO DIGITAL</h1>
+            <p class="subtitle">Innovación. Tecnología. Excelencia.</p>
+            <a href="#products" class="btn-primary">Ver Productos</a>
+        </div>
+    </section>
+
+    <section id="products" class="services">
+        <h2 class="section-title">Nuestros Productos</h2>
+        <div class="services-grid">
+            <!-- Canva Special Offer -->
+            <div class="card special-card">
+                <div class="card-icon">
+                    <img src="canva.png" alt="Canva Logo" class="product-img">
+                </div>
+                <h3>Canva PRO</h3>
+                <div class="card-content">
+                    <p class="highlight-text">🏅 12 meses con tu correo 💙</p>
+                    <ul class="price-list">
+                        <li>✨ 1 año por <strong>S/10 soles</strong> (3 personas)</li>
+                        <li>✨ 1 año por <strong>S/15 soles</strong> (1 persona)</li>
+                    </ul>
+                    <p class="feature-note">✅ Todas las funciones Pro desbloqueadas</p>
+                    <div id="stock-canva" class="stock-status stock-available">Stock: 400</div>
+                    <p class="gold-text">✨ A tu propio correo</p>
+                    <p class="gold-text">⚡ Entrega inmediata</p>
+                    <p class="activation-note">📝 Agrega tu correo donde quieres que se te active al momento de hacer la
+                        compra.</p>
+                    <div class="warranty-info">
+                        <i class="fas fa-star warranty-star"></i>
+                        <span>12 Meses de Garantía</span>
+                    </div>
+                    <p class="trust-badge">🏅✨ Primero te activo la cuenta, después pagas ✨🎖️</p>
+                    <button class="btn-add" onclick="addToCart('Canva PRO (Personal)', 15)">Agregar al Carrito</button>
+                </div>
+            </div>
+
+            <!-- Panel Canva PRO -->
+            <div class="card special-card-alt">
+                <div class="card-icon">
+                    <img src="panel-canva.png" alt="Panel Canva Logo" class="product-img">
+                </div>
+                <h3>Panel Canva PRO</h3>
+                <div class="card-content">
+                    <p class="highlight-text">💥 500 USUARIOS / 3 AÑOS 💥</p>
+                    <ul class="feature-list">
+                        <li>🔥 Administra tu propio panel</li>
+                        <li>✅ Activación a tu correo y dominio</li>
+                        <li>✅ Quitas y agregas usuarios</li>
+                        <li>⚡ Activación inmediata + garantía</li>
+                    </ul>
+                    <div id="stock-panel" class="stock-status stock-available">Stock: 50</div>
+                    <p class="gold-text">✨ A tu propio correo</p>
+                    <p class="gold-text">⚡ Entrega inmediata</p>
+                    <p class="activation-note">📝 Agrega tu correo donde quieres que se te active al momento de hacer la
+                        compra.</p>
+                    <div class="warranty-info">
+                        <i class="fas fa-star warranty-star"></i>
+                        <span>24 Meses de Garantía</span>
+                    </div>
+                    <div class="price-tag">S/69.00 <span class="price-alt">($18.00)</span></div>
+                    <button class="btn-add" onclick="addToCart('Panel Canva PRO', 69)">Agregar al Carrito</button>
+
+                    <div class="activation-steps">
+                        <p><strong>Pasos de activación 😎✨</strong></p>
+                        <ol>
+                            <li>Me envías el correo para tu panel.</li>
+                            <li>Te llega una invitación de Canva.</li>
+                            <li>Aceptas y verificas el panel.</li>
+                            <li>Realizas el pago (Yape/Plin).</li>
+                        </ol>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Perplexity -->
+            <div class="card">
+                <div class="card-icon">
+                    <img src="perplexity.png" alt="Perplexity Logo" class="product-img">
+                </div>
+                <h3>Perplexity AI - GPT5</h3>
+                <p>Búsqueda inteligente y respuestas precisas.</p>
+                <div id="stock-perplexity" class="stock-status stock-available">Stock: 8</div>
+                <p class="gold-text">⚡ Entrega inmediata</p>
+                <p class="activation-note">🔑 Se te entrega ID y contraseña al instante.</p>
+                <div class="warranty-info">
+                    <i class="fas fa-star warranty-star"></i>
+                    <span>10 Meses de Garantía</span>
+                </div>
+                <div class="price-tag">S/29.00 <span class="price-alt">($9.00)</span></div>
+                <button class="btn-add" onclick="addToCart('Perplexity AI - GPT5', 29)">Agregar al Carrito</button>
+            </div>
+
+            <!-- Gemini -->
+            <div class="card">
+                <div class="card-icon">
+                    <img src="gemini.png" alt="Gemini Logo" class="product-img">
+                </div>
+                <h3>Gemini Advanced</h3>
+                <p>12 meses con todos los beneficios.</p>
+                <div id="stock-gemini" class="stock-status stock-available">Stock: 24</div>
+                <p class="gold-text">✨ A tu propio correo</p>
+                <p class="gold-text">⚡ Entrega inmediata</p>
+                <p class="activation-note">📝 Agrega tu correo donde quieres que se te active al momento de hacer la
+                    compra.</p>
+                <div class="warranty-info">
+                    <i class="fas fa-star warranty-star"></i>
+                    <span>10 Meses de Garantía</span>
+                </div>
+                <div class="price-tag">S/30.00</div>
+                <button class="btn-add" onclick="addToCart('Gemini Advanced', 30)">Agregar al Carrito</button>
+            </div>
+
+            <!-- Google One -->
+            <div class="card">
+                <div class="card-icon">
+                    <img src="google-one.png" alt="Google One Logo" class="product-img">
+                </div>
+                <h3>Google One</h3>
+                <p>Almacenamiento ampliado y beneficios premium.</p>
+                <div id="stock-google" class="stock-status stock-available">Stock: 21</div>
+                <p class="gold-text">✨ A tu propio correo</p>
+                <p class="gold-text">⚡ Entrega inmediata</p>
+                <p class="activation-note">📝 Agrega tu correo donde quieres que se te active al momento de hacer la
+                    compra.</p>
+                <div class="warranty-info">
+                    <i class="fas fa-star warranty-star"></i>
+                    <span>10 Meses de Garantía</span>
+                </div>
+                <div class="price-tag">S/30.00</div>
+                <button class="btn-add" onclick="addToCart('Google One', 30)">Agregar al Carrito</button>
+            </div>
+
+            <!-- CapCut -->
+            <div class="card">
+                <div class="card-icon">
+                    <img src="capcut.png?v=new" alt="CapCut Logo" class="product-img">
+                </div>
+                <h3>CapCut Pro</h3>
+                <p>Edición de video profesional.</p>
+                <div class="stock-status stock-out">Sin Stock</div>
+                <p class="gold-text">⚡ Entrega inmediata</p>
+                <div class="warranty-info">
+                    <i class="fas fa-star warranty-star"></i>
+                    <span>30 Días de Garantía</span>
+                </div>
+                <div class="price-tag">S/15.00</div>
+                <button class="btn-add" disabled>Agotado</button>
+            </div>
+        </div>
+    </section>
+
+    <!-- Auth Modal -->
+    <div id="auth-modal" class="modal">
+        <div class="modal-content auth-content">
+            <span class="close-modal" onclick="closeAuthModal()">&times;</span>
+            <div class="auth-tabs">
+                <button class="tab-btn active" onclick="switchTab('login')">Iniciar Sesión</button>
+                <button class="tab-btn" onclick="switchTab('register')">Registrarse</button>
+            </div>
+
+            <!-- Login Form -->
+            <div id="login-form" class="auth-form">
+                <h2>Bienvenido de nuevo</h2>
+                <input type="email" id="login-email" placeholder="Correo electrónico" class="neon-input">
+                <div class="password-wrapper" style="position:relative;">
+                    <input type="password" id="login-password" placeholder="Contraseña" class="neon-input"
+                        style="padding-right: 40px;">
+                    <i class="fas fa-eye toggle-password" onclick="togglePasswordVisibility('login-password', this)"
+                        style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); color: var(--neon-cyan); cursor: pointer;"></i>
+                </div>
+                <button class="btn-primary full-width" id="btn-login-action">Entrar</button>
+                <p class="auth-error" id="login-error"></p>
+            </div>
+
+            <!-- Register Form -->
+            <div id="register-form" class="auth-form" style="display: none;">
+                <h2>Crear cuenta</h2>
+                <!-- <p class="small-text">Solo se permiten correos @gmail.com</p> REMOVED -->
+                <input type="email" id="register-email" placeholder="Correo electrónico" class="neon-input">
+                <div class="password-wrapper" style="position:relative;">
+                    <input type="password" id="register-password" placeholder="Contraseña" class="neon-input"
+                        style="padding-right: 40px;">
+                    <i class="fas fa-eye toggle-password" onclick="togglePasswordVisibility('register-password', this)"
+                        style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); color: var(--neon-cyan); cursor: pointer;"></i>
+                </div>
+                <button class="btn-primary full-width" id="btn-register-action">Registrarse</button>
+                <p class="auth-error" id="register-error"></p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Cart Modal -->
+    <div id="cart-modal" class="cart-modal modal" style="display: none;">
+        <div class="cart-content">
+            <div class="cart-header"
+                style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                <h2 style="margin: 0; display: flex; align-items: center; gap: 10px;">
+                    TU CARRITO
+                    <i class="fas fa-shopping-cart"
+                        style="color: var(--neon-cyan); text-shadow: 0 0 10px var(--neon-cyan); font-size: 1.2rem;"></i>
+                </h2>
+                <span class="close-cart" style="font-size: 2rem; line-height: 1;">&times;</span>
+            </div>
+            <div id="cart-items">
+                <!-- Items will be added here -->
+                <p class="empty-cart">Tu carrito está vacío</p>
+            </div>
+
+            <div class="payment-section">
+                <h3>Método de Pago</h3>
+                <div class="payment-options">
+                    <label class="payment-option yape-opt">
+                        <input type="radio" name="payment" value="yape" checked onchange="togglePaymentMethod()">
+                        <span class="option-card">
+                            <i class="fas fa-qrcode"></i>
+                            <span class="option-title">Yape</span>
+                        </span>
+                    </label>
+                    <label class="payment-option binance-opt">
+                        <input type="radio" name="payment" value="binance" onchange="togglePaymentMethod()">
+                        <span class="option-card">
+                            <i class="fas fa-coins"></i>
+                            <span class="option-title">Binance</span>
+                        </span>
+                    </label>
+                </div>
+
+                <!-- Yape Form -->
+                <div id="yape-form" class="payment-form">
+                    <p class="instruction-text">1. Yapea al (Luis Quintana).</p>
+                    <img src="yapeqr.png" alt="Yape QR"
+                        style="width: 120px; border-radius: 8px; margin-bottom: 10px; display: block; margin-left: auto; margin-right: auto;">
+                    <p class="instruction-text">2. Sube la captura del comprobante.</p>
+                    <input type="file" id="yape-voucher" class="neon-input" accept="image/*">
+                    <input type="email" id="yape-email" class="neon-input" placeholder="Tu Correo Electrónico">
+                </div>
+
+                <!-- Binance Form -->
+                <div id="binance-form" class="payment-form" style="display: none;">
+                    <p class="instruction-text">1. Paga al Binance ID: <strong>531758690</strong>.</p>
+                    <img src="binanceqr.png" alt="Binance QR"
+                        style="width: 120px; border-radius: 8px; margin-bottom: 10px; display: block; margin-left: auto; margin-right: auto;">
+                    <p class="instruction-text">2. Sube la captura del comprobante.</p>
+                    <input type="file" id="binance-voucher" class="neon-input" accept="image/*">
+                    <input type="email" id="binance-email" class="neon-input" placeholder="Tu Correo Electrónico">
+                    <p style="font-size: 0.8rem; color: #00f3ff; margin-top: 8px; text-align: center;">
+                        <i class="fas fa-info-circle"></i> El pedido se copiará automáticamente. <br>
+                        Solo presiona <strong>Ctrl + V</strong> (Pegar) en Telegram.
+                    </p>
+                </div>
+            </div>
+
+            <div class="cart-footer">
+                <div class="total">Total: S/<span id="cart-total">0.00</span></div>
+                <button class="btn-primary full-width" id="checkout-btn">Realizar Pedido</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Lightbox Modal -->
+    <div id="lightbox" class="lightbox">
+        <span class="close-lightbox">&times;</span>
+        <img class="lightbox-content" id="lightbox-img">
+    </div>
+
+    <footer class="footer">
+        <p>&copy; 2025 PIXELIUM X. Todos los derechos reservados.</p>
+    </footer>
+
+    <!-- Floating Cart Bubble -->
+    <div id="floating-cart" class="floating-cart" style="display: none;">
+        <span class="cart-icon">🛒</span>
+        <span id="floating-cart-count" class="floating-count">0</span>
+    </div>
+
+    <!-- Firebase SDK (Compat for local file execution) -->
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-storage-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+
+    <!-- Admin Modal -->
+    <!-- Admin Modal -->
+    <div id="admin-modal" class="modal">
+        <div class="modal-content admin-content">
+            <span class="close-admin">&times;</span>
+            <h2>👑 Panel de Administrador</h2>
+
+
+
+            <!-- Orders Section -->
+            <div class="admin-section">
+                <h3>📋 Pedidos Recientes</h3>
+                <div id="admin-orders-list" class="orders-container">
+                    <!-- Orders will be loaded here -->
+                </div>
+            </div>
+
+            <button id="btn-export-csv" class="btn-primary full-width" style="margin-top: 20px;">
+                📊 Exportar Reporte Excel
+            </button>
+        </div>
+    </div>
+
+    <!-- Orders Modal -->
+    <div id="orders-modal" class="modal">
+        <div class="modal-content">
+            <span class="close-modal close-orders">&times;</span>
+            <h2>📦 Mis Compras</h2>
+            <div id="orders-list" class="orders-container">
+                <!-- Orders will be loaded here -->
+                <p class="loading-text">Cargando historial...</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Stock Manager Modal -->
+    <div id="stock-modal" class="modal">
+        <div class="modal-content admin-content">
+            <span class="close-stock">&times;</span>
+            <h2 style="color: #39ff14;">📦 Gestión de Stock</h2>
+            <div id="stock-list-container" class="stock-list-container">
+                <!-- Stock items will be rendered here via JS -->
+            </div>
+            <button id="btn-save-stock" class="btn-primary full-width"
+                style="margin-top: 20px; border-color: #39ff14; color: #39ff14;">
+                💾 Guardar Cambios
+            </button>
+        </div>
+    </div>
+
+    <!-- Product Manager Modal -->
+    <div id="product-modal" class="modal">
+        <div class="modal-content admin-content" style="max-width: 600px !important;">
+            <span class="close-product-modal">&times;</span>
+            <h2 style="color: #ff00ff;">🛠️ Gestión de Productos</h2>
+
+            <div class="auth-tabs" style="justify-content: center; gap: 10px; margin-bottom: 20px;">
+                <button class="tab-btn active" onclick="switchProductTab('add')">➕ Agregar</button>
+                <button class="tab-btn" onclick="switchProductTab('list')">📋 Lista / Borrar</button>
+            </div>
+
+            <!-- TAB: ADD PRODUCT -->
+            <div id="product-tab-add">
+                <input type="text" id="new-prod-name" placeholder="Nombre del Producto" class="neon-input">
+                <input type="text" id="new-prod-desc" placeholder="Descripción Corta" class="neon-input">
+                <input type="number" id="new-prod-price" placeholder="Precio (S/)" class="neon-input">
+                <input type="text" id="new-prod-price-alt" placeholder="Precio Alt ($) Opcional" class="neon-input">
+                <input type="number" id="new-prod-stock" placeholder="Stock Inicial" class="neon-input">
+                <input type="text" id="new-prod-warranty" placeholder="Garantía (Ej: 12 Meses)" class="neon-input">
+                <p style="color: #ccc; font-size: 0.9rem;">Imagen del Producto:</p>
+                <input type="file" id="new-prod-img" class="neon-input" accept="image/*">
+
+                <h4 style="color:var(--neon-cyan); margin: 10px 0;">Notas Adicionales (Opcional)</h4>
+                <input type="text" id="new-prod-badge" placeholder="Badge (Ej: ⚡ Entrega inmediata)" class="neon-input">
+                <input type="text" id="new-prod-note" placeholder="Nota (Ej: A tu correo)" class="neon-input">
+
+                <button id="btn-create-product" class="btn-primary full-width"
+                    style="border-color: #ff00ff; color: #ff00ff;">
+                    ✨ Crear Producto
+                </button>
+            </div>
+
+            <!-- TAB: LIST PRODUCTS -->
+            <div id="product-tab-list" style="display: none;">
+                <p style="color: #aaa; font-size: 0.9rem; text-align: center;">Aquí puedes ocultar/borrar productos.</p>
+                <div id="product-admin-list" class="stock-list-container">
+                    <!-- List rendered via JS -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Price Manager Modal -->
+    <div id="price-modal" class="modal">
+        <div class="modal-content admin-content" style="max-width: 500px !important;">
+            <span class="close-price-modal">&times;</span>
+            <h2 style="color: #ff9900;">💲 Gestión de Precios</h2>
+            <p style="color: #aaa; font-size: 0.9rem; margin-bottom: 20px;">
+                Edita los precios. Se actualizarán en la tienda y en el carrito.
+            </p>
+
+            <div id="price-admin-list" class="stock-list-container">
+                <!-- Rendered via JS -->
+            </div>
+
+            <button id="btn-save-prices" class="btn-primary full-width"
+                style="border-color: #ff9900; color: #ff9900; margin-top: 20px;">
+                💾 Guardar Precios
+            </button>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+
+</html>

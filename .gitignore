@@ -1,0 +1,15 @@
+
+# WIndows thumbnail cache
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+
+# VS Code settings
+.vscode/
+
+# Logs
+*.log
+npm-debug.log*
+
+# Node modules (if you add them later)
+node_modules/

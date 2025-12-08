@@ -1,0 +1,40 @@
+/* Stock Manager Styles */
+.stock-item-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 15px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.stock-item-name {
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+    flex: 1;
+}
+
+.stock-input {
+    width: 80px;
+    padding: 5px;
+    background: rgba(0, 0, 0, 0.3);
+    border: 1px solid #39ff14;
+    color: #39ff14;
+    border-radius: 4px;
+    text-align: center;
+    font-family: var(--font-heading);
+}
+
+.close-stock {
+    color: #aaa;
+    float: right;
+    font-size: 28px;
+    font-weight: bold;
+    cursor: pointer;
+}
+
+.close-stock:hover {
+    color: white;
+    text-decoration: none;
+    cursor: pointer;
+}
