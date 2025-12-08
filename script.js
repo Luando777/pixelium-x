@@ -668,7 +668,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     };
 
-    // Checkout Logic (Simple WhatsApp Redirect)
+    // Checkout Logic (Robust WhatsApp Redirect)
     if (checkoutBtn) {
         checkoutBtn.onclick = async () => {
             const user = auth.currentUser;
@@ -683,6 +683,17 @@ document.addEventListener('DOMContentLoaded', () => {
             const method = document.querySelector('input[name="payment"]:checked').value;
             const originalText = checkoutBtn.innerText;
 
+            // --- PRE-OPEN WINDOW (Bypass Popup Blocker) ---
+            let redirectWindow = null;
+            try {
+                redirectWindow = window.open('', '_blank');
+                if (redirectWindow) {
+                    redirectWindow.document.write('<html><body style="background:#111; color:#fff; display:flex; justify-content:center; align-items:center; height:100vh; font-family:sans-serif;"><h3>⏳ Procesando tu pedido... por favor espera...</h3></body></html>');
+                }
+            } catch (e) {
+                console.warn("Popup blocked or failed to open", e);
+            }
+
             // --- VALIDATION ---
             let voucherInput, emailInput;
 
@@ -694,14 +705,21 @@ document.addEventListener('DOMContentLoaded', () => {
                 emailInput = document.getElementById('binance-email');
             }
 
-            if (!voucherInput.files[0]) return alert("Por favor, selecciona la captura del comprobante.");
+            if (!voucherInput.files[0]) {
+                if (redirectWindow) redirectWindow.close();
+                return alert("Por favor, selecciona la captura del comprobante.");
+            }
 
             // Validate File Size (Max 5MB)
             if (voucherInput.files[0].size > 5 * 1024 * 1024) {
+                if (redirectWindow) redirectWindow.close();
                 return alert("⚠️ La imagen es muy pesada. Por favor sube una imagen de menos de 5MB.");
             }
 
-            if (!emailInput.value || !emailInput.value.includes('@')) return alert("Por favor, ingresa un correo válido.");
+            if (!emailInput.value || !emailInput.value.includes('@')) {
+                if (redirectWindow) redirectWindow.close();
+                return alert("Por favor, ingresa un correo válido.");
+            }
 
             // Process Checkout
             const file = voucherInput.files[0];
@@ -727,7 +745,6 @@ document.addEventListener('DOMContentLoaded', () => {
                     // Decrement Stock
                     try {
                         console.log("Starting stock decrement...");
-                        // Use for...of to await async operations
                         for (const item of cart) {
                             const qty = item.quantity || 1;
                             await decrementStock(item.name, qty);
@@ -736,10 +753,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         console.error("Error decrementing stock:", stockError);
                     }
 
-
-
                     // Construct WhatsApp Message
-                    // Unicode escapes for emojis
                     const rocket = '\uD83D\uDE80';
                     const sparkles = '\u2728';
                     const fire = '\uD83D\uDD25';
@@ -767,24 +781,24 @@ document.addEventListener('DOMContentLoaded', () => {
 
                     message += `\n¡Quedo a la espera de mi activación! ${bolt}`;
 
-                    // Send Message based on Method
+                    // Update Redirect Window using location.href
                     if (method === 'binance') {
-                        // Telegram Logic
-                        // Note: Telegram URL scheme doesn't support pre-filled text for DMs.
-                        // We copy the message to clipboard and open the chat.
-                        navigator.clipboard.writeText(message).then(() => {
-                            alert("Mensaje copiado al portapapeles. Pégalo en el chat de Telegram.");
-                        }).catch(err => {
-                            console.error('Error copying text: ', err);
-                            alert("No se pudo copiar el mensaje automáticamente. Por favor envía la captura manualmente.");
-                        });
-                        window.open('https://t.me/Pixelium_g', '_blank');
+                        navigator.clipboard.writeText(message).catch(console.error);
+                        if (redirectWindow) {
+                            redirectWindow.location.href = 'https://t.me/Pixelium_g';
+                        } else {
+                            window.open('https://t.me/Pixelium_g', '_blank');
+                        }
                     } else {
-                        // WhatsApp Logic (Yape)
-                        window.open(`https://api.whatsapp.com/send?phone=51919669508&text=${encodeURIComponent(message)}`, '_blank');
+                        const waUrl = `https://api.whatsapp.com/send?phone=51919669508&text=${encodeURIComponent(message)}`;
+                        if (redirectWindow) {
+                            redirectWindow.location.href = waUrl;
+                        } else {
+                            window.window.location.href = waUrl;
+                        }
                     }
 
-                    alert("¡Pedido enviado con éxito! Nos pondremos en contacto.");
+                    alert("¡Pedido enviado con éxito! WhatsApp se abrirá automáticamente.");
                     cart = [];
                     updateCartCount();
                     updateCartUI();
@@ -793,6 +807,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 } catch (error) {
                     console.error(error);
                     alert("Error al procesar el pedido: " + error.message);
+                    if (redirectWindow) redirectWindow.close();
                 } finally {
                     checkoutBtn.innerText = originalText;
                     checkoutBtn.disabled = false;
