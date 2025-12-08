@@ -369,16 +369,28 @@ async function uploadImageToImgBB(base64Image, customName) {
     formData.append('image', base64Image);
     if (customName) formData.append('name', customName);
 
-    const response = await fetch(`https://api.imgbb.com/1/upload?key=${apiKey}`, {
-        method: 'POST',
-        body: formData
-    });
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 30000); // 30 second timeout
 
-    const data = await response.json();
-    if (data.success) {
-        return data.data.url;
-    } else {
-        throw new Error('Error al subir imagen: ' + data.error.message);
+    try {
+        const response = await fetch(`https://api.imgbb.com/1/upload?key=${apiKey}`, {
+            method: 'POST',
+            body: formData,
+            signal: controller.signal
+        });
+        clearTimeout(timeoutId);
+
+        const data = await response.json();
+        if (data.success) {
+            return data.data.url;
+        } else {
+            throw new Error('Error de ImgBB: ' + (data.error ? data.error.message : 'Desconocido'));
+        }
+    } catch (error) {
+        if (error.name === 'AbortError') {
+            throw new Error("Tiempo de espera agotado. Tu internet está lento o la imagen es muy pesada.");
+        }
+        throw error;
     }
 }
 
@@ -643,6 +655,12 @@ document.addEventListener('DOMContentLoaded', () => {
             }
 
             if (!voucherInput.files[0]) return alert("Por favor, selecciona la captura del comprobante.");
+
+            // Validate File Size (Max 5MB)
+            if (voucherInput.files[0].size > 5 * 1024 * 1024) {
+                return alert("⚠️ La imagen es muy pesada. Por favor sube una imagen de menos de 5MB.");
+            }
+
             if (!emailInput.value || !emailInput.value.includes('@')) return alert("Por favor, ingresa un correo válido.");
 
             // Process Checkout
