@@ -1328,13 +1328,32 @@ document.addEventListener('DOMContentLoaded', () => {
     const productAdminList = document.getElementById('product-admin-list');
 
     // State
-    let hiddenProducts = JSON.parse(localStorage.getItem('hiddenProducts')) || [];
-    let customProducts = JSON.parse(localStorage.getItem('customProducts')) || [];
+    // Load from Firestore (Real-time)
+    let hiddenProducts = JSON.parse(localStorage.getItem('hiddenProducts')) || []; // Keep hidden local for now or migrate later? Request was Prices & Products. Let's do Products (Custom).
+    // Actually, migration of customProducts to Firestore
+    let customProducts = [];
 
-    // 1. Initialization: Apply visibility and Render Customs
+    // 1. Initialization: Listen to Firestore
     function initProductSystem() {
-        renderCustomProductsOnGrid();
-        applyProductVisibility();
+        db.collection('products').onSnapshot(snapshot => {
+            const products = [];
+            snapshot.forEach(doc => {
+                products.push(doc.data());
+            });
+            customProducts = products;
+
+            // Re-render
+            // Clear current custom cards first? or just rely on IDs.
+            // Simplified: Remove all custom cards then re-add
+            document.querySelectorAll('.card[id^="custom_"]').forEach(e => e.remove());
+            renderCustomProductsOnGrid();
+            applyProductVisibility();
+
+            // If admin modal open, refresh list
+            if (productModal.style.display === 'block') {
+                renderAdminProductList();
+            }
+        });
     }
 
     // Call on load
@@ -1387,8 +1406,9 @@ document.addEventListener('DOMContentLoaded', () => {
                     const base64Image = reader.result.split(',')[1];
                     const imageUrl = await uploadImageToImgBB(base64Image, `Prod_${title}`);
 
+                    const prodId = 'custom_' + Date.now();
                     const newProduct = {
-                        id: 'custom_' + Date.now(),
+                        id: prodId,
                         title: title,
                         desc: document.getElementById('new-prod-desc').value,
                         price: parseFloat(price),
@@ -1400,15 +1420,28 @@ document.addEventListener('DOMContentLoaded', () => {
                         note: document.getElementById('new-prod-note').value
                     };
 
-                    customProducts.push(newProduct);
-                    localStorage.setItem('customProducts', JSON.stringify(customProducts));
+                    // Save to Firestore
+                    try {
+                        await db.collection('products').doc(prodId).set(newProduct);
 
-                    // Initialize stock for this new product
-                    stockState[title] = newProduct.stock;
-                    localStorage.setItem('stockState', JSON.stringify(stockState));
+                        // Initialize stock for this new product in Firestore Stock
+                        await db.collection('stock').doc('main').set({
+                            [title]: newProduct.stock
+                        }, { merge: true });
 
-                    alert("¡Producto Creado! Recargando...");
-                    location.reload();
+                        alert("¡Producto Creado en la Nube! ☁️");
+                        // Reset form
+                        document.getElementById('new-prod-name').value = '';
+                        document.getElementById('new-prod-price').value = '';
+                        document.getElementById('new-prod-img').value = '';
+                        btnCreateProduct.innerText = "✨ Crear Producto";
+                        btnCreateProduct.disabled = false;
+
+                        // No reload needed due to onSnapshot
+                    } catch (err) {
+                        alert("Error guardando: " + err.message);
+                        btnCreateProduct.disabled = false;
+                    }
                 };
             } catch (e) {
                 console.error(e);
@@ -1533,12 +1566,17 @@ document.addEventListener('DOMContentLoaded', () => {
         applyProductVisibility();
     };
 
-    window.deleteCustomProduct = (index) => {
+    window.deleteCustomProduct = async (index) => {
         if (!confirm("¿Eliminar este producto permanentemente?")) return;
-        customProducts.splice(index, 1);
-        localStorage.setItem('customProducts', JSON.stringify(customProducts));
-        alert("Producto eliminado. Recarga la página.");
-        location.reload();
+        const prod = customProducts[index];
+        if (prod) {
+            try {
+                await db.collection('products').doc(prod.id).delete();
+                alert("Producto eliminado de la nube.");
+            } catch (err) {
+                alert("Error al eliminar: " + err.message);
+            }
+        }
     };
 
     // --- PRICE MANAGER LOGIC (SEPARATE SYSTEM) ---
@@ -1549,11 +1587,19 @@ document.addEventListener('DOMContentLoaded', () => {
     const priceAdminList = document.getElementById('price-admin-list');
 
     // State
-    let priceState = JSON.parse(localStorage.getItem('priceState')) || {};
+    // Load from Firestore (Real-time)
+    let priceState = {};
 
-    // 1. Initialization: Apply Prices
+    // 1. Initialization: Listen to Prices
     function initPriceSystem() {
-        applyPriceOverrides();
+        db.collection('prices').doc('main').onSnapshot(doc => {
+            if (doc.exists) {
+                priceState = doc.data();
+                applyPriceOverrides();
+            } else {
+                db.collection('prices').doc('main').set({});
+            }
+        });
     }
 
     // Call on load
@@ -1610,18 +1656,22 @@ document.addEventListener('DOMContentLoaded', () => {
     if (btnSavePrices) {
         btnSavePrices.addEventListener('click', () => {
             const inputs = document.querySelectorAll('.price-input-field');
+            const updates = {};
             inputs.forEach(input => {
                 const title = input.getAttribute('data-title');
                 const val = parseFloat(input.value);
                 if (!isNaN(val)) {
-                    priceState[title] = val;
+                    updates[title] = val;
                 }
             });
 
-            localStorage.setItem('priceState', JSON.stringify(priceState));
-            alert("¡Precios Actualizados!");
-            priceModal.style.display = 'none';
-            location.reload(); // Safer to reload to ensure all events bound correctly
+            // Save to Firestore
+            db.collection('prices').doc('main').set(updates, { merge: true })
+                .then(() => {
+                    alert("¡Precios Globales Actualizados! ☁️💰");
+                    priceModal.style.display = 'none';
+                })
+                .catch(err => alert("Error: " + err.message));
         });
     }
 
