@@ -1414,6 +1414,7 @@ body {
 
 /* --- MOBILE OPTIMIZATION (PHONES) --- */
 @media (max-width: 480px) {
+
     /* 1. Fix Grid: Force 1 column so cards don't squish */
     .services-grid {
         grid-template-columns: 1fr;
@@ -1425,27 +1426,37 @@ body {
     }
 
     .section-title {
-        font-size: 1.8rem;
+        font-size: 1.5rem;
+        /* Smaller title */
         margin-bottom: 2rem;
+        word-wrap: break-word;
+        /* Prevent cutting */
     }
 
     /* 3. Resize Hero Elements */
     .hero h1 {
-        font-size: 2rem !important; /* Override tablet size */
+        font-size: 1.8rem !important;
+        /* Much smaller hero text */
+        line-height: 1.2;
+        word-wrap: break-word;
+        white-space: normal;
+        /* Allow wrapping */
+        padding: 0 10px;
     }
 
     .hero-logo {
-        width: 120px;
-        height: 120px;
+        width: 100px;
+        height: 100px;
     }
 
     .subtitle {
-        font-size: 1rem;
+        font-size: 0.9rem;
+        padding: 0 20px;
     }
 
     /* 4. Fix Modals on small screens */
-    .modal-content, 
-    .cart-content, 
+    .modal-content,
+    .cart-content,
     .admin-content {
         width: 95% !important;
         padding: 15px !important;
@@ -1462,15 +1473,15 @@ body {
         height: 180px;
         /* Adjust negative margins for new padding */
         margin: -1.5rem -1.5rem 1rem -1.5rem;
-        width: calc(100% + 3rem); 
+        width: calc(100% + 3rem);
     }
 
     .price-tag {
-        font-size: 1.3rem;
+        font-size: 1.2rem;
     }
 
     /* Fix navbar overlap */
     .logo {
-        font-size: 1rem;
+        font-size: 0.9rem;
     }
 }
