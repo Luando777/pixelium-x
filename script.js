@@ -793,18 +793,9 @@ document.addEventListener('DOMContentLoaded', () => {
                             window.open('https://t.me/Pixelium_g', '_blank');
                         }
                     } else {
-                        // ROBUST REDIRECT STRATEGY
-                        const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
-                        let waUrl;
-
-                        if (isMobile) {
-                            // Mobile: Try direct App protocol (fastest)
-                            waUrl = `whatsapp://send?phone=51919669508&text=${encodeURIComponent(message)}`;
-                        } else {
-                            // Desktop: Use web link to avoid "hanging" on blank page if App is missing
-                            // This ensures the window navigates to SOMETHING (WhatsApp Web/Landing)
-                            waUrl = `https://api.whatsapp.com/send?phone=51919669508&text=${encodeURIComponent(message)}`;
-                        }
+                        // FORCE STANDARD HTTPS (Mobile & PC) - V7 FINAL FIX
+                        // This prevents "black screen" on mobile by loading a real webpage first.
+                        const waUrl = `https://api.whatsapp.com/send?phone=51919669508&text=${encodeURIComponent(message)}`;
 
                         if (redirectWindow) {
                             redirectWindow.location.href = waUrl;
