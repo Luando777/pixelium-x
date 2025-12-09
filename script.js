@@ -790,11 +790,12 @@ document.addEventListener('DOMContentLoaded', () => {
                             window.open('https://t.me/Pixelium_g', '_blank');
                         }
                     } else {
-                        const waUrl = `https://api.whatsapp.com/send?phone=51919669508&text=${encodeURIComponent(message)}`;
+                        // FORCE APP OPEN (Mobile & PC) - whatsapp:// protocol
+                        const waUrl = `whatsapp://send?phone=51919669508&text=${encodeURIComponent(message)}`;
                         if (redirectWindow) {
                             redirectWindow.location.href = waUrl;
                         } else {
-                            window.window.location.href = waUrl;
+                            window.location.href = waUrl;
                         }
                     }
 
@@ -814,327 +815,326 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
             };
             reader.readAsDataURL(file);
+        }
+
+        // Modal Functions
+        window.openAuthModal = (tab) => {
+            if (authModal) {
+                authModal.style.display = "block";
+                switchTab(tab);
+            }
         };
-    }
 
-    // Modal Functions
-    window.openAuthModal = (tab) => {
-        if (authModal) {
-            authModal.style.display = "block";
-            switchTab(tab);
-        }
-    };
+        window.closeAuthModal = () => {
+            if (authModal) authModal.style.display = "none";
+        };
 
-    window.closeAuthModal = () => {
-        if (authModal) authModal.style.display = "none";
-    };
-
-    window.switchTab = (tab) => {
-        // Update tabs UI
-        tabBtns.forEach(btn => btn.classList.remove('active'));
-        if (tab === 'login') {
-            tabBtns[0].classList.add('active');
-            loginForm.style.display = 'block';
-            registerForm.style.display = 'none';
-        } else {
-            tabBtns[1].classList.add('active');
-            loginForm.style.display = 'none';
-            registerForm.style.display = 'block';
-        }
-    };
-
-    // Close modal on outside click
-    window.onclick = (event) => {
-        if (event.target == authModal) {
-            closeAuthModal();
-        }
-        if (event.target == cartModal) {
-            cartModal.style.display = "none";
-        }
-        if (event.target == document.getElementById('lightbox')) document.getElementById('lightbox').style.display = "none";
-    };
-
-    window.togglePasswordVisibility = (inputId, icon) => {
-        const input = document.getElementById(inputId);
-        if (input.type === "password") {
-            input.type = "text";
-            icon.classList.remove('fa-eye');
-            icon.classList.add('fa-eye-slash');
-        } else {
-            input.type = "password";
-            icon.classList.remove('fa-eye-slash');
-            icon.classList.add('fa-eye');
-        }
-    };
-
-    // Register Action
-    const btnRegisterAction = document.getElementById('btn-register-action');
-    if (btnRegisterAction) {
-        btnRegisterAction.addEventListener('click', async () => {
-            const email = document.getElementById('register-email').value;
-            const password = document.getElementById('register-password').value;
-            const errorMsg = document.getElementById('register-error');
-
-            const isGmail = email.endsWith('@gmail.com');
-            const isOutlook = email.includes('@outlook'); // Covers .com, .es, etc.
-            const isEdu = email.includes('.edu');
-
-            if (!isGmail && !isOutlook && !isEdu) {
-                errorMsg.innerText = "Solo se permiten correos Gmail, Outlook o Educativos (.edu)";
-                return;
-            }
-
-
-
-            try {
-                await auth.createUserWithEmailAndPassword(email, password);
-                // Success handled by onAuthStateChanged
-            } catch (error) {
-                errorMsg.innerText = error.message;
-            }
-        });
-    }
-
-    // Login Action
-    const btnLoginAction = document.getElementById('btn-login-action');
-    if (btnLoginAction) {
-        btnLoginAction.addEventListener('click', async () => {
-            const email = document.getElementById('login-email').value;
-            const password = document.getElementById('login-password').value;
-            const errorMsg = document.getElementById('login-error');
-
-            try {
-                await auth.signInWithEmailAndPassword(email, password);
-                // Success handled by onAuthStateChanged
-            } catch (error) {
-                errorMsg.innerText = "Error: Verifica tus credenciales.";
-                console.error(error);
-            }
-        });
-    }
-
-    // Logout Action
-    const btnLogout = document.getElementById('logout-btn');
-    if (btnLogout) {
-        btnLogout.addEventListener('click', async () => {
-            try {
-                await auth.signOut();
-            } catch (error) {
-                console.error("Error signing out", error);
-            }
-        });
-    }
-
-    // Orders Modal Close Logic
-    const ordersModal = document.getElementById('orders-modal');
-    const closeOrdersBtn = document.querySelector('.close-orders');
-
-    if (closeOrdersBtn) {
-        closeOrdersBtn.addEventListener('click', () => {
-            ordersModal.style.display = "none";
-        });
-    }
-
-    // Close modal on outside click (Updated)
-    window.onclick = (event) => {
-        if (event.target == authModal) closeAuthModal();
-        if (event.target == cartModal) cartModal.style.display = "none";
-        if (event.target == ordersModal) ordersModal.style.display = "none";
-        if (event.target == document.getElementById('stock-modal')) document.getElementById('stock-modal').style.display = "none";
-        if (event.target == document.getElementById('lightbox')) document.getElementById('lightbox').style.display = "none";
-    };
-
-    // --- Auth State Observer & Admin Setup ---
-    auth.onAuthStateChanged((user) => {
-        const authButtons = document.getElementById('auth-buttons');
-        const userInfo = document.getElementById('user-info');
-        const userAvatar = document.getElementById('user-avatar');
-
-        if (user) {
-            // User is signed in
-            if (authButtons) authButtons.style.display = 'none';
-            if (userInfo) userInfo.style.display = 'flex';
-
-            // Load saved avatar
-            const savedAvatar = localStorage.getItem(`avatar_${user.uid}`);
-            if (savedAvatar) {
-                userAvatar.src = savedAvatar;
+        window.switchTab = (tab) => {
+            // Update tabs UI
+            tabBtns.forEach(btn => btn.classList.remove('active'));
+            if (tab === 'login') {
+                tabBtns[0].classList.add('active');
+                loginForm.style.display = 'block';
+                registerForm.style.display = 'none';
             } else {
-                userAvatar.src = `https://ui-avatars.com/api/?name=${user.email.charAt(0)}&background=00f3ff&color=000`;
+                tabBtns[1].classList.add('active');
+                loginForm.style.display = 'none';
+                registerForm.style.display = 'block';
             }
+        };
 
-            // Load saved cart
-            const savedCart = localStorage.getItem(`cart_${user.uid}`);
-            if (savedCart) {
-                cart = JSON.parse(savedCart);
+        // Close modal on outside click
+        window.onclick = (event) => {
+            if (event.target == authModal) {
+                closeAuthModal();
+            }
+            if (event.target == cartModal) {
+                cartModal.style.display = "none";
+            }
+            if (event.target == document.getElementById('lightbox')) document.getElementById('lightbox').style.display = "none";
+        };
+
+        window.togglePasswordVisibility = (inputId, icon) => {
+            const input = document.getElementById(inputId);
+            if (input.type === "password") {
+                input.type = "text";
+                icon.classList.remove('fa-eye');
+                icon.classList.add('fa-eye-slash');
+            } else {
+                input.type = "password";
+                icon.classList.remove('fa-eye-slash');
+                icon.classList.add('fa-eye');
+            }
+        };
+
+        // Register Action
+        const btnRegisterAction = document.getElementById('btn-register-action');
+        if (btnRegisterAction) {
+            btnRegisterAction.addEventListener('click', async () => {
+                const email = document.getElementById('register-email').value;
+                const password = document.getElementById('register-password').value;
+                const errorMsg = document.getElementById('register-error');
+
+                const isGmail = email.endsWith('@gmail.com');
+                const isOutlook = email.includes('@outlook'); // Covers .com, .es, etc.
+                const isEdu = email.includes('.edu');
+
+                if (!isGmail && !isOutlook && !isEdu) {
+                    errorMsg.innerText = "Solo se permiten correos Gmail, Outlook o Educativos (.edu)";
+                    return;
+                }
+
+
+
+                try {
+                    await auth.createUserWithEmailAndPassword(email, password);
+                    // Success handled by onAuthStateChanged
+                } catch (error) {
+                    errorMsg.innerText = error.message;
+                }
+            });
+        }
+
+        // Login Action
+        const btnLoginAction = document.getElementById('btn-login-action');
+        if (btnLoginAction) {
+            btnLoginAction.addEventListener('click', async () => {
+                const email = document.getElementById('login-email').value;
+                const password = document.getElementById('login-password').value;
+                const errorMsg = document.getElementById('login-error');
+
+                try {
+                    await auth.signInWithEmailAndPassword(email, password);
+                    // Success handled by onAuthStateChanged
+                } catch (error) {
+                    errorMsg.innerText = "Error: Verifica tus credenciales.";
+                    console.error(error);
+                }
+            });
+        }
+
+        // Logout Action
+        const btnLogout = document.getElementById('logout-btn');
+        if (btnLogout) {
+            btnLogout.addEventListener('click', async () => {
+                try {
+                    await auth.signOut();
+                } catch (error) {
+                    console.error("Error signing out", error);
+                }
+            });
+        }
+
+        // Orders Modal Close Logic
+        const ordersModal = document.getElementById('orders-modal');
+        const closeOrdersBtn = document.querySelector('.close-orders');
+
+        if (closeOrdersBtn) {
+            closeOrdersBtn.addEventListener('click', () => {
+                ordersModal.style.display = "none";
+            });
+        }
+
+        // Close modal on outside click (Updated)
+        window.onclick = (event) => {
+            if (event.target == authModal) closeAuthModal();
+            if (event.target == cartModal) cartModal.style.display = "none";
+            if (event.target == ordersModal) ordersModal.style.display = "none";
+            if (event.target == document.getElementById('stock-modal')) document.getElementById('stock-modal').style.display = "none";
+            if (event.target == document.getElementById('lightbox')) document.getElementById('lightbox').style.display = "none";
+        };
+
+        // --- Auth State Observer & Admin Setup ---
+        auth.onAuthStateChanged((user) => {
+            const authButtons = document.getElementById('auth-buttons');
+            const userInfo = document.getElementById('user-info');
+            const userAvatar = document.getElementById('user-avatar');
+
+            if (user) {
+                // User is signed in
+                if (authButtons) authButtons.style.display = 'none';
+                if (userInfo) userInfo.style.display = 'flex';
+
+                // Load saved avatar
+                const savedAvatar = localStorage.getItem(`avatar_${user.uid}`);
+                if (savedAvatar) {
+                    userAvatar.src = savedAvatar;
+                } else {
+                    userAvatar.src = `https://ui-avatars.com/api/?name=${user.email.charAt(0)}&background=00f3ff&color=000`;
+                }
+
+                // Load saved cart
+                const savedCart = localStorage.getItem(`cart_${user.uid}`);
+                if (savedCart) {
+                    cart = JSON.parse(savedCart);
+                    updateCartCount();
+                    updateCartUI();
+                }
+
+                // Show Orders Button
+                const ordersBtn = document.getElementById('orders-btn');
+                if (ordersBtn) {
+                    ordersBtn.style.display = 'block';
+                    ordersBtn.onclick = () => {
+                        document.getElementById('orders-modal').style.display = 'block';
+                        fetchOrders();
+                    };
+                }
+
+                // --- Admin Button Logic ---
+                const adminBtnContainer = document.getElementById('admin-btn-container');
+                const stockAdminBtnContainer = document.getElementById('stock-admin-btn-container');
+                const productsAdminBtnContainer = document.getElementById('products-admin-btn-container');
+                const pricesAdminBtnContainer = document.getElementById('prices-admin-btn-container');
+                const themesAdminBtnContainer = document.getElementById('themes-admin-btn-container');
+
+                if (user.email === 'caproprimero@gmail.com') {
+                    if (adminBtnContainer) adminBtnContainer.style.display = 'block';
+                    if (stockAdminBtnContainer) stockAdminBtnContainer.style.display = 'block';
+                    if (productsAdminBtnContainer) productsAdminBtnContainer.style.display = 'block';
+                    if (pricesAdminBtnContainer) pricesAdminBtnContainer.style.display = 'block';
+                    if (themesAdminBtnContainer) themesAdminBtnContainer.style.display = 'block';
+                } else {
+                    if (adminBtnContainer) adminBtnContainer.style.display = 'none';
+                    if (stockAdminBtnContainer) stockAdminBtnContainer.style.display = 'none';
+                    if (productsAdminBtnContainer) productsAdminBtnContainer.style.display = 'none';
+                    if (pricesAdminBtnContainer) pricesAdminBtnContainer.style.display = 'none';
+                    if (themesAdminBtnContainer) themesAdminBtnContainer.style.display = 'none';
+                }
+
+                closeAuthModal();
+            } else {
+                // User is signed out
+                if (authButtons) authButtons.style.display = 'flex';
+                if (userInfo) userInfo.style.display = 'none';
+
+                const ordersBtn = document.getElementById('orders-btn');
+                if (ordersBtn) ordersBtn.style.display = 'none';
+
+                const adminBtnContainer = document.getElementById('admin-btn-container');
+                if (adminBtnContainer) adminBtnContainer.style.display = 'none';
+
+                const stockAdminBtnContainer = document.getElementById('stock-admin-btn-container');
+                if (stockAdminBtnContainer) stockAdminBtnContainer.style.display = 'none';
+
+                const productsAdminBtnContainer = document.getElementById('products-admin-btn-container');
+                if (productsAdminBtnContainer) productsAdminBtnContainer.style.display = 'none';
+
+                const pricesAdminBtnContainer = document.getElementById('prices-admin-btn-container');
+                if (pricesAdminBtnContainer) pricesAdminBtnContainer.style.display = 'none';
+
+                const themesAdminBtnContainer = document.getElementById('themes-admin-btn-container');
+                if (themesAdminBtnContainer) themesAdminBtnContainer.style.display = 'none';
+
+
+
+                // Clear cart from UI
+                cart = [];
                 updateCartCount();
                 updateCartUI();
             }
+        });
 
-            // Show Orders Button
-            const ordersBtn = document.getElementById('orders-btn');
-            if (ordersBtn) {
-                ordersBtn.style.display = 'block';
-                ordersBtn.onclick = () => {
-                    document.getElementById('orders-modal').style.display = 'block';
-                    fetchOrders();
-                };
-            }
+        // Admin Event Listeners
+        const adminBtn = document.getElementById('btn-admin');
+        const closeAdminBtn = document.querySelector('.close-admin');
 
-            // --- Admin Button Logic ---
-            const adminBtnContainer = document.getElementById('admin-btn-container');
-            const stockAdminBtnContainer = document.getElementById('stock-admin-btn-container');
-            const productsAdminBtnContainer = document.getElementById('products-admin-btn-container');
-            const pricesAdminBtnContainer = document.getElementById('prices-admin-btn-container');
-            const themesAdminBtnContainer = document.getElementById('themes-admin-btn-container');
-
-            if (user.email === 'caproprimero@gmail.com') {
-                if (adminBtnContainer) adminBtnContainer.style.display = 'block';
-                if (stockAdminBtnContainer) stockAdminBtnContainer.style.display = 'block';
-                if (productsAdminBtnContainer) productsAdminBtnContainer.style.display = 'block';
-                if (pricesAdminBtnContainer) pricesAdminBtnContainer.style.display = 'block';
-                if (themesAdminBtnContainer) themesAdminBtnContainer.style.display = 'block';
-            } else {
-                if (adminBtnContainer) adminBtnContainer.style.display = 'none';
-                if (stockAdminBtnContainer) stockAdminBtnContainer.style.display = 'none';
-                if (productsAdminBtnContainer) productsAdminBtnContainer.style.display = 'none';
-                if (pricesAdminBtnContainer) pricesAdminBtnContainer.style.display = 'none';
-                if (themesAdminBtnContainer) themesAdminBtnContainer.style.display = 'none';
-            }
-
-            closeAuthModal();
-        } else {
-            // User is signed out
-            if (authButtons) authButtons.style.display = 'flex';
-            if (userInfo) userInfo.style.display = 'none';
-
-            const ordersBtn = document.getElementById('orders-btn');
-            if (ordersBtn) ordersBtn.style.display = 'none';
-
-            const adminBtnContainer = document.getElementById('admin-btn-container');
-            if (adminBtnContainer) adminBtnContainer.style.display = 'none';
-
-            const stockAdminBtnContainer = document.getElementById('stock-admin-btn-container');
-            if (stockAdminBtnContainer) stockAdminBtnContainer.style.display = 'none';
-
-            const productsAdminBtnContainer = document.getElementById('products-admin-btn-container');
-            if (productsAdminBtnContainer) productsAdminBtnContainer.style.display = 'none';
-
-            const pricesAdminBtnContainer = document.getElementById('prices-admin-btn-container');
-            if (pricesAdminBtnContainer) pricesAdminBtnContainer.style.display = 'none';
-
-            const themesAdminBtnContainer = document.getElementById('themes-admin-btn-container');
-            if (themesAdminBtnContainer) themesAdminBtnContainer.style.display = 'none';
-
-
-
-            // Clear cart from UI
-            cart = [];
-            updateCartCount();
-            updateCartUI();
+        if (adminBtn) {
+            adminBtn.addEventListener('click', openAdminPanel);
         }
-    });
 
-    // Admin Event Listeners
-    const adminBtn = document.getElementById('btn-admin');
-    const closeAdminBtn = document.querySelector('.close-admin');
+        if (closeAdminBtn) {
+            closeAdminBtn.addEventListener('click', () => {
+                document.getElementById('admin-modal').style.display = "none";
+            });
+        }
 
-    if (adminBtn) {
-        adminBtn.addEventListener('click', openAdminPanel);
-    }
+        // --- Profile Picture Logic ---
+        const userAvatar = document.getElementById('user-avatar');
+        const avatarInput = document.getElementById('avatar-input');
 
-    if (closeAdminBtn) {
-        closeAdminBtn.addEventListener('click', () => {
-            document.getElementById('admin-modal').style.display = "none";
-        });
-    }
-
-    // --- Profile Picture Logic ---
-    const userAvatar = document.getElementById('user-avatar');
-    const avatarInput = document.getElementById('avatar-input');
-
-    if (userAvatar && avatarInput) {
-        userAvatar.addEventListener('click', () => {
-            avatarInput.click();
-        });
-
-        avatarInput.addEventListener('change', (e) => {
-            const file = e.target.files[0];
-            if (file) {
-                const reader = new FileReader();
-                reader.onload = function (event) {
-                    const base64Image = event.target.result;
-                    userAvatar.src = base64Image;
-
-                    // Save to LocalStorage linked to user UID
-                    const user = auth.currentUser;
-                    if (user) {
-                        localStorage.setItem(`avatar_${user.uid}`, base64Image);
-                    }
-                };
-                reader.readAsDataURL(file);
-            }
-        });
-    }
-    // --- Admin Logic Functions ---
-    const ADMIN_EMAIL = 'caproprimero@gmail.com';
-    const adminOrdersList = document.getElementById('admin-orders-list');
-    const adminModal = document.getElementById('admin-modal');
-
-    function openAdminPanel() {
-        if (adminModal) adminModal.style.display = "block";
-        fetchAllOrders();
-    }
-
-
-
-    // --- Admin Stock Logic ---
-
-
-    async function fetchAllOrders() {
-        if (!adminOrdersList) return;
-        adminOrdersList.innerHTML = '<p style="text-align:center; color:white;">Cargando pedidos...</p>';
-        try {
-            const snapshot = await db.collection('orders').get();
-
-            if (snapshot.empty) {
-                adminOrdersList.innerHTML = '<p class="no-orders">No hay pedidos registrados.</p>';
-                return;
-            }
-
-            const orders = [];
-            snapshot.forEach(doc => {
-                orders.push({ id: doc.id, ...doc.data() });
+        if (userAvatar && avatarInput) {
+            userAvatar.addEventListener('click', () => {
+                avatarInput.click();
             });
 
-            // Sort by date descending
-            orders.sort((a, b) => {
-                const dateA = a.createdAt ? a.createdAt.toDate() : new Date(0);
-                const dateB = b.createdAt ? b.createdAt.toDate() : new Date(0);
-                return dateB - dateA;
+            avatarInput.addEventListener('change', (e) => {
+                const file = e.target.files[0];
+                if (file) {
+                    const reader = new FileReader();
+                    reader.onload = function (event) {
+                        const base64Image = event.target.result;
+                        userAvatar.src = base64Image;
+
+                        // Save to LocalStorage linked to user UID
+                        const user = auth.currentUser;
+                        if (user) {
+                            localStorage.setItem(`avatar_${user.uid}`, base64Image);
+                        }
+                    };
+                    reader.readAsDataURL(file);
+                }
             });
-
-            renderAdminOrders(orders);
-        } catch (error) {
-            console.error("Error fetching all orders:", error);
-            adminOrdersList.innerHTML = '<p class="no-orders">Error al cargar pedidos.</p>';
         }
-    }
+        // --- Admin Logic Functions ---
+        const ADMIN_EMAIL = 'caproprimero@gmail.com';
+        const adminOrdersList = document.getElementById('admin-orders-list');
+        const adminModal = document.getElementById('admin-modal');
 
-    function renderAdminOrders(orders) {
-        adminOrdersList.innerHTML = '';
-        orders.forEach(order => {
-            const date = order.createdAt ? order.createdAt.toDate().toLocaleString() : 'Reciente';
-            const itemsHtml = order.items.map(item =>
-                `<li class="order-item"><span>${item.name}</span><span>S/${item.price.toFixed(2)}</span></li>`
-            ).join('');
+        function openAdminPanel() {
+            if (adminModal) adminModal.style.display = "block";
+            fetchAllOrders();
+        }
 
-            const statusClass = order.status === 'Entregado' ? 'status-completed' : 'status-pending';
-            const isPending = order.status === 'Pendiente';
 
-            const orderCard = document.createElement('div');
-            orderCard.className = 'order-card';
-            orderCard.innerHTML = `
+
+        // --- Admin Stock Logic ---
+
+
+        async function fetchAllOrders() {
+            if (!adminOrdersList) return;
+            adminOrdersList.innerHTML = '<p style="text-align:center; color:white;">Cargando pedidos...</p>';
+            try {
+                const snapshot = await db.collection('orders').get();
+
+                if (snapshot.empty) {
+                    adminOrdersList.innerHTML = '<p class="no-orders">No hay pedidos registrados.</p>';
+                    return;
+                }
+
+                const orders = [];
+                snapshot.forEach(doc => {
+                    orders.push({ id: doc.id, ...doc.data() });
+                });
+
+                // Sort by date descending
+                orders.sort((a, b) => {
+                    const dateA = a.createdAt ? a.createdAt.toDate() : new Date(0);
+                    const dateB = b.createdAt ? b.createdAt.toDate() : new Date(0);
+                    return dateB - dateA;
+                });
+
+                renderAdminOrders(orders);
+            } catch (error) {
+                console.error("Error fetching all orders:", error);
+                adminOrdersList.innerHTML = '<p class="no-orders">Error al cargar pedidos.</p>';
+            }
+        }
+
+        function renderAdminOrders(orders) {
+            adminOrdersList.innerHTML = '';
+            orders.forEach(order => {
+                const date = order.createdAt ? order.createdAt.toDate().toLocaleString() : 'Reciente';
+                const itemsHtml = order.items.map(item =>
+                    `<li class="order-item"><span>${item.name}</span><span>S/${item.price.toFixed(2)}</span></li>`
+                ).join('');
+
+                const statusClass = order.status === 'Entregado' ? 'status-completed' : 'status-pending';
+                const isPending = order.status === 'Pendiente';
+
+                const orderCard = document.createElement('div');
+                orderCard.className = 'order-card';
+                orderCard.innerHTML = `
                 <div class="order-header">
                     <span class="order-date">📅 ${date}</span>
                     <span class="order-status ${statusClass}">${order.status}</span>
@@ -1152,39 +1152,39 @@ document.addEventListener('DOMContentLoaded', () => {
                 </div>
                 ${isPending ? `<button class="btn-deliver" onclick="updateOrderStatus('${order.id}', 'Entregado')" style="width:100%; margin-top:10px; padding:8px; background:#00ff88; color:#000; border:none; border-radius:4px; font-weight:bold; cursor:pointer;">✅ Marcar como Entregado</button>` : ''}
             `;
-            adminOrdersList.appendChild(orderCard);
-        });
-    }
-
-    window.updateOrderStatus = async (orderId, status) => {
-        if (!confirm(`¿Estás seguro de marcar este pedido como ${status}?`)) return;
-
-        try {
-            await db.collection('orders').doc(orderId).update({ status: status });
-            alert("¡Pedido actualizado!");
-            fetchAllOrders(); // Refresh list
-        } catch (error) {
-            console.error("Error updating order:", error);
-            alert("Error al actualizar: " + error.message);
+                adminOrdersList.appendChild(orderCard);
+            });
         }
-    };
 
-    // --- Export to CSV Logic ---
-    const btnExportCsv = document.getElementById('btn-export-csv');
-    if (btnExportCsv) {
-        btnExportCsv.addEventListener('click', exportOrdersToCSV);
-    }
+        window.updateOrderStatus = async (orderId, status) => {
+            if (!confirm(`¿Estás seguro de marcar este pedido como ${status}?`)) return;
 
-    async function exportOrdersToCSV() {
-        try {
-            const snapshot = await db.collection('orders').get();
-            if (snapshot.empty) {
-                alert("No hay pedidos para exportar.");
-                return;
+            try {
+                await db.collection('orders').doc(orderId).update({ status: status });
+                alert("¡Pedido actualizado!");
+                fetchAllOrders(); // Refresh list
+            } catch (error) {
+                console.error("Error updating order:", error);
+                alert("Error al actualizar: " + error.message);
             }
+        };
 
-            // Create HTML Table for Excel
-            let table = `
+        // --- Export to CSV Logic ---
+        const btnExportCsv = document.getElementById('btn-export-csv');
+        if (btnExportCsv) {
+            btnExportCsv.addEventListener('click', exportOrdersToCSV);
+        }
+
+        async function exportOrdersToCSV() {
+            try {
+                const snapshot = await db.collection('orders').get();
+                if (snapshot.empty) {
+                    alert("No hay pedidos para exportar.");
+                    return;
+                }
+
+                // Create HTML Table for Excel
+                let table = `
                         <html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel" xmlns="http://www.w3.org/TR/REC-html40">
                         <head>
                             <meta charset="UTF-8">
@@ -1215,18 +1215,18 @@ document.addEventListener('DOMContentLoaded', () => {
                                 <tbody>
                     `;
 
-            snapshot.forEach(doc => {
-                const order = doc.data();
-                const dateObj = order.createdAt ? order.createdAt.toDate() : new Date();
-                const date = dateObj.toLocaleDateString();
-                const time = dateObj.toLocaleTimeString();
+                snapshot.forEach(doc => {
+                    const order = doc.data();
+                    const dateObj = order.createdAt ? order.createdAt.toDate() : new Date();
+                    const date = dateObj.toLocaleDateString();
+                    const time = dateObj.toLocaleTimeString();
 
-                // Format products list with line breaks for Excel
-                const products = order.items.map(i => `• ${i.name} (S/${i.price})`).join('<br>');
+                    // Format products list with line breaks for Excel
+                    const products = order.items.map(i => `• ${i.name} (S/${i.price})`).join('<br>');
 
-                const statusClass = order.status === 'Entregado' ? 'status-entregado' : 'status-pendiente';
+                    const statusClass = order.status === 'Entregado' ? 'status-entregado' : 'status-pendiente';
 
-                table += `
+                    table += `
                             <tr>
                                 <td>${date}</td>
                                 <td>${time}</td>
@@ -1238,268 +1238,268 @@ document.addEventListener('DOMContentLoaded', () => {
                                 <td><a href="${order.voucher}" target="_blank">Ver Comprobante</a></td>
                             </tr>
                         `;
-            });
+                });
 
-            table += `
+                table += `
                                 </tbody>
                             </table>
                         </body>
                         </html>
                     `;
 
-            const blob = new Blob([table], { type: 'application/vnd.ms-excel' });
-            const url = window.URL.createObjectURL(blob);
-            const link = document.createElement("a");
-            link.href = url;
-            link.download = "Reporte_Ventas_Pixelium.xls"; // .xls extension triggers Excel to open it
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
+                const blob = new Blob([table], { type: 'application/vnd.ms-excel' });
+                const url = window.URL.createObjectURL(blob);
+                const link = document.createElement("a");
+                link.href = url;
+                link.download = "Reporte_Ventas_Pixelium.xls"; // .xls extension triggers Excel to open it
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
 
-        } catch (error) {
-            console.error("Error exporting Excel:", error);
-            alert("Error al exportar reporte.");
+            } catch (error) {
+                console.error("Error exporting Excel:", error);
+                alert("Error al exportar reporte.");
+            }
         }
-    }
 
 
-    // --- STOCK MANAGER LOGIC (SEPARATE SYSTEM) ---
-    const stockModal = document.getElementById('stock-modal');
-    const btnStockAdmin = document.getElementById('btn-stock-admin');
-    const closeStockBtn = document.querySelector('.close-stock');
-    const btnSaveStock = document.getElementById('btn-save-stock');
-    const stockListContainer = document.getElementById('stock-list-container');
+        // --- STOCK MANAGER LOGIC (SEPARATE SYSTEM) ---
+        const stockModal = document.getElementById('stock-modal');
+        const btnStockAdmin = document.getElementById('btn-stock-admin');
+        const closeStockBtn = document.querySelector('.close-stock');
+        const btnSaveStock = document.getElementById('btn-save-stock');
+        const stockListContainer = document.getElementById('stock-list-container');
 
-    if (btnStockAdmin) {
-        btnStockAdmin.addEventListener('click', () => {
-            stockModal.style.display = 'block';
-            renderStockManager();
-        });
-    }
+        if (btnStockAdmin) {
+            btnStockAdmin.addEventListener('click', () => {
+                stockModal.style.display = 'block';
+                renderStockManager();
+            });
+        }
 
-    if (closeStockBtn) {
-        closeStockBtn.addEventListener('click', () => {
-            stockModal.style.display = 'none';
-        });
-    }
+        if (closeStockBtn) {
+            closeStockBtn.addEventListener('click', () => {
+                stockModal.style.display = 'none';
+            });
+        }
 
-    function renderStockManager() {
-        stockListContainer.innerHTML = '';
+        function renderStockManager() {
+            stockListContainer.innerHTML = '';
 
-        // Map nice names to keys
-        const productNames = {
-            'canva-pro': 'Canva PRO (Personal)',
-            'panel-canva': 'Panel Canva PRO',
-            'perplexity': 'Perplexity AI',
-            'gemini': 'Gemini Advanced',
-            'google-one': 'Google One',
-            'capcut': 'CapCut Pro'
-        };
+            // Map nice names to keys
+            const productNames = {
+                'canva-pro': 'Canva PRO (Personal)',
+                'panel-canva': 'Panel Canva PRO',
+                'perplexity': 'Perplexity AI',
+                'gemini': 'Gemini Advanced',
+                'google-one': 'Google One',
+                'capcut': 'CapCut Pro'
+            };
 
-        for (const [key, value] of Object.entries(stockState)) {
-            const row = document.createElement('div');
-            row.className = 'stock-item-row';
-            row.innerHTML = `
+            for (const [key, value] of Object.entries(stockState)) {
+                const row = document.createElement('div');
+                row.className = 'stock-item-row';
+                row.innerHTML = `
             <span class="stock-item-name">${productNames[key] || key}</span>
             <input type="number" class="stock-input" data-key="${key}" value="${value}" min="0">
         `;
-            stockListContainer.appendChild(row);
+                stockListContainer.appendChild(row);
+            }
         }
-    }
 
-    if (btnSaveStock) {
-        btnSaveStock.addEventListener('click', () => {
-            const inputs = document.querySelectorAll('.stock-input');
-            const updates = {};
-            let changesMade = false;
+        if (btnSaveStock) {
+            btnSaveStock.addEventListener('click', () => {
+                const inputs = document.querySelectorAll('.stock-input');
+                const updates = {};
+                let changesMade = false;
 
-            inputs.forEach(input => {
-                const key = input.getAttribute('data-key');
-                const newValue = parseInt(input.value);
+                inputs.forEach(input => {
+                    const key = input.getAttribute('data-key');
+                    const newValue = parseInt(input.value);
 
-                if (!isNaN(newValue) && newValue >= 0) {
-                    updates[key] = newValue;
-                    changesMade = true;
+                    if (!isNaN(newValue) && newValue >= 0) {
+                        updates[key] = newValue;
+                        changesMade = true;
+                    }
+                });
+
+                if (changesMade) {
+                    // Update Firestore
+                    db.collection('stock').doc('main').set(updates, { merge: true })
+                        .then(() => {
+                            alert('¡Stock Global actualizado! ☁️✅');
+                            stockModal.style.display = 'none';
+                        })
+                        .catch(err => alert("Error guardando stock: " + err.message));
                 }
             });
+        }
 
-            if (changesMade) {
-                // Update Firestore
-                db.collection('stock').doc('main').set(updates, { merge: true })
-                    .then(() => {
-                        alert('¡Stock Global actualizado! ☁️✅');
-                        stockModal.style.display = 'none';
-                    })
-                    .catch(err => alert("Error guardando stock: " + err.message));
-            }
-        });
-    }
+        // --- PRODUCT MANAGER LOGIC (SEPARATE SYSTEM) ---
+        const productModal = document.getElementById('product-modal');
+        const btnProductsAdmin = document.getElementById('btn-products-admin');
+        const closeProductModalBtn = document.querySelector('.close-product-modal');
+        const btnCreateProduct = document.getElementById('btn-create-product');
+        const productAdminList = document.getElementById('product-admin-list');
 
-    // --- PRODUCT MANAGER LOGIC (SEPARATE SYSTEM) ---
-    const productModal = document.getElementById('product-modal');
-    const btnProductsAdmin = document.getElementById('btn-products-admin');
-    const closeProductModalBtn = document.querySelector('.close-product-modal');
-    const btnCreateProduct = document.getElementById('btn-create-product');
-    const productAdminList = document.getElementById('product-admin-list');
+        // State
+        // Load from Firestore (Real-time)
+        let hiddenProducts = JSON.parse(localStorage.getItem('hiddenProducts')) || []; // Keep hidden local for now or migrate later? Request was Prices & Products. Let's do Products (Custom).
+        // Actually, migration of customProducts to Firestore
+        let customProducts = [];
 
-    // State
-    // Load from Firestore (Real-time)
-    let hiddenProducts = JSON.parse(localStorage.getItem('hiddenProducts')) || []; // Keep hidden local for now or migrate later? Request was Prices & Products. Let's do Products (Custom).
-    // Actually, migration of customProducts to Firestore
-    let customProducts = [];
+        // 1. Initialization: Listen to Firestore
+        function initProductSystem() {
+            db.collection('products').onSnapshot(snapshot => {
+                const products = [];
+                snapshot.forEach(doc => {
+                    products.push(doc.data());
+                });
+                customProducts = products;
 
-    // 1. Initialization: Listen to Firestore
-    function initProductSystem() {
-        db.collection('products').onSnapshot(snapshot => {
-            const products = [];
-            snapshot.forEach(doc => {
-                products.push(doc.data());
+                // Re-render
+                // Clear current custom cards first? or just rely on IDs.
+                // Simplified: Remove all custom cards then re-add
+                document.querySelectorAll('.card[id^="custom_"]').forEach(e => e.remove());
+                renderCustomProductsOnGrid();
+                applyProductVisibility();
+
+                // If admin modal open, refresh list
+                if (productModal.style.display === 'block') {
+                    renderAdminProductList();
+                }
             });
-            customProducts = products;
+        }
 
-            // Re-render
-            // Clear current custom cards first? or just rely on IDs.
-            // Simplified: Remove all custom cards then re-add
-            document.querySelectorAll('.card[id^="custom_"]').forEach(e => e.remove());
-            renderCustomProductsOnGrid();
-            applyProductVisibility();
+        // Call on load
+        initProductSystem();
 
-            // If admin modal open, refresh list
-            if (productModal.style.display === 'block') {
+        if (btnProductsAdmin) {
+            btnProductsAdmin.addEventListener('click', () => {
+                productModal.style.display = 'block';
                 renderAdminProductList();
-            }
-        });
-    }
+                switchProductTab('add');
+            });
+        }
 
-    // Call on load
-    initProductSystem();
+        if (closeProductModalBtn) {
+            closeProductModalBtn.addEventListener('click', () => {
+                productModal.style.display = 'none';
+                // Reload page to apply changes cleanly if something was cleared
+                if (confirm("¿Recargar página para ver cambios?")) location.reload();
+            });
+        }
 
-    if (btnProductsAdmin) {
-        btnProductsAdmin.addEventListener('click', () => {
-            productModal.style.display = 'block';
-            renderAdminProductList();
-            switchProductTab('add');
-        });
-    }
+        // Tab Switcher
+        window.switchProductTab = (tab) => {
+            document.getElementById('product-tab-add').style.display = tab === 'add' ? 'block' : 'none';
+            document.getElementById('product-tab-list').style.display = tab === 'list' ? 'block' : 'none';
 
-    if (closeProductModalBtn) {
-        closeProductModalBtn.addEventListener('click', () => {
-            productModal.style.display = 'none';
-            // Reload page to apply changes cleanly if something was cleared
-            if (confirm("¿Recargar página para ver cambios?")) location.reload();
-        });
-    }
+            // Update active class on buttons manually if needed, or keeping simple
+        };
 
-    // Tab Switcher
-    window.switchProductTab = (tab) => {
-        document.getElementById('product-tab-add').style.display = tab === 'add' ? 'block' : 'none';
-        document.getElementById('product-tab-list').style.display = tab === 'list' ? 'block' : 'none';
+        // --- LOGIC: CREATE PRODUCT ---
+        if (btnCreateProduct) {
+            btnCreateProduct.addEventListener('click', async () => {
+                const title = document.getElementById('new-prod-name').value;
+                const price = document.getElementById('new-prod-price').value;
+                const imgInput = document.getElementById('new-prod-img');
 
-        // Update active class on buttons manually if needed, or keeping simple
-    };
+                if (!title || !price || !imgInput.files[0]) {
+                    return alert("Nombre, Precio e Imagen son obligatorios.");
+                }
 
-    // --- LOGIC: CREATE PRODUCT ---
-    if (btnCreateProduct) {
-        btnCreateProduct.addEventListener('click', async () => {
-            const title = document.getElementById('new-prod-name').value;
-            const price = document.getElementById('new-prod-price').value;
-            const imgInput = document.getElementById('new-prod-img');
+                btnCreateProduct.innerText = "Subiendo imagen...";
+                btnCreateProduct.disabled = true;
 
-            if (!title || !price || !imgInput.files[0]) {
-                return alert("Nombre, Precio e Imagen son obligatorios.");
-            }
+                try {
+                    // Upload Image
+                    const reader = new FileReader();
+                    reader.readAsDataURL(imgInput.files[0]);
+                    reader.onloadend = async function () {
 
-            btnCreateProduct.innerText = "Subiendo imagen...";
-            btnCreateProduct.disabled = true;
+                        const base64Image = reader.result.split(',')[1];
+                        const imageUrl = await uploadImageToImgBB(base64Image, `Prod_${title}`);
 
-            try {
-                // Upload Image
-                const reader = new FileReader();
-                reader.readAsDataURL(imgInput.files[0]);
-                reader.onloadend = async function () {
+                        const prodId = 'custom_' + Date.now();
+                        const newProduct = {
+                            id: prodId,
+                            title: title,
+                            desc: document.getElementById('new-prod-desc').value,
+                            price: parseFloat(price),
+                            priceAlt: document.getElementById('new-prod-price-alt').value,
+                            stock: parseInt(document.getElementById('new-prod-stock').value) || 10,
+                            warranty: document.getElementById('new-prod-warranty').value,
+                            image: imageUrl,
+                            badge: document.getElementById('new-prod-badge').value,
+                            note: document.getElementById('new-prod-note').value
+                        };
 
-                    const base64Image = reader.result.split(',')[1];
-                    const imageUrl = await uploadImageToImgBB(base64Image, `Prod_${title}`);
+                        // Save to Firestore
+                        try {
+                            await db.collection('products').doc(prodId).set(newProduct);
 
-                    const prodId = 'custom_' + Date.now();
-                    const newProduct = {
-                        id: prodId,
-                        title: title,
-                        desc: document.getElementById('new-prod-desc').value,
-                        price: parseFloat(price),
-                        priceAlt: document.getElementById('new-prod-price-alt').value,
-                        stock: parseInt(document.getElementById('new-prod-stock').value) || 10,
-                        warranty: document.getElementById('new-prod-warranty').value,
-                        image: imageUrl,
-                        badge: document.getElementById('new-prod-badge').value,
-                        note: document.getElementById('new-prod-note').value
+                            // Initialize stock for this new product in Firestore Stock
+                            await db.collection('stock').doc('main').set({
+                                [title]: newProduct.stock
+                            }, { merge: true });
+
+                            alert("¡Producto Creado en la Nube! ☁️");
+                            // Reset form
+                            document.getElementById('new-prod-name').value = '';
+                            document.getElementById('new-prod-price').value = '';
+                            document.getElementById('new-prod-img').value = '';
+                            btnCreateProduct.innerText = "✨ Crear Producto";
+                            btnCreateProduct.disabled = false;
+
+                            // No reload needed due to onSnapshot
+                        } catch (err) {
+                            alert("Error guardando: " + err.message);
+                            btnCreateProduct.disabled = false;
+                        }
                     };
-
-                    // Save to Firestore
-                    try {
-                        await db.collection('products').doc(prodId).set(newProduct);
-
-                        // Initialize stock for this new product in Firestore Stock
-                        await db.collection('stock').doc('main').set({
-                            [title]: newProduct.stock
-                        }, { merge: true });
-
-                        alert("¡Producto Creado en la Nube! ☁️");
-                        // Reset form
-                        document.getElementById('new-prod-name').value = '';
-                        document.getElementById('new-prod-price').value = '';
-                        document.getElementById('new-prod-img').value = '';
-                        btnCreateProduct.innerText = "✨ Crear Producto";
-                        btnCreateProduct.disabled = false;
-
-                        // No reload needed due to onSnapshot
-                    } catch (err) {
-                        alert("Error guardando: " + err.message);
-                        btnCreateProduct.disabled = false;
-                    }
-                };
-            } catch (e) {
-                console.error(e);
-                alert("Error: " + e.message);
-                btnCreateProduct.innerText = "✨ Crear Producto";
-                btnCreateProduct.disabled = false;
-            }
-        });
-    }
+                } catch (e) {
+                    console.error(e);
+                    alert("Error: " + e.message);
+                    btnCreateProduct.innerText = "✨ Crear Producto";
+                    btnCreateProduct.disabled = false;
+                }
+            });
+        }
 
 
 
-    // --- LOGIC: VISIBILITY (MASKING) ---
-    function applyProductVisibility() {
-        document.querySelectorAll('.card').forEach(card => {
-            const titleEl = card.querySelector('h3');
-            if (titleEl && hiddenProducts.includes(titleEl.innerText.trim())) {
-                card.style.display = 'none';
-            } else {
-                if (card.style.display === 'none') card.style.display = '';
-            }
-        });
-    }
+        // --- LOGIC: VISIBILITY (MASKING) ---
+        function applyProductVisibility() {
+            document.querySelectorAll('.card').forEach(card => {
+                const titleEl = card.querySelector('h3');
+                if (titleEl && hiddenProducts.includes(titleEl.innerText.trim())) {
+                    card.style.display = 'none';
+                } else {
+                    if (card.style.display === 'none') card.style.display = '';
+                }
+            });
+        }
 
-    // --- LOGIC: RENDER CUSTOMS ON GRID ---
-    function renderCustomProductsOnGrid() {
-        const grid = document.querySelector('.services-grid');
-        if (!grid) return;
+        // --- LOGIC: RENDER CUSTOMS ON GRID ---
+        function renderCustomProductsOnGrid() {
+            const grid = document.querySelector('.services-grid');
+            if (!grid) return;
 
-        customProducts.forEach(prod => {
-            if (document.getElementById(prod.id)) return;
+            customProducts.forEach(prod => {
+                if (document.getElementById(prod.id)) return;
 
-            const card = document.createElement('div');
-            card.className = 'card';
-            card.id = prod.id;
+                const card = document.createElement('div');
+                card.className = 'card';
+                card.id = prod.id;
 
-            const currentStock = stockState[prod.title] !== undefined ? stockState[prod.title] : prod.stock;
-            const stockClass = currentStock > 0 ? 'stock-available' : 'stock-out';
-            const stockText = currentStock > 0 ? `Stock: ${currentStock}` : 'Sin Stock';
-            const btnState = currentStock > 0 ? '' : 'disabled';
-            const btnText = currentStock > 0 ? 'Agregar al Carrito' : 'Agotado';
+                const currentStock = stockState[prod.title] !== undefined ? stockState[prod.title] : prod.stock;
+                const stockClass = currentStock > 0 ? 'stock-available' : 'stock-out';
+                const stockText = currentStock > 0 ? `Stock: ${currentStock}` : 'Sin Stock';
+                const btnState = currentStock > 0 ? '' : 'disabled';
+                const btnText = currentStock > 0 ? 'Agregar al Carrito' : 'Agotado';
 
-            card.innerHTML = `
+                card.innerHTML = `
             <div class="card-icon">
                 <img src="${prod.image}" alt="${prod.title}" class="product-img">
             </div>
@@ -1521,209 +1521,209 @@ document.addEventListener('DOMContentLoaded', () => {
             <button class="btn-add" onclick="addToCart('${prod.title}', ${prod.price})" ${btnState}>${btnText}</button>
             `;
 
-            const newImg = card.querySelector('.product-img');
-            newImg.addEventListener('click', () => {
-                const lightbox = document.getElementById('lightbox');
-                const lightboxImg = document.getElementById('lightbox-img');
-                if (lightbox && lightboxImg) {
-                    lightbox.style.display = "block";
-                    lightboxImg.src = newImg.src;
-                }
+                const newImg = card.querySelector('.product-img');
+                newImg.addEventListener('click', () => {
+                    const lightbox = document.getElementById('lightbox');
+                    const lightboxImg = document.getElementById('lightbox-img');
+                    if (lightbox && lightboxImg) {
+                        lightbox.style.display = "block";
+                        lightboxImg.src = newImg.src;
+                    }
+                });
+
+                grid.appendChild(card);
             });
+        }
 
-            grid.appendChild(card);
-        });
-    }
+        // --- LOGIC: ADMIN LIST ---
+        function renderAdminProductList() {
+            if (!productAdminList) return;
+            productAdminList.innerHTML = '';
 
-    // --- LOGIC: ADMIN LIST ---
-    function renderAdminProductList() {
-        if (!productAdminList) return;
-        productAdminList.innerHTML = '';
+            document.querySelectorAll('.services-grid .card').forEach(card => {
+                if (card.id.startsWith('custom_')) return;
 
-        document.querySelectorAll('.services-grid .card').forEach(card => {
-            if (card.id.startsWith('custom_')) return;
+                const title = card.querySelector('h3').innerText.trim();
+                const isHidden = hiddenProducts.includes(title);
 
-            const title = card.querySelector('h3').innerText.trim();
-            const isHidden = hiddenProducts.includes(title);
-
-            const row = document.createElement('div');
-            row.className = 'stock-item-row';
-            row.innerHTML = `
+                const row = document.createElement('div');
+                row.className = 'stock-item-row';
+                row.innerHTML = `
             <span class="stock-item-name">${title} (Original)</span>
             <button onclick="toggleProductVisibility('${title}')" style="background: ${isHidden ? '#39ff14' : '#ff4444'}; border:none; border-radius:4px; padding:  5px; cursor:pointer; color:black; font-weight:bold;">
                 ${isHidden ? 'Mostrar' : 'Ocultar'}
             </button>
         `;
-            productAdminList.appendChild(row);
-        });
+                productAdminList.appendChild(row);
+            });
 
-        customProducts.forEach((prod, index) => {
-            const row = document.createElement('div');
-            row.className = 'stock-item-row';
-            row.innerHTML = `
+            customProducts.forEach((prod, index) => {
+                const row = document.createElement('div');
+                row.className = 'stock-item-row';
+                row.innerHTML = `
             <span class="stock-item-name">${prod.title} (Custom)</span>
             <button onclick="deleteCustomProduct(${index})" style="background: #ff4444; border:none; border-radius:4px; padding: 5px; cursor:pointer; color:white; font-weight:bold;">
                 Borrar
             </button>
         `;
-            productAdminList.appendChild(row);
-        });
-    }
-
-    window.toggleProductVisibility = (title) => {
-        if (hiddenProducts.includes(title)) {
-            hiddenProducts = hiddenProducts.filter(t => t !== title);
-        } else {
-            hiddenProducts.push(title);
+                productAdminList.appendChild(row);
+            });
         }
-        localStorage.setItem('hiddenProducts', JSON.stringify(hiddenProducts));
-        renderAdminProductList();
-        applyProductVisibility();
-    };
 
-    window.deleteCustomProduct = async (index) => {
-        if (!confirm("¿Eliminar este producto permanentemente?")) return;
-        const prod = customProducts[index];
-        if (prod) {
-            try {
-                await db.collection('products').doc(prod.id).delete();
-                alert("Producto eliminado de la nube.");
-            } catch (err) {
-                alert("Error al eliminar: " + err.message);
-            }
-        }
-    };
-
-    // --- PRICE MANAGER LOGIC (SEPARATE SYSTEM) ---
-    const priceModal = document.getElementById('price-modal');
-    const btnPricesAdmin = document.getElementById('btn-prices-admin');
-    const closePriceModalBtn = document.querySelector('.close-price-modal');
-    const btnSavePrices = document.getElementById('btn-save-prices');
-    const priceAdminList = document.getElementById('price-admin-list');
-
-    // State
-    // Load from Firestore (Real-time)
-    let priceState = {};
-
-    // 1. Initialization: Listen to Prices
-    function initPriceSystem() {
-        db.collection('prices').doc('main').onSnapshot(doc => {
-            if (doc.exists) {
-                priceState = doc.data();
-                applyPriceOverrides();
+        window.toggleProductVisibility = (title) => {
+            if (hiddenProducts.includes(title)) {
+                hiddenProducts = hiddenProducts.filter(t => t !== title);
             } else {
-                db.collection('prices').doc('main').set({});
+                hiddenProducts.push(title);
             }
-        });
-    }
+            localStorage.setItem('hiddenProducts', JSON.stringify(hiddenProducts));
+            renderAdminProductList();
+            applyProductVisibility();
+        };
 
-    // Call on load
-    initPriceSystem();
-
-    if (btnPricesAdmin) {
-        btnPricesAdmin.addEventListener('click', () => {
-            priceModal.style.display = 'block';
-            renderPriceManager();
-        });
-    }
-
-    if (closePriceModalBtn) {
-        closePriceModalBtn.addEventListener('click', () => {
-            priceModal.style.display = 'none';
-            applyPriceOverrides(); // Re-apply just in case
-        });
-    }
-
-    // --- LOGIC: RENDER ADMIN LIST ---
-    function renderPriceManager() {
-        if (!priceAdminList) return;
-        priceAdminList.innerHTML = '';
-
-        // Scan all cards (Hardcoded + Custom)
-        document.querySelectorAll('.services-grid .card').forEach(card => {
-            const title = card.querySelector('h3').innerText.trim();
-            // Get current price from STATE or parse from DOM if not in state
-            let currentPrice = priceState[title];
-
-            if (!currentPrice) {
-                // Extract from DOM "S/15.00" -> 15.00
-                const priceTag = card.querySelector('.price-tag');
-                if (priceTag) {
-                    const text = priceTag.childNodes[0].nodeValue.trim(); // "S/15.00"
-                    currentPrice = parseFloat(text.replace(/[^\d.]/g, ''));
-                } else {
-                    currentPrice = 0;
+        window.deleteCustomProduct = async (index) => {
+            if (!confirm("¿Eliminar este producto permanentemente?")) return;
+            const prod = customProducts[index];
+            if (prod) {
+                try {
+                    await db.collection('products').doc(prod.id).delete();
+                    alert("Producto eliminado de la nube.");
+                } catch (err) {
+                    alert("Error al eliminar: " + err.message);
                 }
             }
+        };
 
-            const row = document.createElement('div');
-            row.className = 'stock-item-row';
-            row.innerHTML = `
+        // --- PRICE MANAGER LOGIC (SEPARATE SYSTEM) ---
+        const priceModal = document.getElementById('price-modal');
+        const btnPricesAdmin = document.getElementById('btn-prices-admin');
+        const closePriceModalBtn = document.querySelector('.close-price-modal');
+        const btnSavePrices = document.getElementById('btn-save-prices');
+        const priceAdminList = document.getElementById('price-admin-list');
+
+        // State
+        // Load from Firestore (Real-time)
+        let priceState = {};
+
+        // 1. Initialization: Listen to Prices
+        function initPriceSystem() {
+            db.collection('prices').doc('main').onSnapshot(doc => {
+                if (doc.exists) {
+                    priceState = doc.data();
+                    applyPriceOverrides();
+                } else {
+                    db.collection('prices').doc('main').set({});
+                }
+            });
+        }
+
+        // Call on load
+        initPriceSystem();
+
+        if (btnPricesAdmin) {
+            btnPricesAdmin.addEventListener('click', () => {
+                priceModal.style.display = 'block';
+                renderPriceManager();
+            });
+        }
+
+        if (closePriceModalBtn) {
+            closePriceModalBtn.addEventListener('click', () => {
+                priceModal.style.display = 'none';
+                applyPriceOverrides(); // Re-apply just in case
+            });
+        }
+
+        // --- LOGIC: RENDER ADMIN LIST ---
+        function renderPriceManager() {
+            if (!priceAdminList) return;
+            priceAdminList.innerHTML = '';
+
+            // Scan all cards (Hardcoded + Custom)
+            document.querySelectorAll('.services-grid .card').forEach(card => {
+                const title = card.querySelector('h3').innerText.trim();
+                // Get current price from STATE or parse from DOM if not in state
+                let currentPrice = priceState[title];
+
+                if (!currentPrice) {
+                    // Extract from DOM "S/15.00" -> 15.00
+                    const priceTag = card.querySelector('.price-tag');
+                    if (priceTag) {
+                        const text = priceTag.childNodes[0].nodeValue.trim(); // "S/15.00"
+                        currentPrice = parseFloat(text.replace(/[^\d.]/g, ''));
+                    } else {
+                        currentPrice = 0;
+                    }
+                }
+
+                const row = document.createElement('div');
+                row.className = 'stock-item-row';
+                row.innerHTML = `
                 <span class="stock-item-name">${title}</span>
                 <input type="number" step="0.50" class="stock-input price-input-field"
                     data-title="${title}"
                     value="${currentPrice}">
                     `;
-            priceAdminList.appendChild(row);
-        });
-    }
+                priceAdminList.appendChild(row);
+            });
+        }
 
-    if (btnSavePrices) {
-        btnSavePrices.addEventListener('click', () => {
-            const inputs = document.querySelectorAll('.price-input-field');
-            const updates = {};
-            inputs.forEach(input => {
-                const title = input.getAttribute('data-title');
-                const val = parseFloat(input.value);
-                if (!isNaN(val)) {
-                    updates[title] = val;
+        if (btnSavePrices) {
+            btnSavePrices.addEventListener('click', () => {
+                const inputs = document.querySelectorAll('.price-input-field');
+                const updates = {};
+                inputs.forEach(input => {
+                    const title = input.getAttribute('data-title');
+                    const val = parseFloat(input.value);
+                    if (!isNaN(val)) {
+                        updates[title] = val;
+                    }
+                });
+
+                // Save to Firestore
+                db.collection('prices').doc('main').set(updates, { merge: true })
+                    .then(() => {
+                        alert("¡Precios Globales Actualizados! ☁️💰");
+                        priceModal.style.display = 'none';
+                    })
+                    .catch(err => alert("Error: " + err.message));
+            });
+        }
+
+        // --- LOGIC: APPLY OVERRIDES (CORE) ---
+        function applyPriceOverrides() {
+            document.querySelectorAll('.services-grid .card').forEach(card => {
+                const title = card.querySelector('h3').innerText.trim();
+
+                if (priceState[title] !== undefined) {
+                    const newPrice = priceState[title];
+
+                    // 1. Update Visual Text
+                    const priceTag = card.querySelector('.price-tag');
+                    if (priceTag) {
+                        // Keep the structural span for alt price if exists, just update text node
+                        // Easier: Just rebuild innerHTML to keep format "S/XX <span...>"
+                        // Check if there is an alt price span
+                        const altSpan = priceTag.querySelector('.price-alt');
+                        const altHtml = altSpan ? altSpan.outerHTML : '';
+                        priceTag.innerHTML = `S/${newPrice.toFixed(2)} ${altHtml}`;
+                    }
+
+                    // 2. Update Add to Cart Button Logic
+                    const btn = card.querySelector('.btn-add');
+                    if (btn) {
+                        // Remove old onclick attribute to be safe
+                        btn.removeAttribute('onclick');
+                        // Clone button to strip existing event listeners (if added via JS)
+                        // But since most are inline HTML onclick, we can just override onclick prop
+                        btn.onclick = (e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            addToCart(title, newPrice);
+                        };
+                    }
                 }
             });
+        }
 
-            // Save to Firestore
-            db.collection('prices').doc('main').set(updates, { merge: true })
-                .then(() => {
-                    alert("¡Precios Globales Actualizados! ☁️💰");
-                    priceModal.style.display = 'none';
-                })
-                .catch(err => alert("Error: " + err.message));
-        });
-    }
-
-    // --- LOGIC: APPLY OVERRIDES (CORE) ---
-    function applyPriceOverrides() {
-        document.querySelectorAll('.services-grid .card').forEach(card => {
-            const title = card.querySelector('h3').innerText.trim();
-
-            if (priceState[title] !== undefined) {
-                const newPrice = priceState[title];
-
-                // 1. Update Visual Text
-                const priceTag = card.querySelector('.price-tag');
-                if (priceTag) {
-                    // Keep the structural span for alt price if exists, just update text node
-                    // Easier: Just rebuild innerHTML to keep format "S/XX <span...>"
-                    // Check if there is an alt price span
-                    const altSpan = priceTag.querySelector('.price-alt');
-                    const altHtml = altSpan ? altSpan.outerHTML : '';
-                    priceTag.innerHTML = `S/${newPrice.toFixed(2)} ${altHtml}`;
-                }
-
-                // 2. Update Add to Cart Button Logic
-                const btn = card.querySelector('.btn-add');
-                if (btn) {
-                    // Remove old onclick attribute to be safe
-                    btn.removeAttribute('onclick');
-                    // Clone button to strip existing event listeners (if added via JS)
-                    // But since most are inline HTML onclick, we can just override onclick prop
-                    btn.onclick = (e) => {
-                        e.preventDefault();
-                        e.stopPropagation();
-                        addToCart(title, newPrice);
-                    };
-                }
-            }
-        });
-    }
-
-}); // End of DOMContentLoaded
+    }); // End of DOMContentLoaded
