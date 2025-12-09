@@ -1,3 +1,6 @@
+console.log("Pixelium System Online V3");
+// alert("SISTEMA ACTUALIZADO V3 - Si ves esto, el código nuevo cargó.");
+
 const firebaseConfig = {
     apiKey: "AIzaSyCANk2vWDYkiZXnpwkufTgRrbSqGJhAHNI",
     authDomain: "pixelium-7f62b.firebaseapp.com",
