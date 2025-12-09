@@ -733,11 +733,17 @@ document.addEventListener('DOMContentLoaded', () => {
                 checkoutBtn.innerText = "Subiendo comprobante...";
                 checkoutBtn.disabled = true;
 
+                // DEBUG TRACE
+                alert("Paso 1: Iniciando subida...");
+
                 try {
                     const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
                     const customName = `Comprobante_${emailInput.value}_${timestamp}`;
 
                     const imageUrl = await uploadImageToImgBB(base64Image, customName);
+
+                    // DEBUG TRACE
+                    alert("Paso 2: Imagen subida. Guardando...");
 
                     // Calculate total
                     let total = 0;
@@ -747,7 +753,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
                     // Decrement Stock
                     try {
-                        console.log("Starting stock decrement...");
                         for (const item of cart) {
                             const qty = item.quantity || 1;
                             await decrementStock(item.name, qty);
@@ -771,6 +776,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     let message = `¡HOLA EQUIPO PIXELIUM X! ${rocket}${sparkles}\n\n`;
                     message += `Acabo de realizar una compra ÉPICA y quiero activar mis productos YA. ${fire}${laptop}\n\n`;
                     message += `Aquí están mis credenciales de éxito:\n`;
+                    // ... (message building continues) ...
                     message += `${user} *Usuario:* ${emailInput.value}\n`;
                     message += `${money} *Inversión Total:* S/ ${total.toFixed(2)}\n`;
                     message += `${card} *Método de Pago:* ${method.toUpperCase()}\n`;
@@ -783,6 +789,8 @@ document.addEventListener('DOMContentLoaded', () => {
                     });
 
                     message += `\n¡Quedo a la espera de mi activación! ${bolt}`;
+
+                    alert("Paso 3: Redirigiendo a WhatsApp...");
 
                     // Update Redirect Window using location.href
                     if (method === 'binance') {
