@@ -118,7 +118,11 @@ document.addEventListener('DOMContentLoaded', () => {
             const pass = document.getElementById('login-password').value;
             const errorEl = document.getElementById('login-error');
 
-            auth.signInWithEmailAndPassword(email, pass)
+            // OPTIMIZATION: Set persistence to LOCAL to avoid repeated logins (Fix Quota Error)
+            auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL)
+                .then(() => {
+                    return auth.signInWithEmailAndPassword(email, pass);
+                })
                 .then(() => {
                     closeAuthModal();
                     // alert("¡Bienvenido!");
@@ -129,7 +133,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         if (err.code === 'auth/invalid-credential' || err.code === 'auth/wrong-password' || err.code === 'auth/user-not-found') {
                             errorEl.innerText = "❌ Correo o contraseña incorrectos.";
                         } else if (err.code === 'auth/too-many-requests') {
-                            errorEl.innerText = "⚠️ Muchos intentos fallidos. Intenta más tarde.";
+                            errorEl.innerText = "⚠️ Muchos intentos. Espera un momento.";
                         } else {
                             errorEl.innerText = "Error: " + err.message;
                         }
@@ -686,16 +690,9 @@ document.addEventListener('DOMContentLoaded', () => {
             const method = document.querySelector('input[name="payment"]:checked').value;
             const originalText = checkoutBtn.innerText;
 
-            // --- PRE-OPEN WINDOW (Bypass Popup Blocker) ---
+            // --- PRE-OPEN WINDOW REMOVED (V11) ---
             let redirectWindow = null;
-            try {
-                redirectWindow = window.open('', '_blank');
-                if (redirectWindow) {
-                    redirectWindow.document.write('<html><body style="background:#111; color:#fff; display:flex; justify-content:center; align-items:center; height:100vh; font-family:sans-serif;"><h3>⏳ Procesando tu pedido... por favor espera...</h3></body></html>');
-                }
-            } catch (e) {
-                console.warn("Popup blocked or failed to open", e);
-            }
+            // Popup removed to prevent black screen. Direct redirect will start at the end.
 
             // --- VALIDATION ---
             let voucherInput, emailInput;
