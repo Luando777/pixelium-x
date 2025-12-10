@@ -417,7 +417,7 @@ async function uploadImageToImgBB(base64Image, customName) {
     if (customName) formData.append('name', customName);
 
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 90000); // 90 second timeout (Extended for mobile)
+    const timeoutId = setTimeout(() => controller.abort(), 120000); // 120 second timeout (Super Extended)
 
     try {
         const response = await fetch(`https://api.imgbb.com/1/upload?key=${apiKey}`, {
@@ -817,7 +817,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 } catch (error) {
                     console.error(error);
-                    alert("Error al procesar el pedido: " + error.message);
+                    alert("⚠️ ERROR DE PAGO: " + error.message);
                     if (redirectWindow) redirectWindow.close();
                 } finally {
                     checkoutBtn.innerText = originalText;
