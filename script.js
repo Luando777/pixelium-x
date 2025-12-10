@@ -731,7 +731,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 checkoutBtn.disabled = true;
 
                 // DEBUG TRACE
-                alert("Paso 1: Iniciando subida...");
+                // alert("Paso 1: Iniciando subida...");
 
                 try {
                     const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
@@ -740,7 +740,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     const imageUrl = await uploadImageToImgBB(base64Image, customName);
 
                     // DEBUG TRACE
-                    alert("Paso 2: Imagen subida. Guardando...");
+                    // alert("Paso 2: Imagen subida. Guardando...");
 
                     // Calculate total
                     let total = 0;
@@ -787,7 +787,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
                     message += `\n¡Quedo a la espera de mi activación! ${bolt}`;
 
-                    alert("Paso 3: Redirigiendo a WhatsApp...");
+                    // alert("Paso 3: Redirigiendo a WhatsApp...");
 
                     // Update Redirect Window using location.href
                     if (method === 'binance') {
