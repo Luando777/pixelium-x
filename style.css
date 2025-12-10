@@ -1220,7 +1220,8 @@ body {
 }
 
 /* Mobile Menu Media Queries */
-@media (max-width: 768px) {
+/* Mobile Menu Media Queries (Expanded to include Tablets/High-Res Phones) */
+@media (max-width: 1024px) {
     .menu-toggle {
         display: block;
         font-size: 1.8rem;
