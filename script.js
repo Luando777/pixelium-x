@@ -49,7 +49,6 @@ auth.onAuthStateChanged(user => {
     const userInfo = document.getElementById('user-info');
     const adminBtns = [
         document.getElementById('admin-btn-container'),
-        document.getElementById('stock-admin-btn-container'),
         document.getElementById('products-admin-btn-container'),
         document.getElementById('prices-admin-btn-container')
     ];
