@@ -34,6 +34,38 @@
         <div class="menu-toggle" id="mobile-menu">
             <span class="bar"></span>
             <span class="bar"></span>
+            <span class="bar"></span>
+        </div>
+        <ul class="nav-links">
+            <li><a href="#home">Inicio</a></li>
+            <li><a href="#products">Productos</a></li>
+            <li><a href="#about">Nosotros</a></li>
+
+            <!-- Admin Group Grid -->
+            <li class="admin-group-li">
+                <div class="admin-grid">
+                    <div id="admin-btn-container" style="display: none;">
+                        <button id="btn-admin" class="btn-admin">👑 Admin</button>
+                    </div>
+                    <div id="stock-admin-btn-container" style="display: none;">
+                        <button id="btn-stock-admin" class="btn-admin">📦 Stock</button>
+                    </div>
+                    <div id="products-admin-btn-container" style="display: none;">
+                        <button id="btn-products-admin" class="btn-admin">🛠️ Prod.</button>
+                    </div>
+                    <div id="prices-admin-btn-container" style="display: none;">
+                        <button id="btn-prices-admin" class="btn-admin">💲 Precios</button>
+                    </div>
+                    <div id="themes-admin-btn-container" style="display: none;">
+                        <button id="btn-themes-admin" class="btn-admin">🎨 Temas</button>
+                    </div>
+                </div>
+            </li>
+
+            <li><a href="#" id="cart-btn" class="cart-link">🛒 <span id="cart-count">0</span></a></li>
+            <li id="auth-buttons">
+                <button class="btn-login" onclick="openAuthModal('login')">Ingresar</button>
+                <button class="btn-register" onclick="openAuthModal('register')">Registro</button>
             </li>
             <li id="user-info" style="display: none;">
                 <div class="profile-container">
@@ -44,7 +76,7 @@
                     <button class="btn-logout" id="logout-btn">Salir</button>
                 </div>
             </li>
-            </ul>
+        </ul>
     </nav>
 
     <section id="home" class="hero">
