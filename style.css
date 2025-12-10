@@ -1398,6 +1398,25 @@ body {
     margin-top: 10px;
 }
 
+/* Admin Grid Layout: Default to Flex Row (Single Line) for Desktop */
+.admin-grid {
+    display: flex;
+    flex-direction: row;
+    gap: 10px;
+    align-items: center;
+    width: auto;
+}
+
+.admin-grid div {
+    width: auto;
+}
+
+.admin-grid button {
+    white-space: nowrap;
+    padding: 5px 10px;
+    font-size: 0.9rem;
+}
+
 .btn-deliver {
     background: rgba(0, 255, 136, 0.2);
     border: 1px solid #00ff88;
