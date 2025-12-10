@@ -1273,12 +1273,21 @@ body {
         padding: 0 10%;
     }
 
+    /* Admin Grid Layout (Mobile Override: Matrix) */
     .admin-grid {
         display: grid;
         grid-template-columns: 1fr 1fr;
         gap: 10px;
         width: 100%;
         justify-items: center;
+    }
+
+    .admin-grid div {
+        width: 100%;
+    }
+
+    .admin-grid button {
+        width: 100%;
     }
 
     .admin-grid div {
