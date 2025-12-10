@@ -1472,73 +1472,10 @@ body {
         grid-template-columns: 1fr;
     }
 
-    /* Mobile Menu Styles */
-    .nav-links {
-        display: none;
-        position: absolute;
-        top: 70px;
-        left: 0;
-        width: 100%;
-        background: rgba(10, 10, 15, 0.95);
-        flex-direction: column;
-        align-items: center;
-        padding: 1rem 0;
-        /* SCROLL FIX */
-        max-height: calc(100vh - 70px);
-        overflow-y: auto;
-    }
-
-    .nav-links.active {
-        display: flex;
-    }
-
-    .nav-links li {
-        margin: 0.5rem 0;
-        /* Reduced spacing */
-        width: 100%;
-        display: flex;
-        justify-content: center;
-    }
-
-    /* Admin Grid Layout */
-    .admin-group-li {
-        width: 100% !important;
-        padding: 0 10%;
-    }
-
-    .admin-grid {
-        display: grid;
-        grid-template-columns: 1fr 1fr;
-        gap: 10px;
-        width: 100%;
-        justify-items: center;
-    }
-
-    .admin-grid div {
-        width: 100%;
-    }
-
-    .admin-grid button {
-        width: 100%;
-        font-size: 0.8rem;
-        padding: 8px 5px;
-        white-space: nowrap;
-    }
-
-    /* User Profile Mobile Tweaks */
-    .profile-container {
-        flex-direction: column;
-        gap: 10px;
-        margin-top: 10px;
-        margin-bottom: 20px;
-        width: 100%;
-    }
-
-    .btn-orders,
-    .btn-logout {
-        width: 80%;
-        text-align: center;
-    }
+    /* Mobile Menu Styles (Unified in 768px block) - Removed here to avoid conflict */
+    /* .nav-links styles removed */
+    /* .admin-grid styles removed */
+    /* .profile-container styles removed */
 
     .section-title {
         font-size: 1.5rem;
