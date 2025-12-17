@@ -268,6 +268,13 @@ function updateStockUI() {
         stockGoogle.innerText = `Stock: ${stockState['google-one'] || 0}`;
         updateStockClass(stockGoogle, stockState['google-one'] || 0);
     }
+
+    // CapCut Pro
+    const stockCapcut = document.getElementById('stock-capcut');
+    if (stockCapcut) {
+        stockCapcut.innerText = `Stock: ${stockState['capcut'] || 0}`;
+        updateStockClass(stockCapcut, stockState['capcut'] || 0);
+    }
 }
 
 function updateStockClass(element, quantity) {
