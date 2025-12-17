@@ -237,36 +237,66 @@ function updateStockUI() {
     // Canvas Pro
     const stockCanva = document.getElementById('stock-canva');
     if (stockCanva) {
-        stockCanva.innerText = `Stock: ${stockState['canva-pro'] || 0}`;
-        updateStockClass(stockCanva, stockState['canva-pro'] || 0);
+        const stockVal = stockState['canva-pro'] || 0;
+        stockCanva.innerText = `Stock: ${stockVal}`;
+        updateStockClass(stockCanva, stockVal);
+        const btn = document.getElementById('btn-canva');
+        if (btn) {
+            btn.disabled = stockVal === 0;
+            btn.innerText = stockVal > 0 ? 'Agregar al Carrito' : 'Agotado';
+        }
     }
 
     // Panel Canva
     const stockPanel = document.getElementById('stock-panel');
     if (stockPanel) {
-        stockPanel.innerText = `Stock: ${stockState['panel-canva'] || 0}`;
-        updateStockClass(stockPanel, stockState['panel-canva'] || 0);
+        const stockVal = stockState['panel-canva'] || 0;
+        stockPanel.innerText = `Stock: ${stockVal}`;
+        updateStockClass(stockPanel, stockVal);
+        const btn = document.getElementById('btn-panel');
+        if (btn) {
+            btn.disabled = stockVal === 0;
+            btn.innerText = stockVal > 0 ? 'Agregar al Carrito' : 'Agotado';
+        }
     }
 
     // Perplexity
     const stockPerplexity = document.getElementById('stock-perplexity');
     if (stockPerplexity) {
-        stockPerplexity.innerText = `Stock: ${stockState['perplexity'] || 0}`;
-        updateStockClass(stockPerplexity, stockState['perplexity'] || 0);
+        const stockVal = stockState['perplexity'] || 0;
+        stockPerplexity.innerText = `Stock: ${stockVal}`;
+        updateStockClass(stockPerplexity, stockVal);
+        const btn = document.getElementById('btn-perplexity');
+        if (btn) {
+            btn.disabled = stockVal === 0;
+            btn.innerText = stockVal > 0 ? 'Agregar al Carrito' : 'Agotado';
+        }
     }
 
     // Gemini
     const stockGemini = document.getElementById('stock-gemini');
     if (stockGemini) {
-        stockGemini.innerText = `Stock: ${stockState['gemini'] || 0}`;
-        updateStockClass(stockGemini, stockState['gemini'] || 0);
+        const stockVal = stockState['gemini'] || 0;
+        stockGemini.innerText = `Stock: ${stockVal}`;
+        updateStockClass(stockGemini, stockVal);
+        const btn = document.getElementById('btn-gemini');
+        if (btn) {
+            btn.disabled = stockVal === 0;
+            btn.innerText = stockVal > 0 ? 'Agregar al Carrito' : 'Agotado';
+        }
     }
 
     // Google One
     const stockGoogle = document.getElementById('stock-google');
     if (stockGoogle) {
-        stockGoogle.innerText = `Stock: ${stockState['google-one'] || 0}`;
-        updateStockClass(stockGoogle, stockState['google-one'] || 0);
+        const stockVal = stockState['google-one'] || 0;
+        stockGoogle.innerText = `Stock: ${stockVal}`;
+        updateStockClass(stockGoogle, stockVal);
+        const btn = document.getElementById('btn-google');
+        if (btn) {
+            btn.disabled = stockVal === 0;
+            btn.innerText = stockVal > 0 ? 'Agregar al Carrito' : 'Agotado';
+        }
     }
 
     // CapCut Pro
