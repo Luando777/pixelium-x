@@ -272,8 +272,16 @@ function updateStockUI() {
     // CapCut Pro
     const stockCapcut = document.getElementById('stock-capcut');
     if (stockCapcut) {
-        stockCapcut.innerText = `Stock: ${stockState['capcut'] || 0}`;
-        updateStockClass(stockCapcut, stockState['capcut'] || 0);
+        const stockVal = stockState['capcut'] || 0;
+        stockCapcut.innerText = `Stock: ${stockVal}`;
+        updateStockClass(stockCapcut, stockVal);
+
+        // Update Button
+        const btnCapcut = document.getElementById('btn-capcut');
+        if (btnCapcut) {
+            btnCapcut.disabled = stockVal === 0;
+            btnCapcut.innerText = stockVal > 0 ? 'Agregar al Carrito' : 'Agotado';
+        }
     }
 }
 
