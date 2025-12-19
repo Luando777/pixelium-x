@@ -228,8 +228,8 @@ db.collection('stock').doc('main').onSnapshot((doc) => {
             // Optional: refresh admin UI logic if needed, but might disturb user editing.
         }
     } else {
-        // Initialize if empty
-        db.collection('stock').doc('main').set(initialStock);
+        // Doc removed or not found - Do NOT auto-reset to avoid overwriting existing data if connection flakes
+        console.warn("Stock document 'main' not found or permission denied.");
     }
 });
 
