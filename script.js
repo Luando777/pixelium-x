@@ -335,6 +335,7 @@ async function decrementStock(productName, quantity) {
     else if (productName.includes('Gemini')) key = 'gemini';
     else if (productName.includes('Google One')) key = 'google-one';
     else if (productName.includes('CapCut')) key = 'capcut';
+    else key = productName; // Fallback for custom products (Title is the key)
 
     // Check custom products mapping if needed or use ID based approach in future
     // For now, this covers the hardcoded items.
