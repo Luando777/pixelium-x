@@ -329,13 +329,16 @@ function updateStockClass(element, quantity) {
 async function decrementStock(productName, quantity) {
     // Map product names to keys
     let key = '';
-    if (productName.includes('Canva PRO') && !productName.includes('Panel')) key = 'canva-pro';
-    else if (productName.includes('Panel Canva')) key = 'panel-canva';
-    else if (productName.includes('Perplexity')) key = 'perplexity';
-    else if (productName.includes('Gemini')) key = 'gemini';
-    else if (productName.includes('Google One')) key = 'google-one';
-    else if (productName.includes('CapCut')) key = 'capcut';
-    else key = productName; // Fallback for custom products (Title is the key)
+    switch (productName) {
+        case 'Canva PRO (Personal)': key = 'canva-pro'; break;
+        case 'Panel Canva PRO': key = 'panel-canva'; break;
+        case 'Perplexity AI - GPT5': key = 'perplexity'; break;
+        case 'Gemini Advanced': key = 'gemini'; break;
+        case 'Google One': key = 'google-one'; break;
+        case 'CapCut Pro': key = 'capcut'; break;
+        default: key = productName; // Custom Products use their title exactly
+    }
+    console.log(`Intentando decrementar stock de: ${productName} (Clave: ${key})`);
 
     // Check custom products mapping if needed or use ID based approach in future
     // For now, this covers the hardcoded items.
@@ -358,6 +361,7 @@ async function decrementStock(productName, quantity) {
             return true;
         } catch (e) {
             console.error(e);
+            alert(`Error de stock: ${e.message}`);
             return false;
         }
     }
