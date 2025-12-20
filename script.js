@@ -234,96 +234,40 @@ db.collection('stock').doc('main').onSnapshot((doc) => {
 });
 
 function updateStockUI() {
-    // Canvas Pro
-    const stockCanva = document.getElementById('stock-canva');
-    if (stockCanva) {
-        const stockVal = stockState['canva-pro'] || 0;
-        stockCanva.innerText = `Stock: ${stockVal}`;
-        updateStockClass(stockCanva, stockVal);
-        const btn = document.getElementById('btn-canva');
-        if (btn) {
-            btn.disabled = stockVal === 0;
-            btn.innerText = stockVal > 0 ? 'Agregar al Carrito' : 'Agotado';
+    // Collect all elements with class 'stock-status'
+    const stockElements = document.querySelectorAll('.stock-status');
+
+    stockElements.forEach(el => {
+        const key = el.getAttribute('data-stock-key');
+        if (!key) return;
+
+        // Use stockState (from Firestore) if exists, else fall back to current text if needed or 0
+        const stockVal = stockState[key] !== undefined ? stockState[key] : null;
+
+        if (stockVal !== null) {
+            // Update Text
+            el.innerText = stockVal > 0 ? `Stock: ${stockVal}` : 'Sin Stock';
+
+            // Update Classes
+            if (stockVal === 0) {
+                el.classList.remove('stock-available');
+                el.classList.add('stock-out');
+            } else {
+                el.classList.remove('stock-out');
+                el.classList.add('stock-available');
+            }
+
+            // Update associated button if ID follows pattern 'btn-[key]' or via closest card
+            const card = el.closest('.card');
+            if (card) {
+                const btn = card.querySelector('button.btn-primary, button.btn-add');
+                if (btn) {
+                    btn.disabled = stockVal === 0;
+                    btn.innerText = stockVal > 0 ? 'Agregar al Carrito' : 'Agotado';
+                }
+            }
         }
-    }
-
-    // Panel Canva
-    const stockPanel = document.getElementById('stock-panel');
-    if (stockPanel) {
-        const stockVal = stockState['panel-canva'] || 0;
-        stockPanel.innerText = `Stock: ${stockVal}`;
-        updateStockClass(stockPanel, stockVal);
-        const btn = document.getElementById('btn-panel');
-        if (btn) {
-            btn.disabled = stockVal === 0;
-            btn.innerText = stockVal > 0 ? 'Agregar al Carrito' : 'Agotado';
-        }
-    }
-
-    // Perplexity
-    const stockPerplexity = document.getElementById('stock-perplexity');
-    if (stockPerplexity) {
-        const stockVal = stockState['perplexity'] || 0;
-        stockPerplexity.innerText = `Stock: ${stockVal}`;
-        updateStockClass(stockPerplexity, stockVal);
-        const btn = document.getElementById('btn-perplexity');
-        if (btn) {
-            btn.disabled = stockVal === 0;
-            btn.innerText = stockVal > 0 ? 'Agregar al Carrito' : 'Agotado';
-        }
-    }
-
-    // Gemini
-    const stockGemini = document.getElementById('stock-gemini');
-    if (stockGemini) {
-        const stockVal = stockState['gemini'] || 0;
-        stockGemini.innerText = `Stock: ${stockVal}`;
-        updateStockClass(stockGemini, stockVal);
-        const btn = document.getElementById('btn-gemini');
-        if (btn) {
-            btn.disabled = stockVal === 0;
-            btn.innerText = stockVal > 0 ? 'Agregar al Carrito' : 'Agotado';
-        }
-    }
-
-    // Google One
-    const stockGoogle = document.getElementById('stock-google');
-    if (stockGoogle) {
-        const stockVal = stockState['google-one'] || 0;
-        stockGoogle.innerText = `Stock: ${stockVal}`;
-        updateStockClass(stockGoogle, stockVal);
-        const btn = document.getElementById('btn-google');
-        if (btn) {
-            btn.disabled = stockVal === 0;
-            btn.innerText = stockVal > 0 ? 'Agregar al Carrito' : 'Agotado';
-        }
-    }
-
-    // CapCut Pro
-    const stockCapcut = document.getElementById('stock-capcut');
-    if (stockCapcut) {
-        const stockVal = stockState['capcut'] || 0;
-        stockCapcut.innerText = `Stock: ${stockVal}`;
-        updateStockClass(stockCapcut, stockVal);
-
-        // Update Button
-        const btnCapcut = document.getElementById('btn-capcut');
-        if (btnCapcut) {
-            btnCapcut.disabled = stockVal === 0;
-            btnCapcut.innerText = stockVal > 0 ? 'Agregar al Carrito' : 'Agotado';
-        }
-    }
-}
-
-function updateStockClass(element, quantity) {
-    if (quantity === 0) {
-        element.classList.remove('stock-available');
-        element.classList.add('stock-out');
-        element.innerText = 'Sin Stock';
-    } else {
-        element.classList.remove('stock-out');
-        element.classList.add('stock-available');
-    }
+    });
 }
 
 async function decrementStock(productName, quantity) {
@@ -336,7 +280,7 @@ async function decrementStock(productName, quantity) {
         case 'Gemini Advanced': key = 'gemini'; break;
         case 'Google One': key = 'google-one'; break;
         case 'CapCut Pro': key = 'capcut'; break;
-        default: key = productName; // Custom Products use their title exactly
+        default: key = productName.trim(); // Custom Products use their title exactly
     }
     console.log(`Intentando decrementar stock de: ${productName} (Clave: ${key})`);
 
@@ -1566,7 +1510,7 @@ document.addEventListener('DOMContentLoaded', () => {
             <h3>${prod.title}</h3>
             ${prod.desc ? `<p>${prod.desc}</p>` : ''}
             
-            <div id="stock-${prod.id}" class="stock-status ${stockClass}">${stockText}</div>
+            <div id="stock-${prod.id}" class="stock-status ${stockClass}" data-stock-key="${prod.title}">${stockText}</div>
             
             ${prod.badge ? `<p class="gold-text">${prod.badge}</p>` : ''}
             ${prod.note ? `<p class="activation-note">${prod.note}</p>` : ''}
