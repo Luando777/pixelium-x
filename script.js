@@ -280,7 +280,7 @@ async function decrementStock(productName, quantity) {
         case 'Gemini Advanced': key = 'gemini'; break;
         case 'Google One': key = 'google-one'; break;
         case 'CapCut Pro': key = 'capcut'; break;
-        default: key = productName.trim(); // Custom Products use their title exactly
+        default: key = productName; // Use exact name passed from UI (matches database keys)
     }
     console.log(`Intentando decrementar stock de: ${productName} (Clave: ${key})`);
 
@@ -294,11 +294,23 @@ async function decrementStock(productName, quantity) {
                 const doc = await transaction.get(ref);
                 if (!doc.exists) return; // Should not happen
 
-                const currentStock = doc.data()[key] || 0;
+                const data = doc.data();
+                let currentStock = data[key];
+
+                // Fallback: If exact key not found, try trimmed key (handles old inconsistent data)
+                if (currentStock === undefined && key !== key.trim()) {
+                    currentStock = data[key.trim()];
+                    if (currentStock !== undefined) {
+                        key = key.trim(); // Update key for the transaction update below
+                    }
+                }
+
+                if (currentStock === undefined) currentStock = 0;
+
                 if (currentStock >= quantity) {
                     transaction.update(ref, { [key]: currentStock - quantity });
                 } else {
-                    throw new Error(`Stock insuficiente para ${productName}`);
+                    throw new Error(`Stock insuficiente para ${productName}. Disponible: ${currentStock}`);
                 }
             });
             console.log(`Stock decremented in Cloud for ${key}`);
@@ -1426,9 +1438,10 @@ document.addEventListener('DOMContentLoaded', () => {
                     const imageUrl = await uploadImageToImgBB(base64Image, `Prod_${title}`);
 
                     const prodId = 'custom_' + Date.now();
+                    const trimmedTitle = title.trim();
                     const newProduct = {
                         id: prodId,
-                        title: title,
+                        title: trimmedTitle,
                         desc: document.getElementById('new-prod-desc').value,
                         price: parseFloat(price),
                         priceAlt: document.getElementById('new-prod-price-alt').value,
@@ -1445,7 +1458,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
                         // Initialize stock for this new product in Firestore Stock
                         await db.collection('stock').doc('main').set({
-                            [title]: newProduct.stock
+                            [trimmedTitle]: newProduct.stock
                         }, { merge: true });
 
                         alert("¡Producto Creado en la Nube! ☁️");
