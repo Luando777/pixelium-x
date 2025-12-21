@@ -233,6 +233,53 @@ db.collection('stock').doc('main').onSnapshot((doc) => {
     }
 });
 
+// AUTO-REPAIR SYSTEM: Ensures all products have a stock entry
+async function repairStockSystem() {
+    console.log("Diagnosing stock consistency...");
+    try {
+        const productsSnap = await db.collection('products').get();
+        const stockRef = db.collection('stock').doc('main');
+        const stockDoc = await stockRef.get();
+
+        if (!stockDoc.exists) return;
+        const stockData = stockDoc.data();
+        const updates = {};
+        let needsUpdate = false;
+
+        productsSnap.forEach(doc => {
+            const p = doc.data();
+            const title = p.title;
+
+            // Check if ANY valid key exists (exact, trimmed, or fuzzy)
+            let exists = stockData[title] !== undefined || stockData[title.trim()] !== undefined;
+            if (!exists) {
+                // Try fuzzy check
+                const cleanKey = title.replace(/\s+/g, '').toLowerCase();
+                if (Object.keys(stockData).some(k => k.replace(/\s+/g, '').toLowerCase() === cleanKey)) {
+                    exists = true;
+                }
+            }
+
+            if (!exists) {
+                console.warn(`Reparing missing stock for: ${title}`);
+                updates[title] = p.stock || 10; // Default to 10 if unknown
+                needsUpdate = true;
+            }
+        });
+
+        if (needsUpdate) {
+            await stockRef.update(updates);
+            console.log("Stock system repaired automatically.");
+        } else {
+            console.log("Stock system is healthy.");
+        }
+    } catch (e) {
+        console.error("Auto-repair failed:", e);
+    }
+}
+// Run repair on boot
+setTimeout(repairStockSystem, 3000); // Delay slightly to let auth/init settle
+
 function updateStockUI() {
     // Collect all elements with class 'stock-status'
     const stockElements = document.querySelectorAll('.stock-status');
