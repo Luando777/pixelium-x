@@ -296,12 +296,28 @@ async function decrementStock(productName, quantity) {
 
                 const data = doc.data();
                 let currentStock = data[key];
+                let foundKey = key;
 
-                // Fallback: If exact key not found, try trimmed key (handles old inconsistent data)
+                // 1. First Fallback: Trim
                 if (currentStock === undefined && key !== key.trim()) {
-                    currentStock = data[key.trim()];
-                    if (currentStock !== undefined) {
-                        key = key.trim(); // Update key for the transaction update below
+                    if (data[key.trim()] !== undefined) {
+                        currentStock = data[key.trim()];
+                        foundKey = key.trim();
+                        key = foundKey;
+                    }
+                }
+
+                // 2. Strong Fallback: Fuzzy Match (Ignore spaces/case)
+                if (currentStock === undefined) {
+                    const cleanKey = key.replace(/\s+/g, '').toLowerCase(); // "adobed"
+                    const dbKeys = Object.keys(data);
+                    for (const k of dbKeys) {
+                        if (k.replace(/\s+/g, '').toLowerCase() === cleanKey) {
+                            currentStock = data[k];
+                            foundKey = k;
+                            key = k; // Update to the real DB key
+                            break;
+                        }
                     }
                 }
 
@@ -317,7 +333,15 @@ async function decrementStock(productName, quantity) {
             return true;
         } catch (e) {
             console.error(e);
-            alert(`Error de stock: ${e.message}`);
+            // DEBUG DIAGNOSTIC: Show exactly what keys exist in DB vs what we looked for
+            let dbKeys = "Uknown";
+            try {
+                await db.collection('stock').doc('main').get().then(s => {
+                    if (s.exists) dbKeys = JSON.stringify(Object.keys(s.data()));
+                });
+            } catch (err) { }
+
+            alert(`Error de stock: ${e.message}\n\n[DEBUG INFO]\nBuscando Clave: "${key}"\nClaves en Base de Datos: ${dbKeys}`);
             return false;
         }
     }
