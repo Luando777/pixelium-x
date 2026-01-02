@@ -1589,7 +1589,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
             card.innerHTML = `
             <div class="card-icon">
-                <img src="${prod.image}" alt="${prod.title}" class="product-img">
+                <img src="${prod.image}" alt="${prod.title}" class="product-img" onerror="this.onerror=null; this.src='logo.png';">
             </div>
             <h3>${prod.title}</h3>
             ${prod.desc ? `<p>${prod.desc}</p>` : ''}
