@@ -1642,17 +1642,76 @@ document.addEventListener('DOMContentLoaded', () => {
         });
 
         customProducts.forEach((prod, index) => {
+            const isBroken = prod.image && (prod.image.includes('ibb.co') || prod.image.includes('imgbb.com'));
+
             const row = document.createElement('div');
             row.className = 'stock-item-row';
+            row.style.flexWrap = 'wrap'; // Allow wrapping for repair controls
+
+            let actionHtml = '';
+
+            if (isBroken) {
+                actionHtml = `
+                    <input type="file" id="repair-file-${index}" hidden accept="image/*" onchange="uploadRepairImage(${index}, '${prod.id}')">
+                    <button onclick="document.getElementById('repair-file-${index}').click()" style="background: #ff9900; border:none; border-radius:4px; padding: 5px 10px; cursor:pointer; color:black; font-weight:bold; margin-right: 5px;">
+                        🔧 REPARAR IMAGEN
+                    </button>
+                    <button onclick="deleteCustomProduct(${index})" style="background: #ff4444; border:none; border-radius:4px; padding: 5px; cursor:pointer; color:white; font-weight:bold;">
+                        🗑️
+                    </button>
+                 `;
+            } else {
+                actionHtml = `
+                    <button onclick="deleteCustomProduct(${index})" style="background: #ff4444; border:none; border-radius:4px; padding: 5px; cursor:pointer; color:white; font-weight:bold;">
+                        Borrar
+                    </button>
+                 `;
+            }
+
             row.innerHTML = `
-            <span class="stock-item-name">${prod.title} (Custom)</span>
-            <button onclick="deleteCustomProduct(${index})" style="background: #ff4444; border:none; border-radius:4px; padding: 5px; cursor:pointer; color:white; font-weight:bold;">
-                Borrar
-            </button>
+            <span class="stock-item-name" style="color: ${isBroken ? '#ff9900' : 'inherit'}">
+                ${prod.title} ${isBroken ? '(ROTO)' : '(Custom)'}
+            </span>
+            <div style="display:flex; align-items:center;">
+                ${actionHtml}
+            </div>
         `;
             productAdminList.appendChild(row);
         });
     }
+
+    window.uploadRepairImage = async (index, prodId) => {
+        const fileInput = document.getElementById(`repair-file-${index}`);
+        const file = fileInput.files[0];
+        if (!file) return;
+
+        const btn = fileInput.nextElementSibling; // The button
+        const originalText = btn.innerText;
+        btn.innerText = "⏳ Subiendo...";
+        btn.disabled = true;
+
+        try {
+            const storageRef = firebase.storage().ref();
+            const fileRef = storageRef.child(`products/repair_${Date.now()}_${file.name}`);
+
+            await fileRef.put(file);
+            const imageUrl = await fileRef.getDownloadURL();
+
+            await db.collection('products').doc(prodId).update({
+                image: imageUrl
+            });
+
+            alert("✅ ¡Imagen reparada correctamente! El producto ya es seguro.");
+            fileInput.value = ''; // Clear
+
+        } catch (error) {
+            console.error("Repair error:", error);
+            alert("Error al reparar: " + error.message);
+        } finally {
+            btn.innerText = originalText;
+            btn.disabled = false;
+        }
+    };
 
     window.toggleProductVisibility = (title) => {
         if (hiddenProducts.includes(title)) {
