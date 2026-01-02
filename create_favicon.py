@@ -11,6 +11,13 @@ try:
     # Generate standard favicon (32x32)
     img.resize((32, 32), Image.Resampling.LANCZOS).save("favicon.png")
     print("Generated favicon.png (32x32)")
+
+    # Generate Google specific sizes (48x48, 96x96)
+    img.resize((48, 48), Image.Resampling.LANCZOS).save("icon-48.png")
+    print("Generated icon-48.png (48x48)")
+    
+    img.resize((96, 96), Image.Resampling.LANCZOS).save("icon-96.png")
+    print("Generated icon-96.png (96x96)")
     
     # Generate standard icon (192x192) for Android/High Res
     img.resize((192, 192), Image.Resampling.LANCZOS).save("icon-192.png")
