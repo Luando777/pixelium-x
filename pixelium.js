@@ -1499,59 +1499,55 @@ document.addEventListener('DOMContentLoaded', () => {
             btnCreateProduct.innerText = "Subiendo imagen...";
             btnCreateProduct.disabled = true;
 
-            try {
-                // Upload Image
-                const reader = new FileReader();
-                reader.readAsDataURL(imgInput.files[0]);
-                reader.onloadend = async function () {
+            const imgFile = imgInput.files[0];
+            const storageRef = firebase.storage().ref();
+            const fileRef = storageRef.child(`products/${Date.now()}_${imgFile.name}`);
 
-                    const base64Image = reader.result.split(',')[1];
-                    const imageUrl = await uploadImageToImgBB(base64Image, `Prod_${title}`);
+            fileRef.put(imgFile).then((snapshot) => {
+                return snapshot.ref.getDownloadURL();
+            }).then(async (imageUrl) => {
 
-                    const prodId = 'custom_' + Date.now();
-                    const trimmedTitle = title.trim();
-                    const newProduct = {
-                        id: prodId,
-                        title: trimmedTitle,
-                        desc: document.getElementById('new-prod-desc').value,
-                        price: parseFloat(price),
-                        priceAlt: document.getElementById('new-prod-price-alt').value,
-                        stock: parseInt(document.getElementById('new-prod-stock').value) || 10,
-                        warranty: document.getElementById('new-prod-warranty').value,
-                        image: imageUrl,
-                        badge: document.getElementById('new-prod-badge').value,
-                        note: document.getElementById('new-prod-note').value
-                    };
-
-                    // Save to Firestore
-                    try {
-                        await db.collection('products').doc(prodId).set(newProduct);
-
-                        // Initialize stock for this new product in Firestore Stock
-                        await db.collection('stock').doc('main').set({
-                            [trimmedTitle]: newProduct.stock
-                        }, { merge: true });
-
-                        alert("¡Producto Creado en la Nube! ☁️");
-                        // Reset form
-                        document.getElementById('new-prod-name').value = '';
-                        document.getElementById('new-prod-price').value = '';
-                        document.getElementById('new-prod-img').value = '';
-                        btnCreateProduct.innerText = "✨ Crear Producto";
-                        btnCreateProduct.disabled = false;
-
-                        // No reload needed due to onSnapshot
-                    } catch (err) {
-                        alert("Error guardando: " + err.message);
-                        btnCreateProduct.disabled = false;
-                    }
+                const prodId = 'custom_' + Date.now();
+                const trimmedTitle = title.trim();
+                const newProduct = {
+                    id: prodId,
+                    title: trimmedTitle,
+                    desc: document.getElementById('new-prod-desc').value,
+                    price: parseFloat(price),
+                    priceAlt: document.getElementById('new-prod-price-alt').value,
+                    stock: parseInt(document.getElementById('new-prod-stock').value) || 10,
+                    warranty: document.getElementById('new-prod-warranty').value,
+                    image: imageUrl,
+                    badge: document.getElementById('new-prod-badge').value,
+                    note: document.getElementById('new-prod-note').value
                 };
-            } catch (e) {
-                console.error(e);
-                alert("Error: " + e.message);
-                btnCreateProduct.innerText = "✨ Crear Producto";
+
+                // Save to Firestore
+                try {
+                    await db.collection('products').doc(prodId).set(newProduct);
+
+                    // Initialize stock for this new product in Firestore Stock
+                    await db.collection('stock').doc('main').set({
+                        [trimmedTitle]: newProduct.stock
+                    }, { merge: true });
+
+                    alert("¡Producto Creado con Imagen en Firebase Storage! ☁️🔥");
+                    // Reset form
+                    document.getElementById('new-prod-name').value = '';
+                    document.getElementById('new-prod-price').value = '';
+                    document.getElementById('new-prod-img').value = '';
+                    btnCreateProduct.innerText = "✨ Crear Producto";
+                    btnCreateProduct.disabled = false;
+
+                } catch (err) {
+                    alert("Error guardando datos: " + err.message);
+                    btnCreateProduct.disabled = false;
+                }
+            }).catch((error) => {
+                console.error("Upload failed:", error);
+                alert("Error subiendo imagen: " + error.message);
                 btnCreateProduct.disabled = false;
-            }
+            });
         });
     }
 
