@@ -1699,21 +1699,22 @@ document.addEventListener('DOMContentLoaded', () => {
         const reader = new FileReader();
         reader.readAsDataURL(file);
         reader.onloadend = function () {
-            // Safer Base64 extraction
-            const base64String = reader.result.split(',')[1];
+            // Use full Data URL (safest method)
+            const dataUrl = reader.result;
 
-            alert("⚠️ DEBUG V6: Iniciando. Si esto no aparece, limpia caché.");
+            alert("⚠️ INTENTO V7: Usando método 'data_url' con metadatos...");
 
             const storageRef = firebase.storage().ref();
             const cleanName = file.name.replace(/[^a-zA-Z0-9.]/g, '_');
-            const fileRef = storageRef.child(`products/repair_v6_${Date.now()}_${cleanName}`);
+            const fileRef = storageRef.child(`products/repair_v7_${Date.now()}_${cleanName}`);
 
-            btn.innerText = "⏳ Enviando (15s máx)...";
+            btn.innerText = "⏳ Subiendo (30s)...";
 
             // Create a race between Upload and Timeout
-            const uploadTask = fileRef.putString(base64String, 'base64');
+            const uploadTask = fileRef.putString(dataUrl, 'data_url', { contentType: file.type });
+
             const timeoutTask = new Promise((_, reject) =>
-                setTimeout(() => reject(new Error("Se agotó el tiempo de espera (15s). Tu internet o el firewall bloquea Firebase.")), 15000)
+                setTimeout(() => reject(new Error("Timeout (30s). Posible bloqueo de CORS o Firewall.")), 30000)
             );
 
             Promise.race([uploadTask, timeoutTask])
@@ -1726,7 +1727,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         image: imageUrl
                     });
 
-                    alert("✅ ¡Éxito FINAL! Imagen reparada.");
+                    alert("✅ ¡REPARADO! Si ves esto, funcionó.");
                     fileInput.value = '';
                     btn.innerText = "✅ Listo";
 
@@ -1738,9 +1739,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 .catch((error) => {
                     console.error("Upload failed:", error);
                     let msg = error.message;
-                    if (error.code === 'storage/unauthorized') msg = "No tienes permiso (Usuario no reconocido).";
-                    alert("❌ FALLÓ: " + msg);
-                    btn.innerText = "❌ Reintentar";
+                    if (error.code === 'storage/unauthorized') msg = "Sin permiso. Revisa tus reglas de Firebase Storage.";
+                    alert("❌ FALLÓ V7: " + msg);
+                    btn.innerText = "❌ Error";
                     btn.disabled = false;
                 });
         };
