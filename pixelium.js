@@ -1680,37 +1680,62 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    window.uploadRepairImage = async (index, prodId) => {
+    window.uploadRepairImage = (index, prodId) => {
+        const user = firebase.auth().currentUser;
+        if (!user) {
+            alert("⚠️ Error: No has iniciado sesión. Debes ingresar a tu cuenta para subir archivos.");
+            return;
+        }
+
         const fileInput = document.getElementById(`repair-file-${index}`);
         const file = fileInput.files[0];
         if (!file) return;
 
-        const btn = fileInput.nextElementSibling; // The button
+        const btn = fileInput.nextElementSibling;
         const originalText = btn.innerText;
-        btn.innerText = "⏳ Subiendo...";
+        btn.innerText = "⏳ Preparando...";
         btn.disabled = true;
 
-        try {
+        const reader = new FileReader();
+        reader.readAsDataURL(file);
+        reader.onloadend = function () {
+            // Strip metadata to send pure base64
+            const base64String = reader.result.replace("data:", "").replace(/^.+,/, "");
+
             const storageRef = firebase.storage().ref();
-            const fileRef = storageRef.child(`products/repair_${Date.now()}_${file.name}`);
+            // Clean filename
+            const cleanName = file.name.replace(/[^a-zA-Z0-9.]/g, '_');
+            const fileRef = storageRef.child(`products/repair_${Date.now()}_${cleanName}`);
 
-            await fileRef.put(file);
-            const imageUrl = await fileRef.getDownloadURL();
+            btn.innerText = "⏳ Enviando a Google...";
 
-            await db.collection('products').doc(prodId).update({
-                image: imageUrl
-            });
+            fileRef.putString(base64String, 'base64')
+                .then((snapshot) => {
+                    return snapshot.ref.getDownloadURL();
+                })
+                .then(async (imageUrl) => {
+                    await db.collection('products').doc(prodId).update({
+                        image: imageUrl
+                    });
+                    alert("✅ ¡Éxito! Imagen reparada.");
+                    fileInput.value = '';
+                    btn.innerText = "✅ Listo";
 
-            alert("✅ ¡Imagen reparada correctamente! El producto ya es seguro.");
-            fileInput.value = ''; // Clear
-
-        } catch (error) {
-            console.error("Repair error:", error);
-            alert("Error al reparar: " + error.message);
-        } finally {
-            btn.innerText = originalText;
-            btn.disabled = false;
-        }
+                    // Restore button after 2s
+                    setTimeout(() => {
+                        btn.innerText = originalText;
+                        btn.disabled = false;
+                    }, 2000);
+                })
+                .catch((error) => {
+                    console.error("Upload failed:", error);
+                    let msg = error.message;
+                    if (error.code === 'storage/unauthorized') msg = "No tienes permiso (Usuario no reconocido).";
+                    alert("❌ Error: " + msg);
+                    btn.innerText = "❌ Reintentar";
+                    btn.disabled = false;
+                });
+        };
     };
 
     window.toggleProductVisibility = (title) => {
