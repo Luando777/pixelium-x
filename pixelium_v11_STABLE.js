@@ -1833,76 +1833,149 @@ document.addEventListener('DOMContentLoaded', () => {
     // Call on load
     initPriceSystem();
 
-    // --- DESCRIPTION MANAGER LOGIC (ORIGINAL PRODUCTS) ---
+        // --- OVERRIDE MANAGER LOGIC (ORIGINAL PRODUCTS) ---
     // State
-    let descriptionState = {};
+    let overrideState = {};
+    let editingOriginalTitle = null;
 
-    // 1. Initialization: Listen to Descriptions
-    function initDescriptionSystem() {
-        db.collection('descriptions').doc('main').onSnapshot(doc => {
+    // 1. Initialization: Listen to Overrides
+    function initOverrideSystem() {
+        db.collection('product_overrides').doc('main').onSnapshot(doc => {
             if (doc.exists) {
-                descriptionState = doc.data();
-                applyDescriptionOverrides();
+                overrideState = doc.data();
+                applyProductOverrides();
             } else {
-                db.collection('descriptions').doc('main').set({});
+                db.collection('product_overrides').doc('main').set({});
             }
         });
     }
 
     // 2. Apply Overrides
-    function applyDescriptionOverrides() {
+    function applyProductOverrides() {
         document.querySelectorAll('.services-grid .card').forEach(card => {
-            // Only apply to Original cards (those without custom_ id)
             if (card.id.startsWith('custom_')) return;
 
             const title = card.querySelector('h3').innerText.trim();
-            if (descriptionState[title]) {
-                const newDesc = descriptionState[title];
-
-                // Find existing description paragraph
-                let descP = card.querySelector('p:not(.gold-text):not(.activation-note)');
-
-                // Special case: Panel Canva uses <ul> instead of <p> initially
-                // If no typical desc paragraph found, checks if we need to insert one or replace <ul>
-                if (!descP) {
-                    // Check if there is a UL to handle (hide it or replace?)
-                    // Best interaction: Insert new P after H3 if not exists
-
-                    // If UL exists, we might want to hide it if we are overriding with text
-                    const ul = card.querySelector('ul');
-                    if (ul) ul.style.display = 'none'; // Hide list if description is overridden
-
-                    // Create P if not exists
-                    descP = document.createElement('p');
-                    card.querySelector('h3').after(descP);
+            const data = overrideState[title];
+            if (data) {
+                // Description
+                if (data.desc) {
+                    let descP = card.querySelector('p:not(.gold-text):not(.activation-note)');
+                    if (!descP) {
+                        const ul = card.querySelector('ul');
+                        if (ul) ul.style.display = 'none';
+                        descP = document.createElement('p');
+                        card.querySelector('h3').after(descP);
+                    }
+                    descP.innerText = data.desc;
                 }
 
-                descP.innerText = newDesc;
-                // Ensure it is visible if previously hidden logic applied? N/A
+                // Badge (First Gold Text)
+                if (data.badge) {
+                    let badgeEl = card.querySelector('.gold-text');
+                    if (badgeEl) badgeEl.innerText = data.badge;
+                }
+
+                // Note (Activation Note)
+                if (data.note) {
+                    let noteEl = card.querySelector('.activation-note');
+                    if (noteEl) noteEl.innerText = data.note;
+                }
+
+                // Warranty
+                if (data.warranty) {
+                    let warrantySpan = card.querySelector('.warranty-info span');
+                    if (warrantySpan) warrantySpan.innerText = data.warranty;
+                }
             }
         });
     }
 
-    // 3. Edit Logic
-    window.editOriginalProductDesc = async (title) => {
-        // Get current overridden value or prompt empty
-        const currentVal = descriptionState[title] || '';
-        const newDesc = prompt(`Editar Descripción para ${title}:`, currentVal);
+    // 3. Edit Logic (Open Modal)
+    window.openEditOriginalModal = (title) => {
+        const modal = document.getElementById('product-modal');
+        const btnCreate = document.getElementById('btn-create-product');
+        
+        // Find Card Data to Pre-fill
+        let currentDesc = '', currentBadge = '', currentNote = '', currentWarranty = '';
+        
+        // Check overrides first
+        const data = overrideState[title];
+        if (data) {
+            currentDesc = data.desc || '';
+            currentBadge = data.badge || '';
+            currentNote = data.note || '';
+            currentWarranty = data.warranty || '';
+        } else {
+            // Scrape from DOM
+            const card = Array.from(document.querySelectorAll('.services-grid .card')).find(c => c.querySelector('h3').innerText.trim() === title);
+            if (card) {
+                const descEl = card.querySelector('p:not(.gold-text):not(.activation-note)');
+                if (descEl) currentDesc = descEl.innerText;
+                
+                const badgeEl = card.querySelector('.gold-text');
+                if (badgeEl) currentBadge = badgeEl.innerText;
 
-        if (newDesc !== null) {
-            try {
-                await db.collection('descriptions').doc('main').set({
-                    [title]: newDesc
-                }, { merge: true });
-                alert("¡Descripción (Original) actualizada! 📝✅");
-            } catch (error) {
-                console.error("Error updating description:", error);
-                alert("Error al actualizar: " + error.message);
+                const noteEl = card.querySelector('.activation-note');
+                if (noteEl) currentNote = noteEl.innerText;
+
+                const warEl = card.querySelector('.warranty-info span');
+                if (warEl) currentWarranty = warEl.innerText;
             }
         }
+
+        // Setup Modal UI
+        modal.style.display = 'block';
+        if(window.switchProductTab) switchProductTab('add'); // Show form
+        
+        // Fill Inputs
+        const nameInput = document.getElementById('new-prod-name');
+        if(nameInput) {
+            nameInput.value = title;
+            nameInput.disabled = true;
+        }
+        
+        document.getElementById('new-prod-desc').value = currentDesc;
+        document.getElementById('new-prod-badge').value = currentBadge;
+        document.getElementById('new-prod-note').value = currentNote;
+        document.getElementById('new-prod-warranty').value = currentWarranty;
+
+        // Hide Irrelevant Inputs
+        if(document.getElementById('new-prod-price')) document.getElementById('new-prod-price').style.display = 'none';
+        if(document.getElementById('new-prod-price-alt')) document.getElementById('new-prod-price-alt').style.display = 'none';
+        if(document.getElementById('new-prod-stock')) document.getElementById('new-prod-stock').style.display = 'none';
+        if(document.getElementById('new-prod-img')) document.getElementById('new-prod-img').style.display = 'none';
+        
+        // Update Button
+        btnCreate.innerText = "💾 Guardar Cambios (Original)";
+        
+        // Remove old listeners by cloning
+        const newBtn = btnCreate.cloneNode(true);
+        btnCreate.parentNode.replaceChild(newBtn, btnCreate);
+        
+        newBtn.onclick = async () => {
+            const updates = {
+                desc: document.getElementById('new-prod-desc').value,
+                badge: document.getElementById('new-prod-badge').value,
+                note: document.getElementById('new-prod-note').value,
+                warranty: document.getElementById('new-prod-warranty').value
+            };
+            
+            try {
+                await db.collection('product_overrides').doc('main').set({
+                    [title]: updates
+                }, { merge: true });
+                alert("¡Información actualizada! ☁️✅");
+                modal.style.display = 'none';
+                location.reload(); 
+            } catch(e) {
+                alert("Error: " + e.message);
+            }
+        };
     };
 
-    initDescriptionSystem();
+    initOverrideSystem();
+
 
     if (btnPricesAdmin) {
         btnPricesAdmin.addEventListener('click', () => {
