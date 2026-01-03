@@ -1702,6 +1702,9 @@ document.addEventListener('DOMContentLoaded', () => {
             // Strip metadata to send pure base64
             const base64String = reader.result.replace("data:", "").replace(/^.+,/, "");
 
+            // ALERT DEBUG 1
+            alert("PASO 1: Archivo leído correctamente. Iniciando conexión con Google...");
+
             const storageRef = firebase.storage().ref();
             // Clean filename
             const cleanName = file.name.replace(/[^a-zA-Z0-9.]/g, '_');
@@ -1711,13 +1714,18 @@ document.addEventListener('DOMContentLoaded', () => {
 
             fileRef.putString(base64String, 'base64')
                 .then((snapshot) => {
+                    // ALERT DEBUG 2
+                    alert("PASO 2: Subida de archivo completada. Obteniendo enlace...");
                     return snapshot.ref.getDownloadURL();
                 })
                 .then(async (imageUrl) => {
+                    // ALERT DEBUG 3
+                    alert("PASO 3: Enlace obtenido. Guardando en base de datos...");
                     await db.collection('products').doc(prodId).update({
                         image: imageUrl
                     });
-                    alert("✅ ¡Éxito! Imagen reparada.");
+
+                    alert("✅ ¡Éxito FINAL! Imagen reparada.");
                     fileInput.value = '';
                     btn.innerText = "✅ Listo";
 
@@ -1731,7 +1739,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     console.error("Upload failed:", error);
                     let msg = error.message;
                     if (error.code === 'storage/unauthorized') msg = "No tienes permiso (Usuario no reconocido).";
-                    alert("❌ Error: " + msg);
+                    alert("❌ Error en algún paso: " + msg);
                     btn.innerText = "❌ Reintentar";
                     btn.disabled = false;
                 });
