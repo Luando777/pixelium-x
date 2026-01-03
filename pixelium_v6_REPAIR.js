@@ -1,5 +1,5 @@
-console.log("Pixelium System Online V6 REPAIR");
-alert("✅ SISTEMA V6 (DEBUG MODE): Si ves esto, el código es el correcto.");
+console.log("Pixelium System Online V7 FINAL");
+alert("✅ SISTEMA V7 (FINAL): Timeout 30s + Fix de Tipo de Archivo aplicado.");
 
 const firebaseConfig = {
     apiKey: "AIzaSyCANk2vWDYkiZXnpwkufTgRrbSqGJhAHNI",
