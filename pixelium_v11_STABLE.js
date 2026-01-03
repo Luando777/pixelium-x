@@ -1634,8 +1634,11 @@ document.addEventListener('DOMContentLoaded', () => {
             row.className = 'stock-item-row';
             row.innerHTML = `
             <span class="stock-item-name">${title} (Original)</span>
-            <button onclick="toggleProductVisibility('${title}')" style="background: ${isHidden ? '#39ff14' : '#ff4444'}; border:none; border-radius:4px; padding:  5px; cursor:pointer; color:black; font-weight:bold;">
+            <button onclick="toggleProductVisibility('${title}')" style="background: ${isHidden ? '#39ff14' : '#ff4444'}; border:none; border-radius:4px; padding:  5px; cursor:pointer; color:black; font-weight:bold; margin-right:5px;">
                 ${isHidden ? 'Mostrar' : 'Ocultar'}
+            </button>
+            <button onclick="editOriginalProductDesc('${title}')" style="background: #00f3ff; border:none; border-radius:4px; padding: 5px 10px; cursor:pointer; color:black; font-weight:bold;">
+                ✏️ Edit Desc
             </button>
         `;
             productAdminList.appendChild(row);
@@ -1829,6 +1832,77 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Call on load
     initPriceSystem();
+
+    // --- DESCRIPTION MANAGER LOGIC (ORIGINAL PRODUCTS) ---
+    // State
+    let descriptionState = {};
+
+    // 1. Initialization: Listen to Descriptions
+    function initDescriptionSystem() {
+        db.collection('descriptions').doc('main').onSnapshot(doc => {
+            if (doc.exists) {
+                descriptionState = doc.data();
+                applyDescriptionOverrides();
+            } else {
+                db.collection('descriptions').doc('main').set({});
+            }
+        });
+    }
+
+    // 2. Apply Overrides
+    function applyDescriptionOverrides() {
+        document.querySelectorAll('.services-grid .card').forEach(card => {
+            // Only apply to Original cards (those without custom_ id)
+            if (card.id.startsWith('custom_')) return;
+
+            const title = card.querySelector('h3').innerText.trim();
+            if (descriptionState[title]) {
+                const newDesc = descriptionState[title];
+
+                // Find existing description paragraph
+                let descP = card.querySelector('p:not(.gold-text):not(.activation-note)');
+
+                // Special case: Panel Canva uses <ul> instead of <p> initially
+                // If no typical desc paragraph found, checks if we need to insert one or replace <ul>
+                if (!descP) {
+                    // Check if there is a UL to handle (hide it or replace?)
+                    // Best interaction: Insert new P after H3 if not exists
+
+                    // If UL exists, we might want to hide it if we are overriding with text
+                    const ul = card.querySelector('ul');
+                    if (ul) ul.style.display = 'none'; // Hide list if description is overridden
+
+                    // Create P if not exists
+                    descP = document.createElement('p');
+                    card.querySelector('h3').after(descP);
+                }
+
+                descP.innerText = newDesc;
+                // Ensure it is visible if previously hidden logic applied? N/A
+            }
+        });
+    }
+
+    // 3. Edit Logic
+    window.editOriginalProductDesc = async (title) => {
+        // Get current overridden value or prompt empty
+        const currentVal = descriptionState[title] || '';
+        const newDesc = prompt(`Editar Descripción para ${title}:`, currentVal);
+
+        if (newDesc !== null) {
+            try {
+                await db.collection('descriptions').doc('main').set({
+                    [title]: newDesc
+                }, { merge: true });
+                alert("¡Descripción (Original) actualizada! 📝✅");
+            } catch (error) {
+                console.error("Error updating description:", error);
+                alert("Error al actualizar: " + error.message);
+            }
+        }
+    };
+
+    initDescriptionSystem();
 
     if (btnPricesAdmin) {
         btnPricesAdmin.addEventListener('click', () => {
