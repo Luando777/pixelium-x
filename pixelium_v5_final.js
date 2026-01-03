@@ -1,5 +1,5 @@
-console.log("Pixelium System Online V3");
-// alert("SISTEMA ACTUALIZADO V3 - Si ves esto, el código nuevo cargó.");
+console.log("Pixelium System Online V5");
+alert("✅ SISTEMA ACTUALIZADO V5: Intenta 'Reparar Imagen' ahora.");
 
 const firebaseConfig = {
     apiKey: "AIzaSyCANk2vWDYkiZXnpwkufTgRrbSqGJhAHNI",
