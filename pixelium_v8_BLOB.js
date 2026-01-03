@@ -1,5 +1,5 @@
-console.log("Pixelium System Online V7 FINAL");
-alert("✅ SISTEMA V7 (FINAL): Timeout 30s + Fix de Tipo de Archivo aplicado.");
+console.log("Pixelium System Online V8 BLOB");
+alert("✅ SISTEMA V8 (BLOB): Mira el botón para ver el progreso %.");
 
 const firebaseConfig = {
     apiKey: "AIzaSyCANk2vWDYkiZXnpwkufTgRrbSqGJhAHNI",
@@ -1699,51 +1699,67 @@ document.addEventListener('DOMContentLoaded', () => {
         const reader = new FileReader();
         reader.readAsDataURL(file);
         reader.onloadend = function () {
-            // Use full Data URL (safest method)
+            // Convert DataURL to Blob (V8)
             const dataUrl = reader.result;
+            const byteString = atob(dataUrl.split(',')[1]);
+            const mimeString = dataUrl.split(',')[0].split(':')[1].split(';')[0];
+            const ab = new ArrayBuffer(byteString.length);
+            const ia = new Uint8Array(ab);
+            for (let i = 0; i < byteString.length; i++) {
+                ia[i] = byteString.charCodeAt(i);
+            }
+            const blob = new Blob([ab], { type: mimeString });
 
-            alert("⚠️ INTENTO V7: Usando método 'data_url' con metadatos...");
+            alert("⚠️ INTENTO V8: Usando 'Binary Blob' + Monitor de Progreso.");
 
             const storageRef = firebase.storage().ref();
             const cleanName = file.name.replace(/[^a-zA-Z0-9.]/g, '_');
-            const fileRef = storageRef.child(`products/repair_v7_${Date.now()}_${cleanName}`);
+            const fileRef = storageRef.child(`products/repair_v8_${Date.now()}_${cleanName}`);
 
-            btn.innerText = "⏳ Subiendo (30s)...";
+            btn.innerText = "⏳ Iniciando 0%...";
 
-            // Create a race between Upload and Timeout
-            const uploadTask = fileRef.putString(dataUrl, 'data_url', { contentType: file.type });
+            const uploadTask = fileRef.put(blob);
+            let isComplete = false;
 
-            const timeoutTask = new Promise((_, reject) =>
-                setTimeout(() => reject(new Error("Timeout (30s). Posible bloqueo de CORS o Firewall.")), 30000)
-            );
-
-            Promise.race([uploadTask, timeoutTask])
-                .then((snapshot) => {
-                    alert("PASO 2: Subida OK. Obteniendo link...");
-                    return snapshot.ref.getDownloadURL();
-                })
-                .then(async (imageUrl) => {
-                    await db.collection('products').doc(prodId).update({
-                        image: imageUrl
-                    });
-
-                    alert("✅ ¡REPARADO! Si ves esto, funcionó.");
-                    fileInput.value = '';
-                    btn.innerText = "✅ Listo";
-
-                    setTimeout(() => {
-                        btn.innerText = originalText;
-                        btn.disabled = false;
-                    }, 2000);
-                })
-                .catch((error) => {
-                    console.error("Upload failed:", error);
+            // Monitor Progress
+            uploadTask.on('state_changed',
+                (snapshot) => {
+                    const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
+                    btn.innerText = `🚀 ${Math.round(progress)}%`;
+                    console.log('Upload is ' + progress + '% done');
+                },
+                (error) => {
+                    // Handle unsuccessful uploads
+                    console.error("Upload failed V8:", error);
                     let msg = error.message;
-                    if (error.code === 'storage/unauthorized') msg = "Sin permiso. Revisa tus reglas de Firebase Storage.";
-                    alert("❌ FALLÓ V7: " + msg);
+                    if (error.code === 'storage/unauthorized') msg = "Sin permiso (Firebase Rules).";
+                    alert("❌ ERROR DE SUBIDA: " + msg);
                     btn.innerText = "❌ Error";
                     btn.disabled = false;
-                });
+                    isComplete = true; // Stop race
+                },
+                () => {
+                    // Handle successful uploads on complete
+                    uploadTask.snapshot.ref.getDownloadURL().then(async (imageUrl) => {
+                        isComplete = true;
+                        await db.collection('products').doc(prodId).update({ image: imageUrl });
+                        alert("✅ ¡ÉXITO V8! Imagen reparada.");
+                        fileInput.value = '';
+                        btn.innerText = "✅ Listo";
+                        setTimeout(() => { btn.innerText = originalText; btn.disabled = false; }, 2000);
+                    });
+                }
+            );
+
+            // Safety Timeout (60s)
+            setTimeout(() => {
+                if (!isComplete && uploadTask.snapshot.state === 'running') {
+                    uploadTask.cancel();
+                    alert("❌ TIMEOUT V8 (60s): Si el % se quedó en 0%, es bloqueo de seguridad del navegador.");
+                    btn.innerText = "❌ Timeout";
+                    btn.disabled = false;
+                }
+            }, 60000);
         };
     };
 
