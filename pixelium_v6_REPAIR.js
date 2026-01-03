@@ -1,5 +1,5 @@
-console.log("Pixelium System Online V5");
-alert("✅ SISTEMA ACTUALIZADO V5: Intenta 'Reparar Imagen' ahora.");
+console.log("Pixelium System Online V6 REPAIR");
+alert("✅ SISTEMA V6 (DEBUG MODE): Si ves esto, el código es el correcto.");
 
 const firebaseConfig = {
     apiKey: "AIzaSyCANk2vWDYkiZXnpwkufTgRrbSqGJhAHNI",
@@ -1699,28 +1699,29 @@ document.addEventListener('DOMContentLoaded', () => {
         const reader = new FileReader();
         reader.readAsDataURL(file);
         reader.onloadend = function () {
-            // Strip metadata to send pure base64
-            const base64String = reader.result.replace("data:", "").replace(/^.+,/, "");
+            // Safer Base64 extraction
+            const base64String = reader.result.split(',')[1];
 
-            // ALERT DEBUG 1
-            alert("PASO 1: Archivo leído correctamente. Iniciando conexión con Google...");
+            alert("⚠️ DEBUG V6: Iniciando. Si esto no aparece, limpia caché.");
 
             const storageRef = firebase.storage().ref();
-            // Clean filename
             const cleanName = file.name.replace(/[^a-zA-Z0-9.]/g, '_');
-            const fileRef = storageRef.child(`products/repair_${Date.now()}_${cleanName}`);
+            const fileRef = storageRef.child(`products/repair_v6_${Date.now()}_${cleanName}`);
 
-            btn.innerText = "⏳ Enviando a Google...";
+            btn.innerText = "⏳ Enviando (15s máx)...";
 
-            fileRef.putString(base64String, 'base64')
+            // Create a race between Upload and Timeout
+            const uploadTask = fileRef.putString(base64String, 'base64');
+            const timeoutTask = new Promise((_, reject) =>
+                setTimeout(() => reject(new Error("Se agotó el tiempo de espera (15s). Tu internet o el firewall bloquea Firebase.")), 15000)
+            );
+
+            Promise.race([uploadTask, timeoutTask])
                 .then((snapshot) => {
-                    // ALERT DEBUG 2
-                    alert("PASO 2: Subida de archivo completada. Obteniendo enlace...");
+                    alert("PASO 2: Subida OK. Obteniendo link...");
                     return snapshot.ref.getDownloadURL();
                 })
                 .then(async (imageUrl) => {
-                    // ALERT DEBUG 3
-                    alert("PASO 3: Enlace obtenido. Guardando en base de datos...");
                     await db.collection('products').doc(prodId).update({
                         image: imageUrl
                     });
@@ -1729,7 +1730,6 @@ document.addEventListener('DOMContentLoaded', () => {
                     fileInput.value = '';
                     btn.innerText = "✅ Listo";
 
-                    // Restore button after 2s
                     setTimeout(() => {
                         btn.innerText = originalText;
                         btn.disabled = false;
@@ -1739,7 +1739,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     console.error("Upload failed:", error);
                     let msg = error.message;
                     if (error.code === 'storage/unauthorized') msg = "No tienes permiso (Usuario no reconocido).";
-                    alert("❌ Error en algún paso: " + msg);
+                    alert("❌ FALLÓ: " + msg);
                     btn.innerText = "❌ Reintentar";
                     btn.disabled = false;
                 });
