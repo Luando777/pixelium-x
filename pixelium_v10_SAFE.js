@@ -1674,11 +1674,30 @@ document.addEventListener('DOMContentLoaded', () => {
             </span>
             <div style="display:flex; align-items:center;">
                 ${actionHtml}
+                <button onclick="editProductDesc('${prod.id}', '${(prod.desc || '').replace(/'/g, "\\'")}')" style="background: #00f3ff; border:none; border-radius:4px; padding: 5px 10px; cursor:pointer; color:black; font-weight:bold; margin-left: 5px;">
+                    ✏️ Edit Desc
+                </button>
             </div>
         `;
             productAdminList.appendChild(row);
         });
     }
+
+    // --- LOGIC: EDIT DESCRIPTION ---
+    window.editProductDesc = async (id, oldDesc) => {
+        const newDesc = prompt("Editar Descripción:", oldDesc);
+        if (newDesc !== null && newDesc !== oldDesc) {
+            try {
+                await db.collection('products').doc(id).update({ desc: newDesc });
+                alert("¡Descripción actualizada! 📝✅");
+                // The onSnapshot listener will automatically refresh the list
+            } catch (error) {
+                console.error("Error updating description:", error);
+                alert("Error al actualizar: " + error.message);
+            }
+        }
+    };
+}
 
     window.uploadRepairImage = (index, prodId) => {
         const user = firebase.auth().currentUser;
@@ -1756,160 +1775,160 @@ document.addEventListener('DOMContentLoaded', () => {
         reader.readAsDataURL(file);
     };
 
-    window.toggleProductVisibility = (title) => {
-        if (hiddenProducts.includes(title)) {
-            hiddenProducts = hiddenProducts.filter(t => t !== title);
+window.toggleProductVisibility = (title) => {
+    if (hiddenProducts.includes(title)) {
+        hiddenProducts = hiddenProducts.filter(t => t !== title);
+    } else {
+        hiddenProducts.push(title);
+    }
+    localStorage.setItem('hiddenProducts', JSON.stringify(hiddenProducts));
+    renderAdminProductList();
+    applyProductVisibility();
+};
+
+window.deleteCustomProduct = async (index) => {
+    if (!confirm("¿Eliminar este producto permanentemente?")) return;
+    const prod = customProducts[index];
+    if (prod) {
+        try {
+            await db.collection('products').doc(prod.id).delete();
+            alert("Producto eliminado de la nube.");
+        } catch (err) {
+            alert("Error al eliminar: " + err.message);
+        }
+    }
+};
+
+// --- PRICE MANAGER LOGIC (SEPARATE SYSTEM) ---
+const priceModal = document.getElementById('price-modal');
+const btnPricesAdmin = document.getElementById('btn-prices-admin');
+const closePriceModalBtn = document.querySelector('.close-price-modal');
+const btnSavePrices = document.getElementById('btn-save-prices');
+const priceAdminList = document.getElementById('price-admin-list');
+
+// State
+// Load from Firestore (Real-time)
+let priceState = {};
+
+// 1. Initialization: Listen to Prices
+function initPriceSystem() {
+    db.collection('prices').doc('main').onSnapshot(doc => {
+        if (doc.exists) {
+            priceState = doc.data();
+            applyPriceOverrides();
         } else {
-            hiddenProducts.push(title);
+            db.collection('prices').doc('main').set({});
         }
-        localStorage.setItem('hiddenProducts', JSON.stringify(hiddenProducts));
-        renderAdminProductList();
-        applyProductVisibility();
-    };
+    });
+}
 
-    window.deleteCustomProduct = async (index) => {
-        if (!confirm("¿Eliminar este producto permanentemente?")) return;
-        const prod = customProducts[index];
-        if (prod) {
-            try {
-                await db.collection('products').doc(prod.id).delete();
-                alert("Producto eliminado de la nube.");
-            } catch (err) {
-                alert("Error al eliminar: " + err.message);
-            }
-        }
-    };
+// Call on load
+initPriceSystem();
 
-    // --- PRICE MANAGER LOGIC (SEPARATE SYSTEM) ---
-    const priceModal = document.getElementById('price-modal');
-    const btnPricesAdmin = document.getElementById('btn-prices-admin');
-    const closePriceModalBtn = document.querySelector('.close-price-modal');
-    const btnSavePrices = document.getElementById('btn-save-prices');
-    const priceAdminList = document.getElementById('price-admin-list');
+if (btnPricesAdmin) {
+    btnPricesAdmin.addEventListener('click', () => {
+        priceModal.style.display = 'block';
+        renderPriceManager();
+    });
+}
 
-    // State
-    // Load from Firestore (Real-time)
-    let priceState = {};
+if (closePriceModalBtn) {
+    closePriceModalBtn.addEventListener('click', () => {
+        priceModal.style.display = 'none';
+        applyPriceOverrides(); // Re-apply just in case
+    });
+}
 
-    // 1. Initialization: Listen to Prices
-    function initPriceSystem() {
-        db.collection('prices').doc('main').onSnapshot(doc => {
-            if (doc.exists) {
-                priceState = doc.data();
-                applyPriceOverrides();
+// --- LOGIC: RENDER ADMIN LIST ---
+function renderPriceManager() {
+    if (!priceAdminList) return;
+    priceAdminList.innerHTML = '';
+
+    // Scan all cards (Hardcoded + Custom)
+    document.querySelectorAll('.services-grid .card').forEach(card => {
+        const title = card.querySelector('h3').innerText.trim();
+        // Get current price from STATE or parse from DOM if not in state
+        let currentPrice = priceState[title];
+
+        if (!currentPrice) {
+            // Extract from DOM "S/15.00" -> 15.00
+            const priceTag = card.querySelector('.price-tag');
+            if (priceTag) {
+                const text = priceTag.childNodes[0].nodeValue.trim(); // "S/15.00"
+                currentPrice = parseFloat(text.replace(/[^\d.]/g, ''));
             } else {
-                db.collection('prices').doc('main').set({});
+                currentPrice = 0;
             }
-        });
-    }
+        }
 
-    // Call on load
-    initPriceSystem();
-
-    if (btnPricesAdmin) {
-        btnPricesAdmin.addEventListener('click', () => {
-            priceModal.style.display = 'block';
-            renderPriceManager();
-        });
-    }
-
-    if (closePriceModalBtn) {
-        closePriceModalBtn.addEventListener('click', () => {
-            priceModal.style.display = 'none';
-            applyPriceOverrides(); // Re-apply just in case
-        });
-    }
-
-    // --- LOGIC: RENDER ADMIN LIST ---
-    function renderPriceManager() {
-        if (!priceAdminList) return;
-        priceAdminList.innerHTML = '';
-
-        // Scan all cards (Hardcoded + Custom)
-        document.querySelectorAll('.services-grid .card').forEach(card => {
-            const title = card.querySelector('h3').innerText.trim();
-            // Get current price from STATE or parse from DOM if not in state
-            let currentPrice = priceState[title];
-
-            if (!currentPrice) {
-                // Extract from DOM "S/15.00" -> 15.00
-                const priceTag = card.querySelector('.price-tag');
-                if (priceTag) {
-                    const text = priceTag.childNodes[0].nodeValue.trim(); // "S/15.00"
-                    currentPrice = parseFloat(text.replace(/[^\d.]/g, ''));
-                } else {
-                    currentPrice = 0;
-                }
-            }
-
-            const row = document.createElement('div');
-            row.className = 'stock-item-row';
-            row.innerHTML = `
+        const row = document.createElement('div');
+        row.className = 'stock-item-row';
+        row.innerHTML = `
                 <span class="stock-item-name">${title}</span>
                 <input type="number" step="0.50" class="stock-input price-input-field"
                     data-title="${title}"
                     value="${currentPrice}">
                     `;
-            priceAdminList.appendChild(row);
-        });
-    }
+        priceAdminList.appendChild(row);
+    });
+}
 
-    if (btnSavePrices) {
-        btnSavePrices.addEventListener('click', () => {
-            const inputs = document.querySelectorAll('.price-input-field');
-            const updates = {};
-            inputs.forEach(input => {
-                const title = input.getAttribute('data-title');
-                const val = parseFloat(input.value);
-                if (!isNaN(val)) {
-                    updates[title] = val;
-                }
-            });
-
-            // Save to Firestore
-            db.collection('prices').doc('main').set(updates, { merge: true })
-                .then(() => {
-                    alert("¡Precios Globales Actualizados! ☁️💰");
-                    priceModal.style.display = 'none';
-                })
-                .catch(err => alert("Error: " + err.message));
-        });
-    }
-
-    // --- LOGIC: APPLY OVERRIDES (CORE) ---
-    function applyPriceOverrides() {
-        document.querySelectorAll('.services-grid .card').forEach(card => {
-            const title = card.querySelector('h3').innerText.trim();
-
-            if (priceState[title] !== undefined) {
-                const newPrice = priceState[title];
-
-                // 1. Update Visual Text
-                const priceTag = card.querySelector('.price-tag');
-                if (priceTag) {
-                    // Keep the structural span for alt price if exists, just update text node
-                    // Easier: Just rebuild innerHTML to keep format "S/XX <span...>"
-                    // Check if there is an alt price span
-                    const altSpan = priceTag.querySelector('.price-alt');
-                    const altHtml = altSpan ? altSpan.outerHTML : '';
-                    priceTag.innerHTML = `S/${newPrice.toFixed(2)} ${altHtml}`;
-                }
-
-                // 2. Update Add to Cart Button Logic
-                const btn = card.querySelector('.btn-add');
-                if (btn) {
-                    // Remove old onclick attribute to be safe
-                    btn.removeAttribute('onclick');
-                    // Clone button to strip existing event listeners (if added via JS)
-                    // But since most are inline HTML onclick, we can just override onclick prop
-                    btn.onclick = (e) => {
-                        e.preventDefault();
-                        e.stopPropagation();
-                        addToCart(title, newPrice);
-                    };
-                }
+if (btnSavePrices) {
+    btnSavePrices.addEventListener('click', () => {
+        const inputs = document.querySelectorAll('.price-input-field');
+        const updates = {};
+        inputs.forEach(input => {
+            const title = input.getAttribute('data-title');
+            const val = parseFloat(input.value);
+            if (!isNaN(val)) {
+                updates[title] = val;
             }
         });
-    }
+
+        // Save to Firestore
+        db.collection('prices').doc('main').set(updates, { merge: true })
+            .then(() => {
+                alert("¡Precios Globales Actualizados! ☁️💰");
+                priceModal.style.display = 'none';
+            })
+            .catch(err => alert("Error: " + err.message));
+    });
+}
+
+// --- LOGIC: APPLY OVERRIDES (CORE) ---
+function applyPriceOverrides() {
+    document.querySelectorAll('.services-grid .card').forEach(card => {
+        const title = card.querySelector('h3').innerText.trim();
+
+        if (priceState[title] !== undefined) {
+            const newPrice = priceState[title];
+
+            // 1. Update Visual Text
+            const priceTag = card.querySelector('.price-tag');
+            if (priceTag) {
+                // Keep the structural span for alt price if exists, just update text node
+                // Easier: Just rebuild innerHTML to keep format "S/XX <span...>"
+                // Check if there is an alt price span
+                const altSpan = priceTag.querySelector('.price-alt');
+                const altHtml = altSpan ? altSpan.outerHTML : '';
+                priceTag.innerHTML = `S/${newPrice.toFixed(2)} ${altHtml}`;
+            }
+
+            // 2. Update Add to Cart Button Logic
+            const btn = card.querySelector('.btn-add');
+            if (btn) {
+                // Remove old onclick attribute to be safe
+                btn.removeAttribute('onclick');
+                // Clone button to strip existing event listeners (if added via JS)
+                // But since most are inline HTML onclick, we can just override onclick prop
+                btn.onclick = (e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    addToCart(title, newPrice);
+                };
+            }
+        }
+    });
+}
 
 }); // End of DOMContentLoaded
