@@ -718,7 +718,10 @@ body {
 }
 
 .close-modal,
-.close-admin {
+.close-admin,
+.close-stock,
+.close-product-modal,
+.close-price-modal {
     color: #aaa;
     float: right;
     font-size: 28px;
@@ -727,7 +730,10 @@ body {
 }
 
 .close-modal:hover,
-.close-admin:hover {
+.close-admin:hover,
+.close-stock:hover,
+.close-product-modal:hover,
+.close-price-modal:hover {
     color: white;
     text-decoration: none;
     cursor: pointer;
@@ -1571,6 +1577,7 @@ body {
         font-size: 0.9rem;
     }
 }
+
 /* --- About Section --- */
 .about-section {
     padding: 6rem 5%;
