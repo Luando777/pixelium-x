@@ -1668,17 +1668,22 @@ document.addEventListener('DOMContentLoaded', () => {
                  `;
             }
 
+            const editBtn = document.createElement('button');
+            editBtn.innerText = "✏️ Edit Desc";
+            editBtn.style.cssText = "background: #00f3ff; border:none; border-radius:4px; padding: 5px 10px; cursor:pointer; color:black; font-weight:bold; margin-left: 5px;";
+            editBtn.onclick = () => editProductDesc(prod.id, prod.desc || '');
+
+            const actionContainer = document.createElement('div');
+            actionContainer.style.cssText = "display:flex; align-items:center;";
+            actionContainer.innerHTML = actionHtml; // Keep existing action buttons
+            actionContainer.appendChild(editBtn);
+
             row.innerHTML = `
             <span class="stock-item-name" style="color: ${isBroken ? '#ff9900' : 'inherit'}">
                 ${prod.title} ${isBroken ? '(ROTO)' : '(Custom)'}
             </span>
-            <div style="display:flex; align-items:center;">
-                ${actionHtml}
-                <button onclick="editProductDesc('${prod.id}', '${(prod.desc || '').replace(/'/g, "\\'")}')" style="background: #00f3ff; border:none; border-radius:4px; padding: 5px 10px; cursor:pointer; color:black; font-weight:bold; margin-left: 5px;">
-                    ✏️ Edit Desc
-                </button>
-            </div>
-        `;
+            `;
+            row.appendChild(actionContainer);
             productAdminList.appendChild(row);
         });
     }
