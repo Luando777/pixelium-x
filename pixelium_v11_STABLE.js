@@ -1637,8 +1637,8 @@ document.addEventListener('DOMContentLoaded', () => {
             <button onclick="toggleProductVisibility('${title}')" style="background: ${isHidden ? '#39ff14' : '#ff4444'}; border:none; border-radius:4px; padding:  5px; cursor:pointer; color:black; font-weight:bold; margin-right:5px;">
                 ${isHidden ? 'Mostrar' : 'Ocultar'}
             </button>
-            <button onclick="editOriginalProductDesc('${title}')" style="background: #00f3ff; border:none; border-radius:4px; padding: 5px 10px; cursor:pointer; color:black; font-weight:bold;">
-                ✏️ Edit Desc
+            <button onclick="openEditOriginalModal('${title}')" style="background: #00f3ff; border:none; border-radius:4px; padding: 5px 10px; cursor:pointer; color:black; font-weight:bold;">
+                ✏️ Edit Details
             </button>
         `;
             productAdminList.appendChild(row);
