@@ -1,5 +1,5 @@
 console.log("Pixelium System Online V10 SAFE");
-alert("✅ SISTEMA V10 (SAFE): Reparación Ultra-Rápida (Base64).");
+// alert("✅ SISTEMA V10 (SAFE): Reparación Ultra-Rápida (Base64).");
 
 const firebaseConfig = {
     apiKey: "AIzaSyCANk2vWDYkiZXnpwkufTgRrbSqGJhAHNI",
