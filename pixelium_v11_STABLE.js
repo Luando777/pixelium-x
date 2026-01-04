@@ -1375,7 +1375,7 @@ document.addEventListener('DOMContentLoaded', () => {
             customProducts = products;
             console.log("Loaded custom products:", customProducts.length);
             // DEBUG ALERT
-            // alert(`[SISTEMA V11.8] Cargados ${customProducts.length} productos personalizados desde la nube.`);
+            alert(`[DEBUG V11.9] Cargados: ${customProducts.length} productos desde la base de datos.`);
 
             // Re-render Custom Grid
             document.querySelectorAll('.card[id^="custom_"]').forEach(e => e.remove());
