@@ -1367,7 +1367,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function initProductSystem() {
         console.log("Initializing Product System...");
-        db.collection('products').orderBy('createdAt', 'desc').onSnapshot(snapshot => {
+        db.collection('products').onSnapshot(snapshot => {
             const products = [];
             snapshot.forEach(doc => {
                 products.push({ id: doc.id, ...doc.data() });
