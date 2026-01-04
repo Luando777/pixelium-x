@@ -1350,7 +1350,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
 
-    
+
     // --- PRODUCT SYSTEM (RESTORED) ---
     const productModal = document.getElementById('product-modal');
     const btnProductsAdmin = document.getElementById('btn-products-admin');
@@ -1360,7 +1360,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // It's safer to rely on getElementById inside functions or define if missing, but let's assume it's okay to redefine const if scope allows or var.
     // Actually, V11 might NOT have productAdminList defined if I deleted the block.
     // Ideally put this block where variables don't collide.
-    const productAdminListDOM = document.getElementById('product-admin-list'); 
+    const productAdminList = document.getElementById('product-admin-list');
 
     let hiddenProducts = JSON.parse(localStorage.getItem('hiddenProducts')) || [];
     let customProducts = [];
@@ -1370,7 +1370,7 @@ document.addEventListener('DOMContentLoaded', () => {
         db.collection('products').orderBy('createdAt', 'desc').onSnapshot(snapshot => {
             const products = [];
             snapshot.forEach(doc => {
-                products.push({id: doc.id, ...doc.data()});
+                products.push({ id: doc.id, ...doc.data() });
             });
             customProducts = products;
             console.log("Loaded custom products:", customProducts.length);
@@ -1379,12 +1379,12 @@ document.addEventListener('DOMContentLoaded', () => {
             document.querySelectorAll('.card[id^="custom_"]').forEach(e => e.remove());
             renderCustomProductsOnGrid();
             applyProductVisibility();
-            if(typeof applyPriceOverrides === 'function') applyPriceOverrides();
-            if(typeof applyProductOverrides === 'function') applyProductOverrides();
-            
+            if (typeof applyPriceOverrides === 'function') applyPriceOverrides();
+            if (typeof applyProductOverrides === 'function') applyProductOverrides();
+
             // Refresh Admin List if open (renderAdminProductList is defined later in file)
-             if (productModal && productModal.style.display === 'block') {
-                if(typeof renderAdminProductList === 'function') renderAdminProductList();
+            if (productModal && productModal.style.display === 'block') {
+                if (typeof renderAdminProductList === 'function') renderAdminProductList();
             }
         });
     }
@@ -1395,8 +1395,8 @@ document.addEventListener('DOMContentLoaded', () => {
     if (btnProductsAdmin) {
         btnProductsAdmin.addEventListener('click', () => {
             productModal.style.display = 'block';
-            if(typeof renderAdminProductList === 'function') renderAdminProductList();
-            if(window.switchProductTab) switchProductTab('add');
+            if (typeof renderAdminProductList === 'function') renderAdminProductList();
+            if (window.switchProductTab) switchProductTab('add');
         });
     }
 
@@ -1409,14 +1409,14 @@ document.addEventListener('DOMContentLoaded', () => {
     window.switchProductTab = (tab) => {
         const addTab = document.getElementById('product-tab-add');
         const listTab = document.getElementById('product-tab-list');
-        if(addTab) addTab.style.display = tab === 'add' ? 'block' : 'none';
-        if(listTab) listTab.style.display = tab === 'list' ? 'block' : 'none';
-        
+        if (addTab) addTab.style.display = tab === 'add' ? 'block' : 'none';
+        if (listTab) listTab.style.display = tab === 'list' ? 'block' : 'none';
+
         const buttons = document.querySelectorAll('#product-modal .tab-btn');
-        if(buttons.length > 0) {
+        if (buttons.length > 0) {
             buttons.forEach(b => b.classList.remove('active'));
-            if(tab === 'add') buttons[0].classList.add('active');
-            if(tab === 'list') buttons[1].classList.add('active');
+            if (tab === 'add') buttons[0].classList.add('active');
+            if (tab === 'list') buttons[1].classList.add('active');
         }
     };
 
@@ -1453,7 +1453,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     image: imageUrl,
                     badge: document.getElementById('new-prod-badge').value,
                     note: document.getElementById('new-prod-note').value,
-                    createdAt: firebase.firestore.FieldValue.serverTimestamp() 
+                    createdAt: firebase.firestore.FieldValue.serverTimestamp()
                 };
 
                 try {
@@ -1497,11 +1497,11 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!grid) return;
 
         customProducts.forEach(prod => {
-            if (document.getElementById(prod.id)) return; 
+            if (document.getElementById(prod.id)) return;
 
             const card = document.createElement('div');
             card.className = 'card';
-            card.id = prod.id || `custom_${Date.now()}`; 
+            card.id = prod.id || `custom_${Date.now()}`;
 
             const currentStock = (typeof stockState !== 'undefined' && stockState[prod.title] !== undefined) ? stockState[prod.title] : (prod.stock || 0);
             const stockClass = currentStock > 0 ? 'stock-available' : 'stock-out';
@@ -1533,8 +1533,8 @@ document.addEventListener('DOMContentLoaded', () => {
             <div class="price-tag">S/${pPrice.toFixed(2)} ${prod.priceAlt ? `<span class="price-alt">($${prod.priceAlt})</span>` : ''}</div>
             <button class="btn-add" onclick="window.addToCart('${prod.title}', ${pPrice})" ${btnState}>${btnText}</button>
             `;
-            
-             const newImg = card.querySelector('.product-img');
+
+            const newImg = card.querySelector('.product-img');
             newImg.addEventListener('click', () => {
                 const lightbox = document.getElementById('lightbox');
                 const lightboxImg = document.getElementById('lightbox-img');
@@ -1548,7 +1548,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-// --- STOCK MANAGER LOGIC (SEPARATE SYSTEM) ---
+    // --- STOCK MANAGER LOGIC (SEPARATE SYSTEM) ---
     const stockModal = document.getElementById('stock-modal');
     const btnStockAdmin = document.getElementById('btn-stock-admin');
     const closeStockBtn = document.querySelector('.close-stock');
@@ -1620,204 +1620,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // --- PRODUCT MANAGER LOGIC (SEPARATE SYSTEM) ---
-    const productModal = document.getElementById('product-modal');
-    const btnProductsAdmin = document.getElementById('btn-products-admin');
-    const closeProductModalBtn = document.querySelector('.close-product-modal');
-    const btnCreateProduct = document.getElementById('btn-create-product');
-    const productAdminList = document.getElementById('product-admin-list');
-
-    // State
-    // Load from Firestore (Real-time)
-    let hiddenProducts = JSON.parse(localStorage.getItem('hiddenProducts')) || []; // Keep hidden local for now or migrate later? Request was Prices & Products. Let's do Products (Custom).
-    // Actually, migration of customProducts to Firestore
-    let customProducts = [];
-
-    // 1. Initialization: Listen to Firestore
-    function initProductSystem() {
-        db.collection('products').onSnapshot(snapshot => {
-            const products = [];
-            snapshot.forEach(doc => {
-                products.push(doc.data());
-            });
-            customProducts = products;
-
-            // Re-render
-            // Clear current custom cards first? or just rely on IDs.
-            // Simplified: Remove all custom cards then re-add
-            document.querySelectorAll('.card[id^="custom_"]').forEach(e => e.remove());
-            renderCustomProductsOnGrid();
-            applyProductVisibility();
-
-            // If admin modal open, refresh list
-            if (productModal.style.display === 'block') {
-                renderAdminProductList();
-            }
-        });
-    }
-
-    // Call on load
-    initProductSystem();
-
-    if (btnProductsAdmin) {
-        btnProductsAdmin.addEventListener('click', () => {
-            productModal.style.display = 'block';
-            renderAdminProductList();
-            switchProductTab('add');
-        });
-    }
-
-    if (closeProductModalBtn) {
-        closeProductModalBtn.addEventListener('click', () => {
-            productModal.style.display = 'none';
-            // Reload page to apply changes cleanly if something was cleared
-            if (confirm("¿Recargar página para ver cambios?")) location.reload();
-        });
-    }
-
-    // Tab Switcher
-    window.switchProductTab = (tab) => {
-        document.getElementById('product-tab-add').style.display = tab === 'add' ? 'block' : 'none';
-        document.getElementById('product-tab-list').style.display = tab === 'list' ? 'block' : 'none';
-
-        // Update active class on buttons manually if needed, or keeping simple
-    };
-
-    // --- LOGIC: CREATE PRODUCT ---
-    if (btnCreateProduct) {
-        btnCreateProduct.addEventListener('click', async () => {
-            const title = document.getElementById('new-prod-name').value;
-            const price = document.getElementById('new-prod-price').value;
-            const imgInput = document.getElementById('new-prod-img');
-
-            if (!title || !price || !imgInput.files[0]) {
-                return alert("Nombre, Precio e Imagen son obligatorios.");
-            }
-
-            btnCreateProduct.innerText = "Subiendo imagen...";
-            btnCreateProduct.disabled = true;
-
-            const imgFile = imgInput.files[0];
-            const storageRef = firebase.storage().ref();
-            const fileRef = storageRef.child(`products/${Date.now()}_${imgFile.name}`);
-
-            fileRef.put(imgFile).then((snapshot) => {
-                return snapshot.ref.getDownloadURL();
-            }).then(async (imageUrl) => {
-
-                const prodId = 'custom_' + Date.now();
-                const trimmedTitle = title.trim();
-                const newProduct = {
-                    id: prodId,
-                    title: trimmedTitle,
-                    desc: document.getElementById('new-prod-desc').value,
-                    price: parseFloat(price),
-                    priceAlt: document.getElementById('new-prod-price-alt').value,
-                    stock: parseInt(document.getElementById('new-prod-stock').value) || 10,
-                    warranty: document.getElementById('new-prod-warranty').value,
-                    image: imageUrl,
-                    badge: document.getElementById('new-prod-badge').value,
-                    note: document.getElementById('new-prod-note').value
-                };
-
-                // Save to Firestore
-                try {
-                    await db.collection('products').doc(prodId).set(newProduct);
-
-                    // Initialize stock for this new product in Firestore Stock
-                    await db.collection('stock').doc('main').set({
-                        [trimmedTitle]: newProduct.stock
-                    }, { merge: true });
-
-                    alert("¡Producto Creado con Imagen en Firebase Storage! ☁️🔥");
-                    // Reset form
-                    document.getElementById('new-prod-name').value = '';
-                    document.getElementById('new-prod-price').value = '';
-                    document.getElementById('new-prod-img').value = '';
-                    btnCreateProduct.innerText = "✨ Crear Producto";
-                    btnCreateProduct.disabled = false;
-
-                } catch (err) {
-                    alert("Error guardando datos: " + err.message);
-                    btnCreateProduct.disabled = false;
-                }
-            }).catch((error) => {
-                console.error("Upload failed:", error);
-                alert("Error subiendo imagen: " + error.message);
-                btnCreateProduct.disabled = false;
-            });
-        });
-    }
-
-
-
-    // --- LOGIC: VISIBILITY (MASKING) ---
-    function applyProductVisibility() {
-        document.querySelectorAll('.card').forEach(card => {
-            const titleEl = card.querySelector('h3');
-            if (titleEl && hiddenProducts.includes(titleEl.innerText.trim())) {
-                card.style.display = 'none';
-            } else {
-                if (card.style.display === 'none') card.style.display = '';
-            }
-        });
-    }
-
-    // --- LOGIC: RENDER CUSTOMS ON GRID ---
-    function renderCustomProductsOnGrid() {
-        const grid = document.querySelector('.services-grid');
-        if (!grid) return;
-
-        customProducts.forEach(prod => {
-            if (document.getElementById(prod.id)) return;
-
-            const card = document.createElement('div');
-            card.className = 'card';
-            card.id = prod.id;
-
-            const currentStock = stockState[prod.title] !== undefined ? stockState[prod.title] : prod.stock;
-            const stockClass = currentStock > 0 ? 'stock-available' : 'stock-out';
-            const stockText = currentStock > 0 ? `Stock: ${currentStock}` : 'Sin Stock';
-            const btnState = currentStock > 0 ? '' : 'disabled';
-            const btnText = currentStock > 0 ? 'Agregar al Carrito' : 'Agotado';
-
-            card.innerHTML = `
-            <div class="card-icon">
-                <img src="${prod.image}" alt="${prod.title}" class="product-img" onerror="this.onerror=null; this.src='logo.png';">
-            </div>
-            <h3>${prod.title}</h3>
-            ${prod.desc ? `<p>${prod.desc}</p>` : ''}
-            
-            <div id="stock-${prod.id}" class="stock-status ${stockClass}" data-stock-key="${prod.title}">${stockText}</div>
-            
-            ${prod.badge ? `<p class="gold-text">${prod.badge}</p>` : ''}
-            ${prod.note ? `<p class="activation-note">${prod.note}</p>` : ''}
-            
-            ${prod.warranty ? `
-            <div class="warranty-info">
-                <i class="fas fa-star warranty-star"></i>
-                <span>${prod.warranty}</span>
-            </div>` : ''}
-            
-            <div class="price-tag">S/${prod.price.toFixed(2)} ${prod.priceAlt ? `<span class="price-alt">($${prod.priceAlt})</span>` : ''}</div>
-            <button class="btn-add" onclick="addToCart('${prod.title}', ${prod.price})" ${btnState}>${btnText}</button>
-            `;
-
-            const newImg = card.querySelector('.product-img');
-            newImg.addEventListener('click', () => {
-                const lightbox = document.getElementById('lightbox');
-                const lightboxImg = document.getElementById('lightbox-img');
-                if (lightbox && lightboxImg) {
-                    lightbox.style.display = "block";
-                    lightboxImg.src = newImg.src;
-                }
-            });
-
-            grid.appendChild(card);
-        });
-    }
-
-    // --- LOGIC: ADMIN LIST ---
+    // --- LOGIC: ADMIN LIST (KEPT) ---
     function renderAdminProductList() {
         if (!productAdminList) return;
         productAdminList.innerHTML = '';
@@ -2031,7 +1834,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // Call on load
     initPriceSystem();
 
-        // --- OVERRIDE MANAGER LOGIC (ORIGINAL PRODUCTS) ---
+    // --- OVERRIDE MANAGER LOGIC (ORIGINAL PRODUCTS) ---
     // State
     let overrideState = {};
     let editingOriginalTitle = null;
@@ -2093,10 +1896,10 @@ document.addEventListener('DOMContentLoaded', () => {
     window.openEditOriginalModal = (title) => {
         const modal = document.getElementById('product-modal');
         const btnCreate = document.getElementById('btn-create-product');
-        
+
         // Find Card Data to Pre-fill
         let currentDesc = '', currentBadge = '', currentNote = '', currentWarranty = '';
-        
+
         // Check overrides first
         const data = overrideState[title];
         if (data) {
@@ -2110,7 +1913,7 @@ document.addEventListener('DOMContentLoaded', () => {
             if (card) {
                 const descEl = card.querySelector('p:not(.gold-text):not(.activation-note)');
                 if (descEl) currentDesc = descEl.innerText;
-                
+
                 const badgeEl = card.querySelector('.gold-text');
                 if (badgeEl) currentBadge = badgeEl.innerText;
 
@@ -2124,33 +1927,33 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // Setup Modal UI
         modal.style.display = 'block';
-        if(window.switchProductTab) switchProductTab('add'); // Show form
-        
+        if (window.switchProductTab) switchProductTab('add'); // Show form
+
         // Fill Inputs
         const nameInput = document.getElementById('new-prod-name');
-        if(nameInput) {
+        if (nameInput) {
             nameInput.value = title;
             nameInput.disabled = true;
         }
-        
+
         document.getElementById('new-prod-desc').value = currentDesc;
         document.getElementById('new-prod-badge').value = currentBadge;
         document.getElementById('new-prod-note').value = currentNote;
         document.getElementById('new-prod-warranty').value = currentWarranty;
 
         // Hide Irrelevant Inputs
-        if(document.getElementById('new-prod-price')) document.getElementById('new-prod-price').style.display = 'none';
-        if(document.getElementById('new-prod-price-alt')) document.getElementById('new-prod-price-alt').style.display = 'none';
-        if(document.getElementById('new-prod-stock')) document.getElementById('new-prod-stock').style.display = 'none';
-        if(document.getElementById('new-prod-img')) document.getElementById('new-prod-img').style.display = 'none';
-        
+        if (document.getElementById('new-prod-price')) document.getElementById('new-prod-price').style.display = 'none';
+        if (document.getElementById('new-prod-price-alt')) document.getElementById('new-prod-price-alt').style.display = 'none';
+        if (document.getElementById('new-prod-stock')) document.getElementById('new-prod-stock').style.display = 'none';
+        if (document.getElementById('new-prod-img')) document.getElementById('new-prod-img').style.display = 'none';
+
         // Update Button
         btnCreate.innerText = "💾 Guardar Cambios (Original)";
-        
+
         // Remove old listeners by cloning
         const newBtn = btnCreate.cloneNode(true);
         btnCreate.parentNode.replaceChild(newBtn, btnCreate);
-        
+
         newBtn.onclick = async () => {
             const updates = {
                 desc: document.getElementById('new-prod-desc').value,
@@ -2158,15 +1961,15 @@ document.addEventListener('DOMContentLoaded', () => {
                 note: document.getElementById('new-prod-note').value,
                 warranty: document.getElementById('new-prod-warranty').value
             };
-            
+
             try {
                 await db.collection('product_overrides').doc('main').set({
                     [title]: updates
                 }, { merge: true });
                 alert("¡Información actualizada! ☁️✅");
                 modal.style.display = 'none';
-                location.reload(); 
-            } catch(e) {
+                location.reload();
+            } catch (e) {
                 alert("Error: " + e.message);
             }
         };
