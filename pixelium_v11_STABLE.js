@@ -41,6 +41,8 @@ updateCartCount();
 firebase.initializeApp(firebaseConfig);
 const auth = firebase.auth();
 const db = firebase.firestore();
+// GLOBAL DEBUG ALERT V11.11
+alert(`[DEBUG V11.11] Script Cargado Correctamente.\nFirebase Apps: ${firebase.apps.length}\nFirestore Inicializado.`);
 
 // --- AUTH LOGIC (RESTORED) ---
 // Observer
