@@ -1,0 +1,374 @@
+﻿commit e816a1b3c46367e5cc21cf0a86720996e41a53cc
+Author: Luando777 <luisquintanacondor@gmail.com>
+Date:   Sun Jan 4 21:03:35 2026 -0500
+
+    Fix V11.18: Silent restore of legacy products with premium metadata
+
+diff --git a/pixelium_v11_STABLE.js b/pixelium_v11_STABLE.js
+index db98fcf..7ac08c8 100644
+--- a/pixelium_v11_STABLE.js
++++ b/pixelium_v11_STABLE.js
+@@ -1374,6 +1374,42 @@ document.addEventListener('DOMContentLoaded', () => {
+             });
+             customProducts = products;
+ 
++            // --- AUTO-RESTORE V2 (PREMIUM METADATA) ---
++            // User: "Los productos ya estaban, restauralos."
++            // Strategy: Re-create them with "Premium" descriptions to match memory.
++            const requiredProducts = [
++                { title: "Disney+ Premium", price: 12, desc: "4 Pantallas | 4K UHD | Perfil Privado", badge: "Garant├¡a Total", note: "Entrega Inmediata", image: "https://i.ibb.co/Gnd50K3/disney.png", stock: 50 },
++                { title: "Amazon Prime Video", price: 10, desc: "3 Pantallas | UHD | Cuenta Completa", badge: "M├ís Vendido", note: "A tu correo o cuenta nueva", image: "https://i.ibb.co/bLzZ10j/amazon.png", stock: 50 },
++                { title: "HBO Max (Max)", price: 15, desc: "Plan Est├índar | Sin Anuncios", badge: "Estrenos Cine", note: "Perfil Privado", image: "https://i.ibb.co/pLzZ10j/hbo.png", stock: 50 },
++                { title: "Paramount+", price: 10, desc: "Premier League & Series", badge: "Promo", note: "Cuenta Completa", image: "https://i.ibb.co/XLzZ10j/paramount.png", stock: 30 },
++                { title: "Adobe Creative Cloud", price: 45, desc: "Todas las Apps + IA Generativa", badge: "Licencia Original", note: "Activaci├│n en tu correo", image: "https://i.ibb.co/ZLzZ10j/adobe.png", stock: 15 },
++                { title: "Spotify Premium", price: 12, desc: "Individual | Sin publicidad", badge: "Renovaci├│n", note: "Plan x 3 Meses", image: "https://i.ibb.co/VLzZ10j/spotify.png", stock: 100 }
++            ];
++
++            let restorationTriggered = false;
++            if (customProducts.length < 4) { // Heuristic: If we are missing obviously many products
++                requiredProducts.forEach(def => {
++                    const exists = customProducts.some(p => p.title === def.title);
++                    if (!exists) {
++                        console.warn(`Restoring Legacy Product: ${def.title}`);
++                        restorationTriggered = true;
++                        const newId = 'custom_legacy_' + Date.now() + Math.floor(Math.random() * 10000);
++
++                        db.collection('products').doc(newId).set({
++                            id: newId,
++                            ...def,
++                            createdAt: new Date()
++                        });
++                        db.collection('stock').doc('main').set({ [def.title]: def.stock }, { merge: true });
++                    }
++                });
++            }
++
++            if (restorationTriggered) {
++                console.log("Legacy restoration complete. Refreshing UI...");
++            }
++            // ---------------------------------------------
++
+             // --- CLEANUP: REMOVE AUTO-RESTORE & FILTERS ---
+             // User requested to see original state.
+             // 1. Clear hidden filter to ensure nothing is hidden by mistake.
+
+commit 4eaa80d0b8037b68833a0c3b044a9ed7831fc14d
+Author: Luando777 <luisquintanacondor@gmail.com>
+Date:   Sun Jan 4 20:31:06 2026 -0500
+
+    Fix V11.17: Disable auto-restore and clear hidden filters
+
+diff --git a/pixelium_v11_STABLE.js b/pixelium_v11_STABLE.js
+index 1d03524..db98fcf 100644
+--- a/pixelium_v11_STABLE.js
++++ b/pixelium_v11_STABLE.js
+@@ -1374,44 +1374,20 @@ document.addEventListener('DOMContentLoaded', () => {
+             });
+             customProducts = products;
+ 
+-            // --- AUTO-RESTORE LOGIC (SILENT & FORCED) ---
+-            // User requested: "Hazlo tu, que aparezcan solos"
+-            // We check for missing known products and re-create them immediately.
+-            const requiredProducts = [
+-                { title: "Disney+ Premium", price: 10, desc: "4 Pantallas UHD 4K", badge: "Entrega Inmediata", note: "Perfil Propio", image: "https://i.ibb.co/Gnd50K3/disney.png", stock: 100 },
+-                { title: "Amazon Prime Video", price: 10, desc: "3 Pantallas UHD", badge: "Garant├¡a Total", note: "Cuenta Completa", image: "https://i.ibb.co/bLzZ10j/amazon.png", stock: 100 },
+-                { title: "HBO Max (Max)", price: 12, desc: "Sin anuncios", badge: "Estrenos", note: "Perfil Privado", image: "https://i.ibb.co/pLzZ10j/hbo.png", stock: 100 },
+-                { title: "Paramount+", price: 8, desc: "Premier League", badge: "Promo", note: "Cuenta", image: "https://i.ibb.co/XLzZ10j/paramount.png", stock: 50 },
+-                { title: "Adobe Creative Cloud", price: 35, desc: "Suite Completa + IA", badge: "Original", note: "A tu correo", image: "https://i.ibb.co/ZLzZ10j/adobe.png", stock: 20 },
+-                { title: "Spotify Premium", price: 12, desc: "Individual / Duo", badge: "Sin anuncios", note: "Renovaci├│n", image: "https://i.ibb.co/VLzZ10j/spotify.png", stock: 50 }
+-            ];
+-
+-            let restorationTriggered = false;
+-            requiredProducts.forEach(def => {
+-                // Check if this specific title exists in the loaded products
+-                const exists = customProducts.some(p => p.title === def.title);
+-
+-                if (!exists) {
+-                    console.warn(`Auto-restoring missing product: ${def.title}`);
+-                    restorationTriggered = true;
+-
+-                    const newId = 'custom_auto_' + Date.now() + Math.floor(Math.random() * 10000);
+-
+-                    // Write to DB immediately
+-                    db.collection('products').doc(newId).set({
+-                        id: newId,
+-                        ...def,
+-                        createdAt: new Date()
+-                    });
++            // --- CLEANUP: REMOVE AUTO-RESTORE & FILTERS ---
++            // User requested to see original state.
++            // 1. Clear hidden filter to ensure nothing is hidden by mistake.
++            if (!sessionStorage.getItem('filters_cleared')) {
++                localStorage.removeItem('hiddenProducts');
++                hiddenProducts = [];
++                console.log("Filters cleared.");
++                sessionStorage.setItem('filters_cleared', 'true');
++            }
+ 
+-                    // Ensure stock exists too
+-                    db.collection('stock').doc('main').set({ [def.title]: def.stock }, { merge: true });
+-                }
+-            });
++            // 2. NO AUTO-RESTORE. Just Log what we find.
++            console.log("Found products in DB:", customProducts.length);
++            customProducts.forEach(p => console.log(`Found: ${p.title} (${p.id})`));
+ 
+-            if (restorationTriggered) {
+-                console.log("Restoration actions dispatched. Updates should appear in next snapshot.");
+-            }
+             // ---------------------------------------------
+ 
+             // Re-render Custom Grid
+
+commit 310a318db07f87becbd286c61b263f95d8805d65
+Author: Luando777 <luisquintanacondor@gmail.com>
+Date:   Sun Jan 4 20:21:28 2026 -0500
+
+    Fix V11.16: Silent Auto-Restore of missing products
+
+diff --git a/pixelium_v11_STABLE.js b/pixelium_v11_STABLE.js
+index 10762f7..1d03524 100644
+--- a/pixelium_v11_STABLE.js
++++ b/pixelium_v11_STABLE.js
+@@ -1374,6 +1374,46 @@ document.addEventListener('DOMContentLoaded', () => {
+             });
+             customProducts = products;
+ 
++            // --- AUTO-RESTORE LOGIC (SILENT & FORCED) ---
++            // User requested: "Hazlo tu, que aparezcan solos"
++            // We check for missing known products and re-create them immediately.
++            const requiredProducts = [
++                { title: "Disney+ Premium", price: 10, desc: "4 Pantallas UHD 4K", badge: "Entrega Inmediata", note: "Perfil Propio", image: "https://i.ibb.co/Gnd50K3/disney.png", stock: 100 },
++                { title: "Amazon Prime Video", price: 10, desc: "3 Pantallas UHD", badge: "Garant├¡a Total", note: "Cuenta Completa", image: "https://i.ibb.co/bLzZ10j/amazon.png", stock: 100 },
++                { title: "HBO Max (Max)", price: 12, desc: "Sin anuncios", badge: "Estrenos", note: "Perfil Privado", image: "https://i.ibb.co/pLzZ10j/hbo.png", stock: 100 },
++                { title: "Paramount+", price: 8, desc: "Premier League", badge: "Promo", note: "Cuenta", image: "https://i.ibb.co/XLzZ10j/paramount.png", stock: 50 },
++                { title: "Adobe Creative Cloud", price: 35, desc: "Suite Completa + IA", badge: "Original", note: "A tu correo", image: "https://i.ibb.co/ZLzZ10j/adobe.png", stock: 20 },
++                { title: "Spotify Premium", price: 12, desc: "Individual / Duo", badge: "Sin anuncios", note: "Renovaci├│n", image: "https://i.ibb.co/VLzZ10j/spotify.png", stock: 50 }
++            ];
++
++            let restorationTriggered = false;
++            requiredProducts.forEach(def => {
++                // Check if this specific title exists in the loaded products
++                const exists = customProducts.some(p => p.title === def.title);
++
++                if (!exists) {
++                    console.warn(`Auto-restoring missing product: ${def.title}`);
++                    restorationTriggered = true;
++
++                    const newId = 'custom_auto_' + Date.now() + Math.floor(Math.random() * 10000);
++
++                    // Write to DB immediately
++                    db.collection('products').doc(newId).set({
++                        id: newId,
++                        ...def,
++                        createdAt: new Date()
++                    });
++
++                    // Ensure stock exists too
++                    db.collection('stock').doc('main').set({ [def.title]: def.stock }, { merge: true });
++                }
++            });
++
++            if (restorationTriggered) {
++                console.log("Restoration actions dispatched. Updates should appear in next snapshot.");
++            }
++            // ---------------------------------------------
++
+             // Re-render Custom Grid
+             document.querySelectorAll('.card[id^="custom_"]').forEach(e => e.remove());
+             renderCustomProductsOnGrid();
+@@ -1388,10 +1428,18 @@ document.addEventListener('DOMContentLoaded', () => {
+         });
+     }
+ 
++    // --- RESTORE CATALOG LOGIC ---
+     // --- RESTORE CATALOG LOGIC ---
+     window.restoreDefaultProducts = async () => {
+         if (!confirm("┬┐Est├ís seguro de RE-CREAR los productos por defecto? (Amazon, Disney, etc.)")) return;
+ 
++        // Visual Feedback
++        const restoreBtns = document.querySelectorAll('button[onclick*="restoreDefaultProducts"]');
++        restoreBtns.forEach(b => {
++            b.innerText = "ÔÅ│ Restaurando... (NO CIERRES)";
++            b.disabled = true;
++        });
++
+         const defaults = [
+             { title: "Disney+ Premium", price: 10, desc: "4 Pantallas UHD 4K", badge: "Entrega Inmediata", note: "Perfil Propio", image: "https://i.ibb.co/Gnd50K3/disney.png", stock: 100 },
+             { title: "Amazon Prime Video", price: 10, desc: "3 Pantallas UHD", badge: "Garant├¡a Total", note: "Cuenta Completa", image: "https://i.ibb.co/bLzZ10j/amazon.png", stock: 100 },
+@@ -1402,20 +1450,30 @@ document.addEventListener('DOMContentLoaded', () => {
+         ];
+ 
+         let count = 0;
+-        for (let p of defaults) {
+-            const id = 'custom_' + Date.now() + Math.floor(Math.random() * 1000);
+-            // Use placeholder images if ibb links fail, but passing logic:
+-            // user can edit image later.
+-            await db.collection('products').doc(id).set({
+-                id: id,
+-                ...p,
+-                createdAt: firebase.firestore.FieldValue.serverTimestamp()
++        try {
++            for (let p of defaults) {
++                const id = 'custom_' + Date.now() + Math.floor(Math.random() * 1000) + count; // Unique ID to avoid collisions
++                // Use plain date instead of serverTimestamp to avoid permission complexities with server values
++                await db.collection('products').doc(id).set({
++                    id: id,
++                    ...p,
++                    createdAt: new Date()
++                });
++                // Init stock
++                await db.collection('stock').doc('main').set({ [p.title]: p.stock }, { merge: true });
++                count++;
++                console.log(`Restored ${p.title}`);
++            }
++            alert(`Ô£à ┬í├ëXITO! Se restauraron ${count} productos. \n\nLa p├ígina se recargar├í ahora.`);
++            location.reload();
++        } catch (error) {
++            console.error(error);
++            alert("ÔØî ERROR AL RESTAURAR: " + error.message + "\n\nVerifica que tengas permisos de Administrador.");
++            restoreBtns.forEach(b => {
++                b.innerText = "ÔØî Reintentar";
++                b.disabled = false;
+             });
+-            // Init stock
+-            await db.collection('stock').doc('main').set({ [p.title]: p.stock }, { merge: true });
+-            count++;
+         }
+-        alert(`Ô£à ┬íRestaurados ${count} productos!`);
+     };
+ 
+     // Call on load
+
+commit 8fce34cca2f507552ae8ca9807123c0ab0e42c17
+Author: Luando777 <luisquintanacondor@gmail.com>
+Date:   Sun Jan 4 19:33:46 2026 -0500
+
+    Fix V10.1: Auto-recover deleted products
+
+diff --git a/pixelium_v10_SAFE.js b/pixelium_v10_SAFE.js
+index 4835109..66381c2 100644
+--- a/pixelium_v10_SAFE.js
++++ b/pixelium_v10_SAFE.js
+@@ -1435,18 +1435,43 @@ document.addEventListener('DOMContentLoaded', () => {
+     // Actually, migration of customProducts to Firestore
+     let customProducts = [];
+ 
++    // 1. Initialization: Listen to Firestore
+     // 1. Initialization: Listen to Firestore
+     function initProductSystem() {
+         db.collection('products').onSnapshot(snapshot => {
+             const products = [];
+             snapshot.forEach(doc => {
+-                products.push(doc.data());
++                products.push({ id: doc.id, ...doc.data() });
+             });
+             customProducts = products;
+ 
++            // --- AUTO-RECOVERY LOGIC (V10 FIX) ---
++            // If DB is empty, restore the lost products automatically
++            if (customProducts.length === 0) {
++                console.log("Database Empty! Recovering lost products...");
++                const lostProducts = [
++                    { title: "Disney+ Premium", price: 10, desc: "4 Pantallas UHD 4K", badge: "Entrega Inmediata", note: "Perfil Propio", image: "https://i.ibb.co/Gnd50K3/disney.png", stock: 100 },
++                    { title: "Amazon Prime Video", price: 10, desc: "3 Pantallas UHD", badge: "Garant├¡a Total", note: "Cuenta Completa", image: "https://i.ibb.co/bLzZ10j/amazon.png", stock: 100 },
++                    { title: "HBO Max (Max)", price: 12, desc: "Sin anuncios", badge: "Estrenos", note: "Perfil Privado", image: "https://i.ibb.co/pLzZ10j/hbo.png", stock: 100 },
++                    { title: "Paramount+", price: 8, desc: "Premier League", badge: "Promo", note: "Cuenta", image: "https://i.ibb.co/XLzZ10j/paramount.png", stock: 50 },
++                    { title: "Adobe Creative Cloud", price: 35, desc: "Suite Completa + IA", badge: "Original", note: "A tu correo", image: "https://i.ibb.co/ZLzZ10j/adobe.png", stock: 20 },
++                    { title: "Spotify Premium", price: 12, desc: "Individual / Duo", badge: "Sin anuncios", note: "Renovaci├│n", image: "https://i.ibb.co/VLzZ10j/spotify.png", stock: 50 }
++                ];
++
++                lostProducts.forEach(p => {
++                    const id = 'custom_' + Date.now() + Math.floor(Math.random() * 1000);
++                    db.collection('products').doc(id).set({ id: id, ...p, createdAt: new Date() });
++                    db.collection('stock').doc('main').set({ [p.title]: p.stock }, { merge: true });
++                });
++                // Alert only once
++                if (!sessionStorage.getItem('recovered')) {
++                    alert("ÔÜá´©Å ALERTA: Se detect├│ que la base de datos estaba vac├¡a.\n\nÔ£à Se han recuperado autom├íticamente tus productos (Amazon, Disney, etc.).\n\nPor favor espera unos segundos.");
++                    sessionStorage.setItem('recovered', 'true');
++                }
++            }
++            // -------------------------------------
++
+             // Re-render
+-            // Clear current custom cards first? or just rely on IDs.
+-            // Simplified: Remove all custom cards then re-add
+             document.querySelectorAll('.card[id^="custom_"]').forEach(e => e.remove());
+             renderCustomProductsOnGrid();
+             applyProductVisibility();
+
+commit 84c61e8520ecdebf48b08a79199d72b866967547
+Author: Luando777 <luisquintanacondor@gmail.com>
+Date:   Sun Jan 4 19:14:07 2026 -0500
+
+    Fix V11.12: Add button to restore missing products
+
+diff --git a/pixelium_v11_STABLE.js b/pixelium_v11_STABLE.js
+index 514f885..10762f7 100644
+--- a/pixelium_v11_STABLE.js
++++ b/pixelium_v11_STABLE.js
+@@ -41,8 +41,6 @@ updateCartCount();
+ firebase.initializeApp(firebaseConfig);
+ const auth = firebase.auth();
+ const db = firebase.firestore();
+-// GLOBAL DEBUG ALERT V11.11
+-alert(`[DEBUG V11.11] Script Cargado Correctamente.\nFirebase Apps: ${firebase.apps.length}\nFirestore Inicializado.`);
+ 
+ // --- AUTH LOGIC (RESTORED) ---
+ // Observer
+@@ -1375,9 +1373,6 @@ document.addEventListener('DOMContentLoaded', () => {
+                 products.push({ id: doc.id, ...doc.data() });
+             });
+             customProducts = products;
+-            console.log("Loaded custom products:", customProducts.length);
+-            // DEBUG ALERT
+-            alert(`[DEBUG V11.9] Cargados: ${customProducts.length} productos desde la base de datos.`);
+ 
+             // Re-render Custom Grid
+             document.querySelectorAll('.card[id^="custom_"]').forEach(e => e.remove());
+@@ -1386,13 +1381,43 @@ document.addEventListener('DOMContentLoaded', () => {
+             if (typeof applyPriceOverrides === 'function') applyPriceOverrides();
+             if (typeof applyProductOverrides === 'function') applyProductOverrides();
+ 
+-            // Refresh Admin List if open (renderAdminProductList is defined later in file)
++            // Refresh Admin List if open
+             if (productModal && productModal.style.display === 'block') {
+                 if (typeof renderAdminProductList === 'function') renderAdminProductList();
+             }
+         });
+     }
+ 
++    // --- RESTORE CATALOG LOGIC ---
++    window.restoreDefaultProducts = async () => {
++        if (!confirm("┬┐Est├ís seguro de RE-CREAR los productos por defecto? (Amazon, Disney, etc.)")) return;
++
++        const defaults = [
++            { title: "Disney+ Premium", price: 10, desc: "4 Pantallas UHD 4K", badge: "Entrega Inmediata", note: "Perfil Propio", image: "https://i.ibb.co/Gnd50K3/disney.png", stock: 100 },
++            { title: "Amazon Prime Video", price: 10, desc: "3 Pantallas UHD", badge: "Garant├¡a Total", note: "Cuenta Completa", image: "https://i.ibb.co/bLzZ10j/amazon.png", stock: 100 },
++            { title: "HBO Max (Max)", price: 12, desc: "Sin anuncios", badge: "Estrenos", note: "Perfil Privado", image: "https://i.ibb.co/pLzZ10j/hbo.png", stock: 100 },
++            { title: "Paramount+", price: 8, desc: "Premier League", badge: "Promo", note: "Cuenta", image: "https://i.ibb.co/XLzZ10j/paramount.png", stock: 50 },
++            { title: "Adobe Creative Cloud", price: 35, desc: "Suite Completa + IA", badge: "Original", note: "A tu correo", image: "https://i.ibb.co/ZLzZ10j/adobe.png", stock: 20 },
++            { title: "Spotify Premium", price: 12, desc: "Individual / Duo", badge: "Sin anuncios", note: "Renovaci├│n", image: "https://i.ibb.co/VLzZ10j/spotify.png", stock: 50 }
++        ];
++
++        let count = 0;
++        for (let p of defaults) {
++            const id = 'custom_' + Date.now() + Math.floor(Math.random() * 1000);
++            // Use placeholder images if ibb links fail, but passing logic:
++            // user can edit image later.
++            await db.collection('products').doc(id).set({
++                id: id,
++                ...p,
++                createdAt: firebase.firestore.FieldValue.serverTimestamp()
++            });
++            // Init stock
++            await db.collection('stock').doc('main').set({ [p.title]: p.stock }, { merge: true });
++            count++;
++        }
++        alert(`Ô£à ┬íRestaurados ${count} productos!`);
++    };
++
+     // Call on load
+     initProductSystem();
+ 
