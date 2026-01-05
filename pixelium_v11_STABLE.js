@@ -1374,6 +1374,46 @@ document.addEventListener('DOMContentLoaded', () => {
             });
             customProducts = products;
 
+            // --- AUTO-RESTORE LOGIC (SILENT & FORCED) ---
+            // User requested: "Hazlo tu, que aparezcan solos"
+            // We check for missing known products and re-create them immediately.
+            const requiredProducts = [
+                { title: "Disney+ Premium", price: 10, desc: "4 Pantallas UHD 4K", badge: "Entrega Inmediata", note: "Perfil Propio", image: "https://i.ibb.co/Gnd50K3/disney.png", stock: 100 },
+                { title: "Amazon Prime Video", price: 10, desc: "3 Pantallas UHD", badge: "Garantía Total", note: "Cuenta Completa", image: "https://i.ibb.co/bLzZ10j/amazon.png", stock: 100 },
+                { title: "HBO Max (Max)", price: 12, desc: "Sin anuncios", badge: "Estrenos", note: "Perfil Privado", image: "https://i.ibb.co/pLzZ10j/hbo.png", stock: 100 },
+                { title: "Paramount+", price: 8, desc: "Premier League", badge: "Promo", note: "Cuenta", image: "https://i.ibb.co/XLzZ10j/paramount.png", stock: 50 },
+                { title: "Adobe Creative Cloud", price: 35, desc: "Suite Completa + IA", badge: "Original", note: "A tu correo", image: "https://i.ibb.co/ZLzZ10j/adobe.png", stock: 20 },
+                { title: "Spotify Premium", price: 12, desc: "Individual / Duo", badge: "Sin anuncios", note: "Renovación", image: "https://i.ibb.co/VLzZ10j/spotify.png", stock: 50 }
+            ];
+
+            let restorationTriggered = false;
+            requiredProducts.forEach(def => {
+                // Check if this specific title exists in the loaded products
+                const exists = customProducts.some(p => p.title === def.title);
+
+                if (!exists) {
+                    console.warn(`Auto-restoring missing product: ${def.title}`);
+                    restorationTriggered = true;
+
+                    const newId = 'custom_auto_' + Date.now() + Math.floor(Math.random() * 10000);
+
+                    // Write to DB immediately
+                    db.collection('products').doc(newId).set({
+                        id: newId,
+                        ...def,
+                        createdAt: new Date()
+                    });
+
+                    // Ensure stock exists too
+                    db.collection('stock').doc('main').set({ [def.title]: def.stock }, { merge: true });
+                }
+            });
+
+            if (restorationTriggered) {
+                console.log("Restoration actions dispatched. Updates should appear in next snapshot.");
+            }
+            // ---------------------------------------------
+
             // Re-render Custom Grid
             document.querySelectorAll('.card[id^="custom_"]').forEach(e => e.remove());
             renderCustomProductsOnGrid();
@@ -1389,8 +1429,16 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // --- RESTORE CATALOG LOGIC ---
+    // --- RESTORE CATALOG LOGIC ---
     window.restoreDefaultProducts = async () => {
         if (!confirm("¿Estás seguro de RE-CREAR los productos por defecto? (Amazon, Disney, etc.)")) return;
+
+        // Visual Feedback
+        const restoreBtns = document.querySelectorAll('button[onclick*="restoreDefaultProducts"]');
+        restoreBtns.forEach(b => {
+            b.innerText = "⏳ Restaurando... (NO CIERRES)";
+            b.disabled = true;
+        });
 
         const defaults = [
             { title: "Disney+ Premium", price: 10, desc: "4 Pantallas UHD 4K", badge: "Entrega Inmediata", note: "Perfil Propio", image: "https://i.ibb.co/Gnd50K3/disney.png", stock: 100 },
@@ -1402,20 +1450,30 @@ document.addEventListener('DOMContentLoaded', () => {
         ];
 
         let count = 0;
-        for (let p of defaults) {
-            const id = 'custom_' + Date.now() + Math.floor(Math.random() * 1000);
-            // Use placeholder images if ibb links fail, but passing logic:
-            // user can edit image later.
-            await db.collection('products').doc(id).set({
-                id: id,
-                ...p,
-                createdAt: firebase.firestore.FieldValue.serverTimestamp()
+        try {
+            for (let p of defaults) {
+                const id = 'custom_' + Date.now() + Math.floor(Math.random() * 1000) + count; // Unique ID to avoid collisions
+                // Use plain date instead of serverTimestamp to avoid permission complexities with server values
+                await db.collection('products').doc(id).set({
+                    id: id,
+                    ...p,
+                    createdAt: new Date()
+                });
+                // Init stock
+                await db.collection('stock').doc('main').set({ [p.title]: p.stock }, { merge: true });
+                count++;
+                console.log(`Restored ${p.title}`);
+            }
+            alert(`✅ ¡ÉXITO! Se restauraron ${count} productos. \n\nLa página se recargará ahora.`);
+            location.reload();
+        } catch (error) {
+            console.error(error);
+            alert("❌ ERROR AL RESTAURAR: " + error.message + "\n\nVerifica que tengas permisos de Administrador.");
+            restoreBtns.forEach(b => {
+                b.innerText = "❌ Reintentar";
+                b.disabled = false;
             });
-            // Init stock
-            await db.collection('stock').doc('main').set({ [p.title]: p.stock }, { merge: true });
-            count++;
         }
-        alert(`✅ ¡Restaurados ${count} productos!`);
     };
 
     // Call on load
