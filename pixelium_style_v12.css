@@ -702,7 +702,20 @@ body {
     max-height: 85vh;
     overflow-y: auto;
     position: relative;
+    /* CRITICAL FOR CLOSE BUTTON */
     animation: modalPop 0.3s ease-out;
+}
+
+.modal-content h2 {
+    text-align: center;
+    margin-top: 0;
+    padding-right: 40px;
+    /* Space for close button */
+    font-size: 1.5rem;
+    color: var(--neon-cyan);
+    border-bottom: 1px solid var(--glass-border);
+    padding-bottom: 15px;
+    margin-bottom: 20px;
 }
 
 @keyframes modalPop {
@@ -725,11 +738,14 @@ body {
     position: absolute;
     top: 15px;
     right: 20px;
-    color: #aaa;
-    font-size: 28px;
+    color: #fff;
+    /* High contrast */
+    font-size: 32px;
+    /* Bigger */
     font-weight: bold;
     cursor: pointer;
     line-height: 1;
+    z-index: 10;
 }
 
 .close-modal:hover,
@@ -801,6 +817,8 @@ body {
     border: 2px solid var(--neon-cyan);
     border-radius: 50%;
     display: flex;
+    z-index: 9999 !important;
+    /* Force Top */
     align-items: center;
     justify-content: center;
     cursor: pointer;

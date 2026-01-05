@@ -1460,8 +1460,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 let recoveredCount = 0;
 
                 for (const [key, stockVal] of Object.entries(stockState)) {
-                    // detailed check: if key is not ignored and not in existingTitles
-                    if (!ignoredKeys.includes(key) && !existingTitles.includes(key)) {
+                    // detailed check: if key is valid (not null/undefined), not ignored, and not already in products
+                    if (key && key !== 'null' && key !== 'undefined' && !ignoredKeys.includes(key) && !existingTitles.includes(key)) {
                         console.log("Found orphan stock key: ", key, ". Recovering product...");
 
                         const id = 'custom_' + Date.now() + Math.floor(Math.random() * 10000);
@@ -1484,8 +1484,17 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
 
                 if (recoveredCount > 0) {
-                    alert(`✅ RECUPERACIÓN ÉXITOSA: Se encontraron ${recoveredCount} productos perdidos en el stock (Disney, HBO, etc)...\n\nSe han restaurado al catálogo.`);
+                    console.log(`✅ RECUPERACIÓN ÉXITOSA: ${recoveredCount} productos restaurados.`);
+                    // alert(`✅ RECUPERACIÓN ÉXITOSA...`); // Disabled by user request
                     location.reload();
+                }
+
+                // --- ONE-TIME CLEANUP: DELETE "NULL" PRODUCT ---
+                const nullProd = customProducts.find(p => p.title === 'null' || p.title === 'undefined');
+                if (nullProd) {
+                    console.log("Deleting ghost product: ", nullProd.id);
+                    db.collection('products').doc(nullProd.id).delete();
+                    setTimeout(() => location.reload(), 1000);
                 }
             }
             // -------------------------------------
