@@ -1499,6 +1499,12 @@ document.addEventListener('DOMContentLoaded', () => {
             if (productModal.style.display === 'block') {
                 renderAdminProductList();
             }
+        }, (error) => {
+            console.error("Error products listener:", error);
+            // ONLY ALERT IF PERMISSION DENIED
+            if (error.code === 'permission-denied') {
+                alert("⛔ ¡ALERTA CRÍTICA! ⛔\n\nTu base de datos (Firebase) bloqueó el acceso.\n\nRAZÓN: 'Missing or insufficient permissions'.\n\nSOLUCIÓN: Tus reglas de seguridad expiraron. Debes ir a Firebase Console y cambiarlas a 'allow read, write: if true;' o actualizar la fecha.");
+            }
         });
     }
 
