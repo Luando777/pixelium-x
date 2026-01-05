@@ -41,8 +41,6 @@ updateCartCount();
 firebase.initializeApp(firebaseConfig);
 const auth = firebase.auth();
 const db = firebase.firestore();
-// GLOBAL DEBUG ALERT V11.11
-alert(`[DEBUG V11.11] Script Cargado Correctamente.\nFirebase Apps: ${firebase.apps.length}\nFirestore Inicializado.`);
 
 // --- AUTH LOGIC (RESTORED) ---
 // Observer
@@ -1375,9 +1373,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 products.push({ id: doc.id, ...doc.data() });
             });
             customProducts = products;
-            console.log("Loaded custom products:", customProducts.length);
-            // DEBUG ALERT
-            alert(`[DEBUG V11.9] Cargados: ${customProducts.length} productos desde la base de datos.`);
 
             // Re-render Custom Grid
             document.querySelectorAll('.card[id^="custom_"]').forEach(e => e.remove());
@@ -1386,12 +1381,42 @@ document.addEventListener('DOMContentLoaded', () => {
             if (typeof applyPriceOverrides === 'function') applyPriceOverrides();
             if (typeof applyProductOverrides === 'function') applyProductOverrides();
 
-            // Refresh Admin List if open (renderAdminProductList is defined later in file)
+            // Refresh Admin List if open
             if (productModal && productModal.style.display === 'block') {
                 if (typeof renderAdminProductList === 'function') renderAdminProductList();
             }
         });
     }
+
+    // --- RESTORE CATALOG LOGIC ---
+    window.restoreDefaultProducts = async () => {
+        if (!confirm("¿Estás seguro de RE-CREAR los productos por defecto? (Amazon, Disney, etc.)")) return;
+
+        const defaults = [
+            { title: "Disney+ Premium", price: 10, desc: "4 Pantallas UHD 4K", badge: "Entrega Inmediata", note: "Perfil Propio", image: "https://i.ibb.co/Gnd50K3/disney.png", stock: 100 },
+            { title: "Amazon Prime Video", price: 10, desc: "3 Pantallas UHD", badge: "Garantía Total", note: "Cuenta Completa", image: "https://i.ibb.co/bLzZ10j/amazon.png", stock: 100 },
+            { title: "HBO Max (Max)", price: 12, desc: "Sin anuncios", badge: "Estrenos", note: "Perfil Privado", image: "https://i.ibb.co/pLzZ10j/hbo.png", stock: 100 },
+            { title: "Paramount+", price: 8, desc: "Premier League", badge: "Promo", note: "Cuenta", image: "https://i.ibb.co/XLzZ10j/paramount.png", stock: 50 },
+            { title: "Adobe Creative Cloud", price: 35, desc: "Suite Completa + IA", badge: "Original", note: "A tu correo", image: "https://i.ibb.co/ZLzZ10j/adobe.png", stock: 20 },
+            { title: "Spotify Premium", price: 12, desc: "Individual / Duo", badge: "Sin anuncios", note: "Renovación", image: "https://i.ibb.co/VLzZ10j/spotify.png", stock: 50 }
+        ];
+
+        let count = 0;
+        for (let p of defaults) {
+            const id = 'custom_' + Date.now() + Math.floor(Math.random() * 1000);
+            // Use placeholder images if ibb links fail, but passing logic:
+            // user can edit image later.
+            await db.collection('products').doc(id).set({
+                id: id,
+                ...p,
+                createdAt: firebase.firestore.FieldValue.serverTimestamp()
+            });
+            // Init stock
+            await db.collection('stock').doc('main').set({ [p.title]: p.stock }, { merge: true });
+            count++;
+        }
+        alert(`✅ ¡Restaurados ${count} productos!`);
+    };
 
     // Call on load
     initProductSystem();
