@@ -1722,238 +1722,239 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     };
     // Braces fixed
-};
+    // Brace removed
 
-window.uploadRepairImage = (index, prodId) => {
-    const user = firebase.auth().currentUser;
-    if (!user) {
-        alert("⚠️ Error: No has iniciado sesión.");
-        return;
-    }
 
-    const fileInput = document.getElementById(`repair-file-${index}`);
-    const file = fileInput.files[0];
-    if (!file) return;
+    window.uploadRepairImage = (index, prodId) => {
+        const user = firebase.auth().currentUser;
+        if (!user) {
+            alert("⚠️ Error: No has iniciado sesión.");
+            return;
+        }
 
-    const btn = fileInput.nextElementSibling;
-    const originalText = btn.innerText;
-    btn.innerText = "⏳ Procesando...";
-    btn.disabled = true;
+        const fileInput = document.getElementById(`repair-file-${index}`);
+        const file = fileInput.files[0];
+        if (!file) return;
 
-    // V10 Logic: Canvas Resize + Base64 -> Firestore Direct
-    const reader = new FileReader();
-    reader.onload = function (e) {
-        const img = new Image();
-        img.onload = function () {
-            const canvas = document.createElement('canvas');
-            const ctx = canvas.getContext('2d');
+        const btn = fileInput.nextElementSibling;
+        const originalText = btn.innerText;
+        btn.innerText = "⏳ Procesando...";
+        btn.disabled = true;
 
-            // Resize logic (Max 600px)
-            const MAX_WIDTH = 600;
-            const MAX_HEIGHT = 600;
-            let width = img.width;
-            let height = img.height;
+        // V10 Logic: Canvas Resize + Base64 -> Firestore Direct
+        const reader = new FileReader();
+        reader.onload = function (e) {
+            const img = new Image();
+            img.onload = function () {
+                const canvas = document.createElement('canvas');
+                const ctx = canvas.getContext('2d');
 
-            if (width > height) {
-                if (width > MAX_WIDTH) {
-                    height *= MAX_WIDTH / width;
-                    width = MAX_WIDTH;
+                // Resize logic (Max 600px)
+                const MAX_WIDTH = 600;
+                const MAX_HEIGHT = 600;
+                let width = img.width;
+                let height = img.height;
+
+                if (width > height) {
+                    if (width > MAX_WIDTH) {
+                        height *= MAX_WIDTH / width;
+                        width = MAX_WIDTH;
+                    }
+                } else {
+                    if (height > MAX_HEIGHT) {
+                        width *= MAX_HEIGHT / height;
+                        height = MAX_HEIGHT;
+                    }
                 }
-            } else {
-                if (height > MAX_HEIGHT) {
-                    width *= MAX_HEIGHT / height;
-                    height = MAX_HEIGHT;
+
+                canvas.width = width;
+                canvas.height = height;
+                ctx.drawImage(img, 0, 0, width, height);
+
+                const dataUrl = canvas.toDataURL('image/jpeg', 0.7);
+
+                if (dataUrl.length > 800000) {
+                    alert("❌ Imagen muy pesada/compleja. Usa una más simple.");
+                    btn.innerText = "❌ Muy pesada";
+                    setTimeout(() => { btn.innerText = originalText; btn.disabled = false; }, 2000);
+                    return;
                 }
-            }
 
-            canvas.width = width;
-            canvas.height = height;
-            ctx.drawImage(img, 0, 0, width, height);
+                btn.innerText = "⏳ Guardando (V10)...";
 
-            const dataUrl = canvas.toDataURL('image/jpeg', 0.7);
-
-            if (dataUrl.length > 800000) {
-                alert("❌ Imagen muy pesada/compleja. Usa una más simple.");
-                btn.innerText = "❌ Muy pesada";
-                setTimeout(() => { btn.innerText = originalText; btn.disabled = false; }, 2000);
-                return;
-            }
-
-            btn.innerText = "⏳ Guardando (V10)...";
-
-            db.collection('products').doc(prodId).update({ image: dataUrl })
-                .then(() => {
-                    alert("✅ ¡ÉXITO V10! Imagen reparada.");
-                    fileInput.value = '';
-                    btn.innerText = "✅ Listo";
-                    setTimeout(() => { btn.innerText = originalText; btn.disabled = false; }, 2000);
-                })
-                .catch((error) => {
-                    console.error("Error updating document: ", error);
-                    alert("❌ Error: " + error.message);
-                    btn.innerText = "❌ Error";
-                    setTimeout(() => { btn.innerText = originalText; btn.disabled = false; }, 2000);
-                });
+                db.collection('products').doc(prodId).update({ image: dataUrl })
+                    .then(() => {
+                        alert("✅ ¡ÉXITO V10! Imagen reparada.");
+                        fileInput.value = '';
+                        btn.innerText = "✅ Listo";
+                        setTimeout(() => { btn.innerText = originalText; btn.disabled = false; }, 2000);
+                    })
+                    .catch((error) => {
+                        console.error("Error updating document: ", error);
+                        alert("❌ Error: " + error.message);
+                        btn.innerText = "❌ Error";
+                        setTimeout(() => { btn.innerText = originalText; btn.disabled = false; }, 2000);
+                    });
+            };
+            img.src = e.target.result;
         };
-        img.src = e.target.result;
+        reader.readAsDataURL(file);
     };
-    reader.readAsDataURL(file);
-};
 
-window.toggleProductVisibility = (title) => {
-    if (hiddenProducts.includes(title)) {
-        hiddenProducts = hiddenProducts.filter(t => t !== title);
-    } else {
-        hiddenProducts.push(title);
-    }
-    localStorage.setItem('hiddenProducts', JSON.stringify(hiddenProducts));
-    renderAdminProductList();
-    applyProductVisibility();
-};
-
-window.deleteCustomProduct = async (index) => {
-    if (!confirm("¿Eliminar este producto permanentemente?")) return;
-    const prod = customProducts[index];
-    if (prod) {
-        try {
-            await db.collection('products').doc(prod.id).delete();
-            alert("Producto eliminado de la nube.");
-        } catch (err) {
-            alert("Error al eliminar: " + err.message);
-        }
-    }
-};
-
-// --- PRICE MANAGER LOGIC (SEPARATE SYSTEM) ---
-const priceModal = document.getElementById('price-modal');
-const btnPricesAdmin = document.getElementById('btn-prices-admin');
-const closePriceModalBtn = document.querySelector('.close-price-modal');
-const btnSavePrices = document.getElementById('btn-save-prices');
-const priceAdminList = document.getElementById('price-admin-list');
-
-// State
-// Load from Firestore (Real-time)
-let priceState = {};
-
-// 1. Initialization: Listen to Prices
-function initPriceSystem() {
-    db.collection('prices').doc('main').onSnapshot(doc => {
-        if (doc.exists) {
-            priceState = doc.data();
-            applyPriceOverrides();
+    window.toggleProductVisibility = (title) => {
+        if (hiddenProducts.includes(title)) {
+            hiddenProducts = hiddenProducts.filter(t => t !== title);
         } else {
-            db.collection('prices').doc('main').set({});
+            hiddenProducts.push(title);
         }
-    });
-}
+        localStorage.setItem('hiddenProducts', JSON.stringify(hiddenProducts));
+        renderAdminProductList();
+        applyProductVisibility();
+    };
 
-// Call on load
-initPriceSystem();
-
-if (btnPricesAdmin) {
-    btnPricesAdmin.addEventListener('click', () => {
-        priceModal.style.display = 'block';
-        renderPriceManager();
-    });
-}
-
-if (closePriceModalBtn) {
-    closePriceModalBtn.addEventListener('click', () => {
-        priceModal.style.display = 'none';
-        applyPriceOverrides(); // Re-apply just in case
-    });
-}
-
-// --- LOGIC: RENDER ADMIN LIST ---
-function renderPriceManager() {
-    if (!priceAdminList) return;
-    priceAdminList.innerHTML = '';
-
-    // Scan all cards (Hardcoded + Custom)
-    document.querySelectorAll('.services-grid .card').forEach(card => {
-        const title = card.querySelector('h3').innerText.trim();
-        // Get current price from STATE or parse from DOM if not in state
-        let currentPrice = priceState[title];
-
-        if (!currentPrice) {
-            // Extract from DOM "S/15.00" -> 15.00
-            const priceTag = card.querySelector('.price-tag');
-            if (priceTag) {
-                const text = priceTag.childNodes[0].nodeValue.trim(); // "S/15.00"
-                currentPrice = parseFloat(text.replace(/[^\d.]/g, ''));
-            } else {
-                currentPrice = 0;
+    window.deleteCustomProduct = async (index) => {
+        if (!confirm("¿Eliminar este producto permanentemente?")) return;
+        const prod = customProducts[index];
+        if (prod) {
+            try {
+                await db.collection('products').doc(prod.id).delete();
+                alert("Producto eliminado de la nube.");
+            } catch (err) {
+                alert("Error al eliminar: " + err.message);
             }
         }
+    };
 
-        const row = document.createElement('div');
-        row.className = 'stock-item-row';
-        row.innerHTML = `
+    // --- PRICE MANAGER LOGIC (SEPARATE SYSTEM) ---
+    const priceModal = document.getElementById('price-modal');
+    const btnPricesAdmin = document.getElementById('btn-prices-admin');
+    const closePriceModalBtn = document.querySelector('.close-price-modal');
+    const btnSavePrices = document.getElementById('btn-save-prices');
+    const priceAdminList = document.getElementById('price-admin-list');
+
+    // State
+    // Load from Firestore (Real-time)
+    let priceState = {};
+
+    // 1. Initialization: Listen to Prices
+    function initPriceSystem() {
+        db.collection('prices').doc('main').onSnapshot(doc => {
+            if (doc.exists) {
+                priceState = doc.data();
+                applyPriceOverrides();
+            } else {
+                db.collection('prices').doc('main').set({});
+            }
+        });
+    }
+
+    // Call on load
+    initPriceSystem();
+
+    if (btnPricesAdmin) {
+        btnPricesAdmin.addEventListener('click', () => {
+            priceModal.style.display = 'block';
+            renderPriceManager();
+        });
+    }
+
+    if (closePriceModalBtn) {
+        closePriceModalBtn.addEventListener('click', () => {
+            priceModal.style.display = 'none';
+            applyPriceOverrides(); // Re-apply just in case
+        });
+    }
+
+    // --- LOGIC: RENDER ADMIN LIST ---
+    function renderPriceManager() {
+        if (!priceAdminList) return;
+        priceAdminList.innerHTML = '';
+
+        // Scan all cards (Hardcoded + Custom)
+        document.querySelectorAll('.services-grid .card').forEach(card => {
+            const title = card.querySelector('h3').innerText.trim();
+            // Get current price from STATE or parse from DOM if not in state
+            let currentPrice = priceState[title];
+
+            if (!currentPrice) {
+                // Extract from DOM "S/15.00" -> 15.00
+                const priceTag = card.querySelector('.price-tag');
+                if (priceTag) {
+                    const text = priceTag.childNodes[0].nodeValue.trim(); // "S/15.00"
+                    currentPrice = parseFloat(text.replace(/[^\d.]/g, ''));
+                } else {
+                    currentPrice = 0;
+                }
+            }
+
+            const row = document.createElement('div');
+            row.className = 'stock-item-row';
+            row.innerHTML = `
                 <span class="stock-item-name">${title}</span>
                 <input type="number" step="0.50" class="stock-input price-input-field"
                     data-title="${title}"
                     value="${currentPrice}">
                     `;
-        priceAdminList.appendChild(row);
-    });
-}
+            priceAdminList.appendChild(row);
+        });
+    }
 
-if (btnSavePrices) {
-    btnSavePrices.addEventListener('click', () => {
-        const inputs = document.querySelectorAll('.price-input-field');
-        const updates = {};
-        inputs.forEach(input => {
-            const title = input.getAttribute('data-title');
-            const val = parseFloat(input.value);
-            if (!isNaN(val)) {
-                updates[title] = val;
+    if (btnSavePrices) {
+        btnSavePrices.addEventListener('click', () => {
+            const inputs = document.querySelectorAll('.price-input-field');
+            const updates = {};
+            inputs.forEach(input => {
+                const title = input.getAttribute('data-title');
+                const val = parseFloat(input.value);
+                if (!isNaN(val)) {
+                    updates[title] = val;
+                }
+            });
+
+            // Save to Firestore
+            db.collection('prices').doc('main').set(updates, { merge: true })
+                .then(() => {
+                    alert("¡Precios Globales Actualizados! ☁️💰");
+                    priceModal.style.display = 'none';
+                })
+                .catch(err => alert("Error: " + err.message));
+        });
+    }
+
+    // --- LOGIC: APPLY OVERRIDES (CORE) ---
+    function applyPriceOverrides() {
+        document.querySelectorAll('.services-grid .card').forEach(card => {
+            const title = card.querySelector('h3').innerText.trim();
+
+            if (priceState[title] !== undefined) {
+                const newPrice = priceState[title];
+
+                // 1. Update Visual Text
+                const priceTag = card.querySelector('.price-tag');
+                if (priceTag) {
+                    // Keep the structural span for alt price if exists, just update text node
+                    // Easier: Just rebuild innerHTML to keep format "S/XX <span...>"
+                    // Check if there is an alt price span
+                    const altSpan = priceTag.querySelector('.price-alt');
+                    const altHtml = altSpan ? altSpan.outerHTML : '';
+                    priceTag.innerHTML = `S/${newPrice.toFixed(2)} ${altHtml}`;
+                }
+
+                // 2. Update Add to Cart Button Logic
+                const btn = card.querySelector('.btn-add');
+                if (btn) {
+                    // Remove old onclick attribute to be safe
+                    btn.removeAttribute('onclick');
+                    // Clone button to strip existing event listeners (if added via JS)
+                    // But since most are inline HTML onclick, we can just override onclick prop
+                    btn.onclick = (e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        addToCart(title, newPrice);
+                    };
+                }
             }
         });
-
-        // Save to Firestore
-        db.collection('prices').doc('main').set(updates, { merge: true })
-            .then(() => {
-                alert("¡Precios Globales Actualizados! ☁️💰");
-                priceModal.style.display = 'none';
-            })
-            .catch(err => alert("Error: " + err.message));
-    });
-}
-
-// --- LOGIC: APPLY OVERRIDES (CORE) ---
-function applyPriceOverrides() {
-    document.querySelectorAll('.services-grid .card').forEach(card => {
-        const title = card.querySelector('h3').innerText.trim();
-
-        if (priceState[title] !== undefined) {
-            const newPrice = priceState[title];
-
-            // 1. Update Visual Text
-            const priceTag = card.querySelector('.price-tag');
-            if (priceTag) {
-                // Keep the structural span for alt price if exists, just update text node
-                // Easier: Just rebuild innerHTML to keep format "S/XX <span...>"
-                // Check if there is an alt price span
-                const altSpan = priceTag.querySelector('.price-alt');
-                const altHtml = altSpan ? altSpan.outerHTML : '';
-                priceTag.innerHTML = `S/${newPrice.toFixed(2)} ${altHtml}`;
-            }
-
-            // 2. Update Add to Cart Button Logic
-            const btn = card.querySelector('.btn-add');
-            if (btn) {
-                // Remove old onclick attribute to be safe
-                btn.removeAttribute('onclick');
-                // Clone button to strip existing event listeners (if added via JS)
-                // But since most are inline HTML onclick, we can just override onclick prop
-                btn.onclick = (e) => {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    addToCart(title, newPrice);
-                };
-            }
-        }
-    });
-}
+    }
 
 }); // End of DOMContentLoaded
