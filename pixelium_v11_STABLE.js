@@ -1374,44 +1374,20 @@ document.addEventListener('DOMContentLoaded', () => {
             });
             customProducts = products;
 
-            // --- AUTO-RESTORE LOGIC (SILENT & FORCED) ---
-            // User requested: "Hazlo tu, que aparezcan solos"
-            // We check for missing known products and re-create them immediately.
-            const requiredProducts = [
-                { title: "Disney+ Premium", price: 10, desc: "4 Pantallas UHD 4K", badge: "Entrega Inmediata", note: "Perfil Propio", image: "https://i.ibb.co/Gnd50K3/disney.png", stock: 100 },
-                { title: "Amazon Prime Video", price: 10, desc: "3 Pantallas UHD", badge: "Garantía Total", note: "Cuenta Completa", image: "https://i.ibb.co/bLzZ10j/amazon.png", stock: 100 },
-                { title: "HBO Max (Max)", price: 12, desc: "Sin anuncios", badge: "Estrenos", note: "Perfil Privado", image: "https://i.ibb.co/pLzZ10j/hbo.png", stock: 100 },
-                { title: "Paramount+", price: 8, desc: "Premier League", badge: "Promo", note: "Cuenta", image: "https://i.ibb.co/XLzZ10j/paramount.png", stock: 50 },
-                { title: "Adobe Creative Cloud", price: 35, desc: "Suite Completa + IA", badge: "Original", note: "A tu correo", image: "https://i.ibb.co/ZLzZ10j/adobe.png", stock: 20 },
-                { title: "Spotify Premium", price: 12, desc: "Individual / Duo", badge: "Sin anuncios", note: "Renovación", image: "https://i.ibb.co/VLzZ10j/spotify.png", stock: 50 }
-            ];
-
-            let restorationTriggered = false;
-            requiredProducts.forEach(def => {
-                // Check if this specific title exists in the loaded products
-                const exists = customProducts.some(p => p.title === def.title);
-
-                if (!exists) {
-                    console.warn(`Auto-restoring missing product: ${def.title}`);
-                    restorationTriggered = true;
-
-                    const newId = 'custom_auto_' + Date.now() + Math.floor(Math.random() * 10000);
-
-                    // Write to DB immediately
-                    db.collection('products').doc(newId).set({
-                        id: newId,
-                        ...def,
-                        createdAt: new Date()
-                    });
-
-                    // Ensure stock exists too
-                    db.collection('stock').doc('main').set({ [def.title]: def.stock }, { merge: true });
-                }
-            });
-
-            if (restorationTriggered) {
-                console.log("Restoration actions dispatched. Updates should appear in next snapshot.");
+            // --- CLEANUP: REMOVE AUTO-RESTORE & FILTERS ---
+            // User requested to see original state.
+            // 1. Clear hidden filter to ensure nothing is hidden by mistake.
+            if (!sessionStorage.getItem('filters_cleared')) {
+                localStorage.removeItem('hiddenProducts');
+                hiddenProducts = [];
+                console.log("Filters cleared.");
+                sessionStorage.setItem('filters_cleared', 'true');
             }
+
+            // 2. NO AUTO-RESTORE. Just Log what we find.
+            console.log("Found products in DB:", customProducts.length);
+            customProducts.forEach(p => console.log(`Found: ${p.title} (${p.id})`));
+
             // ---------------------------------------------
 
             // Re-render Custom Grid
