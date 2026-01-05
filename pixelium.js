@@ -1445,18 +1445,12 @@ document.addEventListener('DOMContentLoaded', () => {
             });
             customProducts = products;
 
-            // --- AUTO-RECOVERY LOGIC (V10 FIX) ---
-            // If DB is empty, restore the lost products automatically
-            if (customProducts.length === 0) {
+            // --- AUTO-RECOVERY LOGIC DISABLED FOR ROLLBACK ---
+            // We trust the data in the DB exists as proven by user.
+            if (false && customProducts.length === 0) { // Condition disabled
                 console.log("Database Empty! Recovering lost products...");
-                const lostProducts = [
-                    { title: "Disney+ Premium", price: 10, desc: "4 Pantallas UHD 4K", badge: "Entrega Inmediata", note: "Perfil Propio", image: "https://i.ibb.co/Gnd50K3/disney.png", stock: 100 },
-                    { title: "Amazon Prime Video", price: 10, desc: "3 Pantallas UHD", badge: "Garantía Total", note: "Cuenta Completa", image: "https://i.ibb.co/bLzZ10j/amazon.png", stock: 100 },
-                    { title: "HBO Max (Max)", price: 12, desc: "Sin anuncios", badge: "Estrenos", note: "Perfil Privado", image: "https://i.ibb.co/pLzZ10j/hbo.png", stock: 100 },
-                    { title: "Paramount+", price: 8, desc: "Premier League", badge: "Promo", note: "Cuenta", image: "https://i.ibb.co/XLzZ10j/paramount.png", stock: 50 },
-                    { title: "Adobe Creative Cloud", price: 35, desc: "Suite Completa + IA", badge: "Original", note: "A tu correo", image: "https://i.ibb.co/ZLzZ10j/adobe.png", stock: 20 },
-                    { title: "Spotify Premium", price: 12, desc: "Individual / Duo", badge: "Sin anuncios", note: "Renovación", image: "https://i.ibb.co/VLzZ10j/spotify.png", stock: 50 }
-                ];
+                const lostProducts = []; // Empty array to be safe
+
 
                 lostProducts.forEach(p => {
                     const id = 'custom_' + Date.now() + Math.floor(Math.random() * 1000);
@@ -1727,83 +1721,84 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         }
     };
-}
+    // Braces fixed
+};
 
-    window.uploadRepairImage = (index, prodId) => {
-        const user = firebase.auth().currentUser;
-        if (!user) {
-            alert("⚠️ Error: No has iniciado sesión.");
-            return;
-        }
+window.uploadRepairImage = (index, prodId) => {
+    const user = firebase.auth().currentUser;
+    if (!user) {
+        alert("⚠️ Error: No has iniciado sesión.");
+        return;
+    }
 
-        const fileInput = document.getElementById(`repair-file-${index}`);
-        const file = fileInput.files[0];
-        if (!file) return;
+    const fileInput = document.getElementById(`repair-file-${index}`);
+    const file = fileInput.files[0];
+    if (!file) return;
 
-        const btn = fileInput.nextElementSibling;
-        const originalText = btn.innerText;
-        btn.innerText = "⏳ Procesando...";
-        btn.disabled = true;
+    const btn = fileInput.nextElementSibling;
+    const originalText = btn.innerText;
+    btn.innerText = "⏳ Procesando...";
+    btn.disabled = true;
 
-        // V10 Logic: Canvas Resize + Base64 -> Firestore Direct
-        const reader = new FileReader();
-        reader.onload = function (e) {
-            const img = new Image();
-            img.onload = function () {
-                const canvas = document.createElement('canvas');
-                const ctx = canvas.getContext('2d');
+    // V10 Logic: Canvas Resize + Base64 -> Firestore Direct
+    const reader = new FileReader();
+    reader.onload = function (e) {
+        const img = new Image();
+        img.onload = function () {
+            const canvas = document.createElement('canvas');
+            const ctx = canvas.getContext('2d');
 
-                // Resize logic (Max 600px)
-                const MAX_WIDTH = 600;
-                const MAX_HEIGHT = 600;
-                let width = img.width;
-                let height = img.height;
+            // Resize logic (Max 600px)
+            const MAX_WIDTH = 600;
+            const MAX_HEIGHT = 600;
+            let width = img.width;
+            let height = img.height;
 
-                if (width > height) {
-                    if (width > MAX_WIDTH) {
-                        height *= MAX_WIDTH / width;
-                        width = MAX_WIDTH;
-                    }
-                } else {
-                    if (height > MAX_HEIGHT) {
-                        width *= MAX_HEIGHT / height;
-                        height = MAX_HEIGHT;
-                    }
+            if (width > height) {
+                if (width > MAX_WIDTH) {
+                    height *= MAX_WIDTH / width;
+                    width = MAX_WIDTH;
                 }
+            } else {
+                if (height > MAX_HEIGHT) {
+                    width *= MAX_HEIGHT / height;
+                    height = MAX_HEIGHT;
+                }
+            }
 
-                canvas.width = width;
-                canvas.height = height;
-                ctx.drawImage(img, 0, 0, width, height);
+            canvas.width = width;
+            canvas.height = height;
+            ctx.drawImage(img, 0, 0, width, height);
 
-                const dataUrl = canvas.toDataURL('image/jpeg', 0.7);
+            const dataUrl = canvas.toDataURL('image/jpeg', 0.7);
 
-                if (dataUrl.length > 800000) {
-                    alert("❌ Imagen muy pesada/compleja. Usa una más simple.");
-                    btn.innerText = "❌ Muy pesada";
+            if (dataUrl.length > 800000) {
+                alert("❌ Imagen muy pesada/compleja. Usa una más simple.");
+                btn.innerText = "❌ Muy pesada";
+                setTimeout(() => { btn.innerText = originalText; btn.disabled = false; }, 2000);
+                return;
+            }
+
+            btn.innerText = "⏳ Guardando (V10)...";
+
+            db.collection('products').doc(prodId).update({ image: dataUrl })
+                .then(() => {
+                    alert("✅ ¡ÉXITO V10! Imagen reparada.");
+                    fileInput.value = '';
+                    btn.innerText = "✅ Listo";
                     setTimeout(() => { btn.innerText = originalText; btn.disabled = false; }, 2000);
-                    return;
-                }
-
-                btn.innerText = "⏳ Guardando (V10)...";
-
-                db.collection('products').doc(prodId).update({ image: dataUrl })
-                    .then(() => {
-                        alert("✅ ¡ÉXITO V10! Imagen reparada.");
-                        fileInput.value = '';
-                        btn.innerText = "✅ Listo";
-                        setTimeout(() => { btn.innerText = originalText; btn.disabled = false; }, 2000);
-                    })
-                    .catch((error) => {
-                        console.error("Error updating document: ", error);
-                        alert("❌ Error: " + error.message);
-                        btn.innerText = "❌ Error";
-                        setTimeout(() => { btn.innerText = originalText; btn.disabled = false; }, 2000);
-                    });
-            };
-            img.src = e.target.result;
+                })
+                .catch((error) => {
+                    console.error("Error updating document: ", error);
+                    alert("❌ Error: " + error.message);
+                    btn.innerText = "❌ Error";
+                    setTimeout(() => { btn.innerText = originalText; btn.disabled = false; }, 2000);
+                });
         };
-        reader.readAsDataURL(file);
+        img.src = e.target.result;
     };
+    reader.readAsDataURL(file);
+};
 
 window.toggleProductVisibility = (title) => {
     if (hiddenProducts.includes(title)) {
@@ -1847,70 +1842,7 @@ function initPriceSystem() {
             priceState = doc.data();
             applyPriceOverrides();
         } else {
-            // --- RECOVERY SYSTEM V10.4 (GLOBAL) ---
-            const recoveryDB = firebase.firestore();
-
-            // 1. Force Restore Function
-            window.forceRestore = async () => {
-                if (!confirm("¿CONFIRMAR RECUPERACIÓN DE DISNEY, AMAZON, ETC?")) return;
-
-                const banner = document.getElementById('debug-banner');
-                if (banner) {
-                    banner.innerHTML = "RESTAURANDO... POR FAVOR ESPERE...";
-                    banner.style.background = 'orange';
-                }
-
-                const lostProducts = [
-                    { title: "Disney+ Premium", price: 10, desc: "4 Pantallas UHD 4K", badge: "Entrega Inmediata", note: "Perfil Propio", image: "https://i.ibb.co/Gnd50K3/disney.png", stock: 100 },
-                    { title: "Amazon Prime Video", price: 10, desc: "3 Pantallas UHD", badge: "Garantía Total", note: "Cuenta Completa", image: "https://i.ibb.co/bLzZ10j/amazon.png", stock: 100 },
-                    { title: "HBO Max (Max)", price: 12, desc: "Sin anuncios", badge: "Estrenos", note: "Perfil Privado", image: "https://i.ibb.co/pLzZ10j/hbo.png", stock: 100 },
-                    { title: "Paramount+", price: 8, desc: "Premier League", badge: "Promo", note: "Cuenta", image: "https://i.ibb.co/XLzZ10j/paramount.png", stock: 50 },
-                    { title: "Adobe Creative Cloud", price: 35, desc: "Suite Completa + IA", badge: "Original", note: "A tu correo", image: "https://i.ibb.co/ZLzZ10j/adobe.png", stock: 20 },
-                    { title: "Spotify Premium", price: 12, desc: "Individual / Duo", badge: "Sin anuncios", note: "Renovación", image: "https://i.ibb.co/VLzZ10j/spotify.png", stock: 50 }
-                ];
-
-                try {
-                    let count = 0;
-                    for (let p of lostProducts) {
-                        const id = 'custom_' + Date.now() + Math.floor(Math.random() * 1000) + count;
-                        console.log("Restoring:", p.title);
-                        await recoveryDB.collection('products').doc(id).set({ id: id, ...p, createdAt: new Date() });
-                        await recoveryDB.collection('stock').doc('main').set({ [p.title]: p.stock }, { merge: true });
-                        count++;
-                    }
-                    alert(`✅ ¡${count} PRODUCTOS RECUPERADOS! LA PÁGINA SE RECARGARÁ.`);
-                    location.reload();
-                } catch (e) {
-                    alert("ERROR CRÍTICO: " + e.message);
-                }
-            };
-
-            // 2. Immediate Banner Injection
-            setTimeout(() => {
-                let debugBanner = document.getElementById('debug-banner');
-                if (!debugBanner) {
-                    debugBanner = document.createElement('div');
-                    debugBanner.id = 'debug-banner';
-                    debugBanner.style.position = 'fixed';
-                    debugBanner.style.top = '0';
-                    debugBanner.style.left = '0';
-                    debugBanner.style.width = '100%';
-                    debugBanner.style.background = 'blue';
-                    debugBanner.style.color = 'white';
-                    debugBanner.style.zIndex = '999999';
-                    debugBanner.style.textAlign = 'center';
-                    debugBanner.style.padding = '15px';
-                    debugBanner.style.fontSize = '1.2rem';
-                    debugBanner.style.fontWeight = 'bold';
-                    debugBanner.innerHTML = `
-            SISTEMA DE RECUPERACIÓN V10.4 ACTIVADO <br>
-            <button onclick="window.forceRestore()" style="background:red; color:white; border:2px solid white; padding:10px 20px; font-size:1rem; cursor:pointer; margin-top:5px;">
-                ⚠️ CLICK AQUÍ PARA RECUPERAR PRODUCTOS PERDIDOS
-            </button>
-        `;
-                    document.body.prepend(debugBanner);
-                }
-            }, 1000); // 1 second delay to ensure DOM is ready
+            db.collection('prices').doc('main').set({});
         }
     });
 }
