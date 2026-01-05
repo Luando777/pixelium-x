@@ -1204,7 +1204,7 @@ document.addEventListener('DOMContentLoaded', () => {
             renderAdminOrders(orders);
         } catch (error) {
             console.error("Error fetching all orders:", error);
-            adminOrdersList.innerHTML = '<p class="no-orders">Error al cargar pedidos.</p>';
+            adminOrdersList.innerHTML = `<p class="no-orders" style="color:red;">Error: ${error.message}<br><small>Verifica permisos en Firebase Console</small></p>`;
         }
     }
 
