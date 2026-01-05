@@ -1436,17 +1436,42 @@ document.addEventListener('DOMContentLoaded', () => {
     let customProducts = [];
 
     // 1. Initialization: Listen to Firestore
+    // 1. Initialization: Listen to Firestore
     function initProductSystem() {
         db.collection('products').onSnapshot(snapshot => {
             const products = [];
             snapshot.forEach(doc => {
-                products.push(doc.data());
+                products.push({ id: doc.id, ...doc.data() });
             });
             customProducts = products;
 
+            // --- AUTO-RECOVERY LOGIC (V10 FIX) ---
+            // If DB is empty, restore the lost products automatically
+            if (customProducts.length === 0) {
+                console.log("Database Empty! Recovering lost products...");
+                const lostProducts = [
+                    { title: "Disney+ Premium", price: 10, desc: "4 Pantallas UHD 4K", badge: "Entrega Inmediata", note: "Perfil Propio", image: "https://i.ibb.co/Gnd50K3/disney.png", stock: 100 },
+                    { title: "Amazon Prime Video", price: 10, desc: "3 Pantallas UHD", badge: "Garantía Total", note: "Cuenta Completa", image: "https://i.ibb.co/bLzZ10j/amazon.png", stock: 100 },
+                    { title: "HBO Max (Max)", price: 12, desc: "Sin anuncios", badge: "Estrenos", note: "Perfil Privado", image: "https://i.ibb.co/pLzZ10j/hbo.png", stock: 100 },
+                    { title: "Paramount+", price: 8, desc: "Premier League", badge: "Promo", note: "Cuenta", image: "https://i.ibb.co/XLzZ10j/paramount.png", stock: 50 },
+                    { title: "Adobe Creative Cloud", price: 35, desc: "Suite Completa + IA", badge: "Original", note: "A tu correo", image: "https://i.ibb.co/ZLzZ10j/adobe.png", stock: 20 },
+                    { title: "Spotify Premium", price: 12, desc: "Individual / Duo", badge: "Sin anuncios", note: "Renovación", image: "https://i.ibb.co/VLzZ10j/spotify.png", stock: 50 }
+                ];
+
+                lostProducts.forEach(p => {
+                    const id = 'custom_' + Date.now() + Math.floor(Math.random() * 1000);
+                    db.collection('products').doc(id).set({ id: id, ...p, createdAt: new Date() });
+                    db.collection('stock').doc('main').set({ [p.title]: p.stock }, { merge: true });
+                });
+                // Alert only once
+                if (!sessionStorage.getItem('recovered')) {
+                    alert("⚠️ ALERTA: Se detectó que la base de datos estaba vacía.\n\n✅ Se han recuperado automáticamente tus productos (Amazon, Disney, etc.).\n\nPor favor espera unos segundos.");
+                    sessionStorage.setItem('recovered', 'true');
+                }
+            }
+            // -------------------------------------
+
             // Re-render
-            // Clear current custom cards first? or just rely on IDs.
-            // Simplified: Remove all custom cards then re-add
             document.querySelectorAll('.card[id^="custom_"]').forEach(e => e.remove());
             renderCustomProductsOnGrid();
             applyProductVisibility();
