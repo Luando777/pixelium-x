@@ -1445,22 +1445,47 @@ document.addEventListener('DOMContentLoaded', () => {
             });
             customProducts = products;
 
-            // --- AUTO-RECOVERY LOGIC DISABLED FOR ROLLBACK ---
-            // We trust the data in the DB exists as proven by user.
-            if (false && customProducts.length === 0) { // Condition disabled
-                console.log("Database Empty! Recovering lost products...");
-                const lostProducts = []; // Empty array to be safe
+            // --- REAL AUTO-RECOVERY FROM STOCK (REQUESTED BY USER) ---
+            // If we have stock keys that are NOT in customProducts, recreate them!
+            setTimeout(syncProductsFromStock, 2000); // Wait for stock to load
 
+            async function syncProductsFromStock() {
+                if (!stockState || Object.keys(stockState).length === 0) return;
 
-                lostProducts.forEach(p => {
-                    const id = 'custom_' + Date.now() + Math.floor(Math.random() * 1000);
-                    db.collection('products').doc(id).set({ id: id, ...p, createdAt: new Date() });
-                    db.collection('stock').doc('main').set({ [p.title]: p.stock }, { merge: true });
-                });
-                // Alert only once
-                if (!sessionStorage.getItem('recovered')) {
-                    alert("⚠️ ALERTA: Se detectó que la base de datos estaba vacía.\n\n✅ Se han recuperado automáticamente tus productos (Amazon, Disney, etc.).\n\nPor favor espera unos segundos.");
-                    sessionStorage.setItem('recovered', 'true');
+                // Hardcoded IDs to ignore (these are static in HTML)
+                const ignoredKeys = ['canva-pro', 'panel-canva', 'perplexity', 'gemini', 'google-one', 'capcut'];
+
+                const existingTitles = customProducts.map(p => p.title);
+
+                let recoveredCount = 0;
+
+                for (const [key, stockVal] of Object.entries(stockState)) {
+                    // detailed check: if key is not ignored and not in existingTitles
+                    if (!ignoredKeys.includes(key) && !existingTitles.includes(key)) {
+                        console.log("Found orphan stock key: ", key, ". Recovering product...");
+
+                        const id = 'custom_' + Date.now() + Math.floor(Math.random() * 10000);
+                        const newProd = {
+                            id: id,
+                            title: key,
+                            desc: 'Producto Recuperado (Editar Descripción)',
+                            price: 15.00, // Default safe price
+                            stock: stockVal,
+                            image: 'IMAGEN_PARA_REPARAR.png', // Placeholder
+                            createdAt: new Date(),
+                            note: 'Recuperado de Stock'
+                        };
+
+                        try {
+                            await db.collection('products').doc(id).set(newProd);
+                            recoveredCount++;
+                        } catch (e) { console.error(e); }
+                    }
+                }
+
+                if (recoveredCount > 0) {
+                    alert(`✅ RECUPERACIÓN ÉXITOSA: Se encontraron ${recoveredCount} productos perdidos en el stock (Disney, HBO, etc)...\n\nSe han restaurado al catálogo.`);
+                    location.reload();
                 }
             }
             // -------------------------------------
