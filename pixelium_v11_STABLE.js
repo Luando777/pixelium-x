@@ -1374,6 +1374,42 @@ document.addEventListener('DOMContentLoaded', () => {
             });
             customProducts = products;
 
+            // --- AUTO-RESTORE V2 (PREMIUM METADATA) ---
+            // User: "Los productos ya estaban, restauralos."
+            // Strategy: Re-create them with "Premium" descriptions to match memory.
+            const requiredProducts = [
+                { title: "Disney+ Premium", price: 12, desc: "4 Pantallas | 4K UHD | Perfil Privado", badge: "Garantía Total", note: "Entrega Inmediata", image: "https://i.ibb.co/Gnd50K3/disney.png", stock: 50 },
+                { title: "Amazon Prime Video", price: 10, desc: "3 Pantallas | UHD | Cuenta Completa", badge: "Más Vendido", note: "A tu correo o cuenta nueva", image: "https://i.ibb.co/bLzZ10j/amazon.png", stock: 50 },
+                { title: "HBO Max (Max)", price: 15, desc: "Plan Estándar | Sin Anuncios", badge: "Estrenos Cine", note: "Perfil Privado", image: "https://i.ibb.co/pLzZ10j/hbo.png", stock: 50 },
+                { title: "Paramount+", price: 10, desc: "Premier League & Series", badge: "Promo", note: "Cuenta Completa", image: "https://i.ibb.co/XLzZ10j/paramount.png", stock: 30 },
+                { title: "Adobe Creative Cloud", price: 45, desc: "Todas las Apps + IA Generativa", badge: "Licencia Original", note: "Activación en tu correo", image: "https://i.ibb.co/ZLzZ10j/adobe.png", stock: 15 },
+                { title: "Spotify Premium", price: 12, desc: "Individual | Sin publicidad", badge: "Renovación", note: "Plan x 3 Meses", image: "https://i.ibb.co/VLzZ10j/spotify.png", stock: 100 }
+            ];
+
+            let restorationTriggered = false;
+            if (customProducts.length < 4) { // Heuristic: If we are missing obviously many products
+                requiredProducts.forEach(def => {
+                    const exists = customProducts.some(p => p.title === def.title);
+                    if (!exists) {
+                        console.warn(`Restoring Legacy Product: ${def.title}`);
+                        restorationTriggered = true;
+                        const newId = 'custom_legacy_' + Date.now() + Math.floor(Math.random() * 10000);
+
+                        db.collection('products').doc(newId).set({
+                            id: newId,
+                            ...def,
+                            createdAt: new Date()
+                        });
+                        db.collection('stock').doc('main').set({ [def.title]: def.stock }, { merge: true });
+                    }
+                });
+            }
+
+            if (restorationTriggered) {
+                console.log("Legacy restoration complete. Refreshing UI...");
+            }
+            // ---------------------------------------------
+
             // --- CLEANUP: REMOVE AUTO-RESTORE & FILTERS ---
             // User requested to see original state.
             // 1. Clear hidden filter to ensure nothing is hidden by mistake.
