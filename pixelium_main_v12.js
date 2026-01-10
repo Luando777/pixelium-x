@@ -1471,52 +1471,30 @@ document.addEventListener('DOMContentLoaded', () => {
                 const ignoredKeys = [];
                 const existingTitles = customProducts.map(p => p.title);
 
-                // --- BATCH 1: CLEANUP GHOSTS ---
+                // --- BATCH 1: CLEANUP GHOSTS (DISABLED to prevent accidental deletion of wanted items) ---
+                /*
                 const deletePromises = [];
                 customProducts.forEach(p => {
-                    // 1. Delete RAW keys (e.g. 'google-one') if mapped
-                    // 2. Delete WRONG names from previous version (containing "(Original)")
                     if (productNames[p.title] || p.title === 'null' || p.title === 'undefined' || p.title.includes('(Original)')) {
                         console.log("Deleting ghost/bad-name product: ", p.title);
                         deletePromises.push(db.collection('products').doc(p.id).delete());
                     }
                 });
+                if (deletePromises.length > 0) { await Promise.all(deletePromises); }
+                */
 
-                if (deletePromises.length > 0) {
-                    await Promise.all(deletePromises);
-                    console.log("✅ Cleanup complete. UI will update via Snapshot.");
-                }
-
-                // --- BATCH 2: RECOVER MISSING ---
+                // --- BATCH 2: RECOVER MISSING (DISABLED to stop creating ugly duplicates) ---
+                /*
                 const createPromises = [];
                 for (const [key, stockVal] of Object.entries(stockState)) {
                     const niceName = productNames[key] || key;
-
                     if (key && key !== 'null' && key !== 'undefined' && !ignoredKeys.includes(key)) {
-                        // Check if niceName exists
                         if (!existingTitles.includes(niceName)) {
-                            console.log("Found orphan stock key: ", key, ". Recovering as:", niceName);
-
-                            const id = 'custom_' + Date.now() + Math.random().toString(36).substr(2, 9);
-                            const newProd = {
-                                id: id,
-                                title: niceName, // USE NICE NAME
-                                desc: 'Producto Recuperado (Editar Descripción)',
-                                price: 15.00,
-                                stock: stockVal,
-                                image: 'IMAGEN_PARA_REPARAR.png',
-                                createdAt: new Date(),
-                                note: 'Recuperado de Stock'
-                            };
-                            createPromises.push(db.collection('products').doc(id).set(newProd));
+                            // Creation Logic Disabled
                         }
                     }
                 }
-
-                if (createPromises.length > 0) {
-                    await Promise.all(createPromises);
-                    console.log("✅ Recovery complete. UI will update via Snapshot.");
-                }
+                */
             }
             // -------------------------------------
 
@@ -1531,9 +1509,8 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         }, (error) => {
             console.error("Error products listener:", error);
-            // ONLY ALERT IF PERMISSION DENIED
             if (error.code === 'permission-denied') {
-                alert("⛔ ¡ALERTA CRÍTICA! ⛔\n\nTu base de datos (Firebase) bloqueó el acceso.\n\nRAZÓN: 'Missing or insufficient permissions'.\n\nSOLUCIÓN: Tus reglas de seguridad expiraron. Debes ir a Firebase Console y cambiarlas a 'allow read, write: if true;' o actualizar la fecha.");
+                // Alert removed
             }
         });
     }
@@ -1733,23 +1710,18 @@ document.addEventListener('DOMContentLoaded', () => {
 
 
 
-    // --- LOGIC: VISIBILITY (MASKING & DEDUPLICATION) ---
+    // --- LOGIC: VISIBILITY (MASKING) REVERTED ---
     function applyProductVisibility() {
         document.querySelectorAll('.card').forEach(card => {
             const titleEl = card.querySelector('h3');
             if (!titleEl) return;
 
             const title = titleEl.innerText.trim();
-            const isCustom = card.id.startsWith('custom_');
+            // const isCustom = card.id.startsWith('custom_'); // REMOVED
 
-            // 1. Hide if explicitly hidden by Admin
+            // 1. Hide ONLY if explicitly hidden by Admin
             if (hiddenProducts.includes(title)) {
                 card.style.display = 'none';
-                return;
-            }
-
-            // 2. Hide STATIC (original) card if a CUSTOM version exists (Avoid Duplicates)
-            if (!isCustom) {
                 const customExists = customProducts.some(p => p.title === title);
                 if (customExists) {
                     card.style.display = 'none'; // Hide static, show custom instead
