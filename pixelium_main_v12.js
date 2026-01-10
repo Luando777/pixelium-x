@@ -486,36 +486,7 @@ function renderOrders(orders) {
     });
 }
 
-async function uploadImageToImgBB(base64Image, customName) {
-    const apiKey = 'eda93dc64bbf5d5b2e8110b8dab0d2f2';
-    const formData = new FormData();
-    formData.append('image', base64Image);
-    if (customName) formData.append('name', customName);
-
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 120000); // 120 second timeout (Super Extended)
-
-    try {
-        const response = await fetch(`https://api.imgbb.com/1/upload?key=${apiKey}`, {
-            method: 'POST',
-            body: formData,
-            signal: controller.signal
-        });
-        clearTimeout(timeoutId);
-
-        const data = await response.json();
-        if (data.success) {
-            return data.data.url;
-        } else {
-            throw new Error('Error de ImgBB: ' + (data.error ? data.error.message : 'Desconocido'));
-        }
-    } catch (error) {
-        if (error.name === 'AbortError') {
-            throw new Error("Tiempo de espera agotado. Tu internet está lento o la imagen es muy pesada.");
-        }
-        throw error;
-    }
-}
+// ImgBB function removed by user request
 
 document.addEventListener('DOMContentLoaded', () => {
     console.log('Pixelium X initialized');
@@ -666,11 +637,14 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // Show floating cart if items > 0
         if (floatingCartBtn) {
+            floatingCartBtn.style.display = "flex"; // Always show
+            /*
             if (count > 0) {
                 floatingCartBtn.style.display = "flex";
             } else {
                 floatingCartBtn.style.display = "none";
-            }
+            } 
+            */
         }
     }
 
@@ -1593,6 +1567,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     alert("¡Producto Creado con Imagen en Firebase Storage! ☁️🔥");
                     // Reset form
                     document.getElementById('new-prod-name').value = '';
+                    document.getElementById('new-prod-desc').value = '';
                     document.getElementById('new-prod-price').value = '';
                     document.getElementById('new-prod-img').value = '';
                     btnCreateProduct.innerText = "✨ Crear Producto";
