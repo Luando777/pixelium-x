@@ -486,7 +486,33 @@ function renderOrders(orders) {
     });
 }
 
-// ImgBB function removed by user request
+// --- HELPER: COMPRESS IMAGE TO BASE64 (Database Friendly) ---
+function compressImage(file) {
+    return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.readAsDataURL(file);
+        reader.onload = (event) => {
+            const img = new Image();
+            img.src = event.target.result;
+            img.onload = () => {
+                const canvas = document.createElement('canvas');
+                const MAX_WIDTH = 600; // Small enough for Firestore (1MB limit)
+                const scaleSize = MAX_WIDTH / img.width;
+                canvas.width = MAX_WIDTH;
+                canvas.height = img.height * scaleSize;
+
+                const ctx = canvas.getContext('2d');
+                ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+
+                // Compress to JPEG at 70% quality
+                const dataUrl = canvas.toDataURL('image/jpeg', 0.7);
+                resolve(dataUrl);
+            };
+            img.onerror = (err) => reject(err);
+        };
+        reader.onerror = (err) => reject(err);
+    });
+}
 
 document.addEventListener('DOMContentLoaded', () => {
     console.log('Pixelium X initialized');
@@ -1529,16 +1555,19 @@ document.addEventListener('DOMContentLoaded', () => {
                 return alert("Nombre, Precio e Imagen son obligatorios.");
             }
 
-            btnCreateProduct.innerText = "Subiendo imagen...";
-            btnCreateProduct.disabled = true;
+            try {
+                btnCreateProduct.innerText = "Procesando imagen (Modo Base64)...";
+                btnCreateProduct.disabled = true;
 
-            const imgFile = imgInput.files[0];
-            const storageRef = firebase.storage().ref();
-            const fileRef = storageRef.child(`products/${Date.now()}_${imgFile.name}`);
-
-            fileRef.put(imgFile).then((snapshot) => {
-                return snapshot.ref.getDownloadURL();
-            }).then(async (imageUrl) => {
+                const imgFile = imgInput.files[0];
+                
+                // COMPRESS IMAGE TO BASE64 (No Server Required)
+                const base64Image = await compressImage(imgFile);
+                
+                // Check size safety (approx)
+                if (base64Image.length > 900000) { // ~900KB
+                    throw new Error("Imagen muy compleja incluso comprimida. Usa una más simple.");
+                }
 
                 const prodId = 'custom_' + Date.now();
                 const trimmedTitle = title.trim();
@@ -1550,38 +1579,35 @@ document.addEventListener('DOMContentLoaded', () => {
                     priceAlt: document.getElementById('new-prod-price-alt').value,
                     stock: parseInt(document.getElementById('new-prod-stock').value) || 10,
                     warranty: document.getElementById('new-prod-warranty').value,
-                    image: imageUrl,
+                    image: base64Image, // SAVED DIRECTLY IN DB
                     badge: document.getElementById('new-prod-badge').value,
                     note: document.getElementById('new-prod-note').value
                 };
 
                 // Save to Firestore
-                try {
-                    await db.collection('products').doc(prodId).set(newProduct);
+                await db.collection('products').doc(prodId).set(newProduct);
 
-                    // Initialize stock for this new product in Firestore Stock
-                    await db.collection('stock').doc('main').set({
-                        [trimmedTitle]: newProduct.stock
-                    }, { merge: true });
+                // Initialize stock
+                await db.collection('stock').doc('main').set({
+                    [trimmedTitle]: newProduct.stock
+                }, { merge: true });
 
-                    alert("¡Producto Creado con Imagen en Firebase Storage! ☁️🔥");
-                    // Reset form
-                    document.getElementById('new-prod-name').value = '';
-                    document.getElementById('new-prod-desc').value = '';
-                    document.getElementById('new-prod-price').value = '';
-                    document.getElementById('new-prod-img').value = '';
-                    btnCreateProduct.innerText = "✨ Crear Producto";
-                    btnCreateProduct.disabled = false;
-
-                } catch (err) {
-                    alert("Error guardando datos: " + err.message);
-                    btnCreateProduct.disabled = false;
-                }
-            }).catch((error) => {
-                console.error("Upload failed:", error);
-                alert("Error subiendo imagen: " + error.message);
+                alert("¡Producto Creado! (Guardado en Base de Datos) 💾✨");
+                
+                // Reset form
+                document.getElementById('new-prod-name').value = '';
+                document.getElementById('new-prod-desc').value = '';
+                document.getElementById('new-prod-price').value = '';
+                document.getElementById('new-prod-img').value = '';
+                btnCreateProduct.innerText = "✨ Crear Producto";
                 btnCreateProduct.disabled = false;
-            });
+
+            } catch (error) {
+                console.error("Save failed:", error);
+                alert("Error: " + error.message);
+                btnCreateProduct.innerText = "✨ Crear Producto";
+                btnCreateProduct.disabled = false;
+            }
         });
     }
 
