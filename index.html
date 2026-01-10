@@ -479,8 +479,35 @@
             <div class="auth-tabs" style="justify-content: center; gap: 10px; margin-bottom: 20px;">
                 <button class="tab-btn active" onclick="switchProductTab('add')">➕ Agregar</button>
                 <button class="tab-btn" onclick="switchProductTab('list')">📋 Lista / Borrar</button>
-                <button class="tab-btn" style="background: #ffaa00; color: black;"
-                    onclick="window.restoreDefaultProducts()">🔄 Restaurar Catálogo</button>
+                <button class="tab-btn" onclick="switchProductTab('list')">📋 Lista / Borrar</button>
+                <button class="tab-btn" style="background: #00e5ff; color: black;" onclick="switchProductTab('edit')">✏️
+                    Editar Info</button>
+            </div>
+
+            <!-- TAB: EDIT PRODUCT -->
+            <div id="product-tab-edit" style="display: none;">
+                <h4 style="color:var(--neon-cyan); margin-bottom: 10px;">Selecciona Producto a Editar:</h4>
+                <select id="edit-prod-selector" class="neon-input" style="background: #222; margin-bottom: 15px;">
+                    <option value="">-- Selecciona --</option>
+                </select>
+
+                <div id="edit-form-container" style="display:none;">
+                    <label style="color:#ccc;">Nombre:</label>
+                    <input type="text" id="edit-prod-name" class="neon-input">
+
+                    <label style="color:#ccc;">Descripción:</label>
+                    <input type="text" id="edit-prod-desc" class="neon-input">
+
+                    <label style="color:#ccc;">Badge (Etiqueta):</label>
+                    <input type="text" id="edit-prod-badge" class="neon-input">
+
+                    <label style="color:#ccc;">Nota (Entrega):</label>
+                    <input type="text" id="edit-prod-note" class="neon-input">
+
+                    <button id="btn-save-edit" class="btn-primary full-width" style="margin-top: 15px;">
+                        💾 Guardar Cambios de Info
+                    </button>
+                </div>
             </div>
 
             <!-- TAB: ADD PRODUCT -->
@@ -507,8 +534,6 @@
             <!-- TAB: LIST PRODUCTS -->
             <div id="product-tab-list" style="display: none;">
                 <p style="color: #aaa; font-size: 0.9rem; text-align: center;">Aquí puedes ocultar/borrar productos.</p>
-                <button class="btn-primary full-width" style="background: #ffaa00; color: black; margin-bottom: 10px;"
-                    onclick="window.restoreDefaultProducts()">🔄 RESTAURAR CATÁLOGO (EMERGENCIA)</button>
                 <div id="product-admin-list" class="stock-list-container">
                     <!-- List rendered via JS -->
                 </div>

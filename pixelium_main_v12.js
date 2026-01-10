@@ -1537,12 +1537,101 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // Tab Switcher
+    // Tab Switcher
     window.switchProductTab = (tab) => {
-        document.getElementById('product-tab-add').style.display = tab === 'add' ? 'block' : 'none';
-        document.getElementById('product-tab-list').style.display = tab === 'list' ? 'block' : 'none';
+        document.querySelectorAll('.auth-tabs .tab-btn').forEach(btn => btn.classList.remove('active'));
 
-        // Update active class on buttons manually if needed, or keeping simple
+        const tabAdd = document.getElementById('product-tab-add');
+        const tabList = document.getElementById('product-tab-list');
+        const tabEdit = document.getElementById('product-tab-edit');
+
+        // Reset
+        tabAdd.style.display = 'none';
+        tabList.style.display = 'none';
+        tabEdit.style.display = 'none';
+
+        if (tab === 'add') {
+            document.querySelectorAll('.auth-tabs .tab-btn')[0].classList.add('active');
+            tabAdd.style.display = 'block';
+        } else if (tab === 'list') {
+            document.querySelectorAll('.auth-tabs .tab-btn')[1].classList.add('active');
+            tabList.style.display = 'block';
+            renderAdminProductList();
+        } else if (tab === 'edit') {
+            document.querySelectorAll('.auth-tabs .tab-btn')[2].classList.add('active');
+            tabEdit.style.display = 'block';
+            loadProductsToEditSelector();
+        }
     };
+
+    function loadProductsToEditSelector() {
+        const selector = document.getElementById('edit-prod-selector');
+        selector.innerHTML = '<option value="">-- Selecciona --</option>';
+        customProducts.forEach(p => {
+            const opt = document.createElement('option');
+            opt.value = p.id;
+            opt.innerText = p.title;
+            selector.appendChild(opt);
+        });
+    }
+
+    // --- CHANGE LISTENER FOR EDIT SELECTOR ---
+    const editSelector = document.getElementById('edit-prod-selector');
+    if (editSelector) {
+        editSelector.addEventListener('change', (e) => {
+            const prodId = e.target.value;
+            const container = document.getElementById('edit-form-container');
+
+            if (!prodId) {
+                container.style.display = 'none';
+                return;
+            }
+
+            const prod = customProducts.find(p => p.id === prodId);
+            if (prod) {
+                container.style.display = 'block';
+                document.getElementById('edit-prod-name').value = prod.title || '';
+                document.getElementById('edit-prod-desc').value = prod.desc || '';
+                document.getElementById('edit-prod-badge').value = prod.badge || '';
+                document.getElementById('edit-prod-note').value = prod.note || '';
+            }
+        });
+    }
+
+    // --- SAVE EDIT BTN ---
+    const btnSaveEdit = document.getElementById('btn-save-edit');
+    if (btnSaveEdit) {
+        btnSaveEdit.addEventListener('click', async () => {
+            const prodId = document.getElementById('edit-prod-selector').value;
+            if (!prodId) return;
+
+            btnSaveEdit.innerText = "Guardando...";
+            btnSaveEdit.disabled = true;
+
+            const updates = {
+                title: document.getElementById('edit-prod-name').value,
+                desc: document.getElementById('edit-prod-desc').value,
+                badge: document.getElementById('edit-prod-badge').value,
+                note: document.getElementById('edit-prod-note').value
+            };
+
+            try {
+                await db.collection('products').doc(prodId).update(updates);
+
+                alert("¡Información Actualizada! ✅");
+                btnSaveEdit.innerText = "💾 Guardar Cambios de Info";
+                btnSaveEdit.disabled = false;
+
+                // Refresh list if user goes back to list tab
+                renderCustomProductsOnGrid();
+
+            } catch (err) {
+                alert("Error: " + err.message);
+                btnSaveEdit.innerText = "💾 Guardar Cambios de Info";
+                btnSaveEdit.disabled = false;
+            }
+        });
+    }
 
     // --- LOGIC: CREATE PRODUCT ---
     if (btnCreateProduct) {
@@ -1560,10 +1649,10 @@ document.addEventListener('DOMContentLoaded', () => {
                 btnCreateProduct.disabled = true;
 
                 const imgFile = imgInput.files[0];
-                
+
                 // COMPRESS IMAGE TO BASE64 (No Server Required)
                 const base64Image = await compressImage(imgFile);
-                
+
                 // Check size safety (approx)
                 if (base64Image.length > 900000) { // ~900KB
                     throw new Error("Imagen muy compleja incluso comprimida. Usa una más simple.");
@@ -1593,7 +1682,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 }, { merge: true });
 
                 alert("¡Producto Creado! (Guardado en Base de Datos) 💾✨");
-                
+
                 // Reset form
                 document.getElementById('new-prod-name').value = '';
                 document.getElementById('new-prod-desc').value = '';
