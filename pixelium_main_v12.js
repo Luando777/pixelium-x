@@ -1479,10 +1479,14 @@ document.addEventListener('DOMContentLoaded', () => {
                 ];
 
                 customProducts.forEach(p => {
-                    // Delete if it acts as a "Copy" (Recuperado de Stock)
-                    // OR matches the original names exactly to avoid duplication
-                    if (p.note === 'Recuperado de Stock' || targetsToDelete.includes(p.title) || p.title.includes('(Original)')) {
-                        console.log("Deleting copy/ghost to restore original: ", p.title);
+                    // ROBUST CLEANUP: Delete by Image or Description Signature
+                    // This catches ALL auto-generated copies regardless of name
+                    if (p.image === 'IMAGEN_PARA_REPARAR.png' ||
+                        p.desc === 'Producto Recuperado (Editar Descripción)' ||
+                        p.note === 'Recuperado de Stock' ||
+                        p.title.includes('(Original)')) {
+
+                        console.log("Deleting ghost/copy: ", p.title);
                         deletePromises.push(db.collection('products').doc(p.id).delete());
                     }
                 });
