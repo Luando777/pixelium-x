@@ -1452,8 +1452,8 @@ document.addEventListener('DOMContentLoaded', () => {
             async function syncProductsFromStock() {
                 if (!stockState || Object.keys(stockState).length === 0) return;
 
-                // Hardcoded IDs to ignore (these are static in HTML)
-                const ignoredKeys = ['canva-pro', 'panel-canva', 'perplexity', 'gemini', 'google-one', 'capcut'];
+                // ALLOW ALL PRODUCTS (No ignored keys anymore)
+                const ignoredKeys = [];
 
                 const existingTitles = customProducts.map(p => p.title);
 
