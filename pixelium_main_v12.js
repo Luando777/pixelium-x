@@ -1479,9 +1479,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 ];
 
                 customProducts.forEach(p => {
-                    // Delete if it matches one of the "Original" names (meaning it's a copy)
-                    // OR if it has the "Original" suffix from before
-                    if (targetsToDelete.includes(p.title) || p.title.includes('(Original)')) {
+                    // Delete if it acts as a "Copy" (Recuperado de Stock)
+                    // OR matches the original names exactly to avoid duplication
+                    if (p.note === 'Recuperado de Stock' || targetsToDelete.includes(p.title) || p.title.includes('(Original)')) {
                         console.log("Deleting copy/ghost to restore original: ", p.title);
                         deletePromises.push(db.collection('products').doc(p.id).delete());
                     }
