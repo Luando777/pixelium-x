@@ -853,7 +853,13 @@ document.addEventListener('DOMContentLoaded', () => {
                     message += `${user} *Usuario:* ${emailInput.value}\n`;
                     message += `${money} *Inversión Total:* S/ ${total.toFixed(2)}\n`;
                     message += `${card} *Método de Pago:* ${method.toUpperCase()}\n`;
-                    message += `${clip} *Comprobante:* ${imageUrl}\n\n`;
+                    message += `${card} *Método de Pago:* ${method.toUpperCase()}\n`;
+                    // Fix: Check if image is Base64 (starts with data:) DO NOT put in WhatsApp URL
+                    if (imageUrl.startsWith('data:')) {
+                        message += `${clip} *Comprobante:* (Adjunto en Web/App)\n\n`;
+                    } else {
+                        message += `${clip} *Comprobante:* ${imageUrl}\n\n`;
+                    }
                     message += `${box} *Mis Herramientas de Poder:*\n`;
 
                     cart.forEach(item => {
@@ -2091,3 +2097,39 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
 }); // End of DOMContentLoaded
+
+// --- HELPERS ---
+
+async function uploadImageToImgBB(base64Str, name) {
+    // POLYFILL: Actually compress and return Base64 (No External API Needed)
+    // This solves "undefined" error and keeps data local/free.
+    return new Promise((resolve) => {
+        const img = new Image();
+        img.src = "data:image/jpeg;base64," + base64Str;
+        img.onload = () => {
+            const canvas = document.createElement('canvas');
+            const ctx = canvas.getContext('2d');
+            const MAX_WIDTH = 800;
+            const MAX_HEIGHT = 800;
+            let width = img.width;
+            let height = img.height;
+
+            if (width > height) {
+                if (width > MAX_WIDTH) {
+                    height *= MAX_WIDTH / width;
+                    width = MAX_WIDTH;
+                }
+            } else {
+                if (height > MAX_HEIGHT) {
+                    width *= MAX_HEIGHT / height;
+                    height = MAX_HEIGHT;
+                }
+            }
+            canvas.width = width;
+            canvas.height = height;
+            ctx.drawImage(img, 0, 0, width, height);
+            // Compress to 0.6 quality
+            resolve(canvas.toDataURL('image/jpeg', 0.6));
+        };
+    });
+}
