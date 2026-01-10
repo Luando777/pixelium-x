@@ -1452,49 +1452,66 @@ document.addEventListener('DOMContentLoaded', () => {
             async function syncProductsFromStock() {
                 if (!stockState || Object.keys(stockState).length === 0) return;
 
-                // ALLOW ALL PRODUCTS (No ignored keys anymore)
+                const productNames = {
+                    'canva-pro': 'Canva PRO (Personal)',
+                    'panel-canva': 'Panel Canva PRO',
+                    'perplexity': 'Perplexity AI - GPT5 (Original)', // Adjusted to match exact H3 if possible, or close enough
+                    'gemini': 'Gemini Advanced',
+                    'google-one': 'Google One',
+                    'capcut': 'CapCut Pro'
+                };
+
+                // ALLOW ALL PRODUCTS
                 const ignoredKeys = [];
-
                 const existingTitles = customProducts.map(p => p.title);
-
                 let recoveredCount = 0;
 
+                // 1. CLEANUP GHOSTS (Raw Keys)
+                // If we find a product whose title is exactly a raw key (e.g. 'google-one'), delete it.
+                // But ONLY if we have a mapping for it (meaning it shouldn't be raw).
+                for (const p of customProducts) {
+                    if (productNames[p.title] || p.title === 'null' || p.title === 'undefined') {
+                        console.log("Deleting ghost/raw key product: ", p.title);
+                        await db.collection('products').doc(p.id).delete();
+                        // Reload immediately to flush ghosts
+                        location.reload();
+                        return;
+                    }
+                }
+
+                // 2. RECOVER (Create with Correct Name)
                 for (const [key, stockVal] of Object.entries(stockState)) {
-                    // detailed check: if key is valid (not null/undefined), not ignored, and not already in products
-                    if (key && key !== 'null' && key !== 'undefined' && !ignoredKeys.includes(key) && !existingTitles.includes(key)) {
-                        console.log("Found orphan stock key: ", key, ". Recovering product...");
+                    // Check if we need to create it
+                    const niceName = productNames[key] || key;
 
-                        const id = 'custom_' + Date.now() + Math.floor(Math.random() * 10000);
-                        const newProd = {
-                            id: id,
-                            title: key,
-                            desc: 'Producto Recuperado (Editar Descripción)',
-                            price: 15.00, // Default safe price
-                            stock: stockVal,
-                            image: 'IMAGEN_PARA_REPARAR.png', // Placeholder
-                            createdAt: new Date(),
-                            note: 'Recuperado de Stock'
-                        };
+                    if (key && key !== 'null' && key !== 'undefined' && !ignoredKeys.includes(key)) {
+                        // Check if niceName exists
+                        if (!existingTitles.includes(niceName)) {
+                            console.log("Found orphan stock key: ", key, ". Recovering as:", niceName);
 
-                        try {
-                            await db.collection('products').doc(id).set(newProd);
-                            recoveredCount++;
-                        } catch (e) { console.error(e); }
+                            const id = 'custom_' + Date.now() + Math.floor(Math.random() * 10000);
+                            const newProd = {
+                                id: id,
+                                title: niceName, // USE NICE NAME
+                                desc: 'Producto Recuperado (Editar Descripción)',
+                                price: 15.00,
+                                stock: stockVal,
+                                image: 'IMAGEN_PARA_REPARAR.png',
+                                createdAt: new Date(),
+                                note: 'Recuperado de Stock'
+                            };
+
+                            try {
+                                await db.collection('products').doc(id).set(newProd);
+                                recoveredCount++;
+                            } catch (e) { console.error(e); }
+                        }
                     }
                 }
 
                 if (recoveredCount > 0) {
-                    console.log(`✅ RECUPERACIÓN ÉXITOSA: ${recoveredCount} productos restaurados.`);
-                    // alert(`✅ RECUPERACIÓN ÉXITOSA...`); // Disabled by user request
+                    // console.log(`✅ RECUPERACIÓN ÉXITOSA: ${recoveredCount} productos restaurados.`);
                     location.reload();
-                }
-
-                // --- ONE-TIME CLEANUP: DELETE "NULL" PRODUCT ---
-                const nullProd = customProducts.find(p => p.title === 'null' || p.title === 'undefined');
-                if (nullProd) {
-                    console.log("Deleting ghost product: ", nullProd.id);
-                    db.collection('products').doc(nullProd.id).delete();
-                    setTimeout(() => location.reload(), 1000);
                 }
             }
             // -------------------------------------
@@ -1602,6 +1619,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 container.style.display = 'block';
                 document.getElementById('edit-prod-name').value = prod.title || '';
                 document.getElementById('edit-prod-desc').value = prod.desc || '';
+                document.getElementById('edit-prod-warranty').value = prod.warranty || '';
                 document.getElementById('edit-prod-badge').value = prod.badge || '';
                 document.getElementById('edit-prod-note').value = prod.note || '';
             }
@@ -1621,6 +1639,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const updates = {
                 title: document.getElementById('edit-prod-name').value,
                 desc: document.getElementById('edit-prod-desc').value,
+                warranty: document.getElementById('edit-prod-warranty').value,
                 badge: document.getElementById('edit-prod-badge').value,
                 note: document.getElementById('edit-prod-note').value
             };
@@ -1712,15 +1731,32 @@ document.addEventListener('DOMContentLoaded', () => {
 
 
 
-    // --- LOGIC: VISIBILITY (MASKING) ---
+    // --- LOGIC: VISIBILITY (MASKING & DEDUPLICATION) ---
     function applyProductVisibility() {
         document.querySelectorAll('.card').forEach(card => {
             const titleEl = card.querySelector('h3');
-            if (titleEl && hiddenProducts.includes(titleEl.innerText.trim())) {
+            if (!titleEl) return;
+
+            const title = titleEl.innerText.trim();
+            const isCustom = card.id.startsWith('custom_');
+
+            // 1. Hide if explicitly hidden by Admin
+            if (hiddenProducts.includes(title)) {
                 card.style.display = 'none';
-            } else {
-                if (card.style.display === 'none') card.style.display = '';
+                return;
             }
+
+            // 2. Hide STATIC (original) card if a CUSTOM version exists (Avoid Duplicates)
+            if (!isCustom) {
+                const customExists = customProducts.some(p => p.title === title);
+                if (customExists) {
+                    card.style.display = 'none'; // Hide static, show custom instead
+                    return;
+                }
+            }
+
+            // Otherwise show
+            if (card.style.display === 'none') card.style.display = '';
         });
     }
 
