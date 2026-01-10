@@ -1538,28 +1538,38 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Tab Switcher
     // Tab Switcher V2
+    // Tab Switcher V2
     window.switchProductTabV2 = (tab) => {
-        document.querySelectorAll('.auth-tabs .tab-btn').forEach(btn => btn.classList.remove('active'));
+        const btns = document.querySelectorAll('.auth-tabs .tab-btn');
+        btns.forEach(btn => {
+            btn.classList.remove('active');
+            btn.style.background = ''; // Reset inline background
+            btn.style.color = '';
+        });
 
         const tabAdd = document.getElementById('product-tab-add');
         const tabList = document.getElementById('product-tab-list');
         const tabEdit = document.getElementById('product-tab-edit');
 
-        // Reset
-        tabAdd.style.display = 'none';
-        tabList.style.display = 'none';
-        tabEdit.style.display = 'none';
+        // Hide all
+        if (tabAdd) tabAdd.style.display = 'none';
+        if (tabList) tabList.style.display = 'none';
+        if (tabEdit) tabEdit.style.display = 'none';
 
         if (tab === 'add') {
-            document.querySelectorAll('.auth-tabs .tab-btn')[0].classList.add('active');
-            tabAdd.style.display = 'block';
+            btns[0].classList.add('active');
+            if (tabAdd) tabAdd.style.display = 'block';
         } else if (tab === 'list') {
-            document.querySelectorAll('.auth-tabs .tab-btn')[1].classList.add('active');
-            tabList.style.display = 'block';
+            btns[1].classList.add('active');
+            if (tabList) tabList.style.display = 'block';
             renderAdminProductList();
         } else if (tab === 'edit') {
-            document.querySelectorAll('.auth-tabs .tab-btn')[2].classList.add('active');
-            tabEdit.style.display = 'block';
+            btns[2].classList.add('active');
+            // Explicitly style the active Edit button for visibility
+            btns[2].style.background = '#00e5ff';
+            btns[2].style.color = 'black';
+
+            if (tabEdit) tabEdit.style.display = 'block';
             loadProductsToEditSelector();
         }
     };
