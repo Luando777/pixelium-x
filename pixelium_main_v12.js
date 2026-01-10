@@ -1459,9 +1459,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (!stockState || Object.keys(stockState).length === 0) return;
 
                 const productNames = {
-                    'canva-pro': 'Canva PRO (Personal)',
+                    'canva-pro': 'Canva PRO', // Exact H3 match
                     'panel-canva': 'Panel Canva PRO',
-                    'perplexity': 'Perplexity AI - GPT5 (Original)',
+                    'perplexity': 'Perplexity AI - GPT5',
                     'gemini': 'Gemini Advanced',
                     'google-one': 'Google One',
                     'capcut': 'CapCut Pro'
@@ -1474,9 +1474,10 @@ document.addEventListener('DOMContentLoaded', () => {
                 // --- BATCH 1: CLEANUP GHOSTS ---
                 const deletePromises = [];
                 customProducts.forEach(p => {
-                    // Check if title is a RAW key that should be mapped, OR is explicitly null/undefined
-                    if (productNames[p.title] || p.title === 'null' || p.title === 'undefined') {
-                        console.log("Deleting ghost/raw key product: ", p.title);
+                    // 1. Delete RAW keys (e.g. 'google-one') if mapped
+                    // 2. Delete WRONG names from previous version (containing "(Original)")
+                    if (productNames[p.title] || p.title === 'null' || p.title === 'undefined' || p.title.includes('(Original)')) {
+                        console.log("Deleting ghost/bad-name product: ", p.title);
                         deletePromises.push(db.collection('products').doc(p.id).delete());
                     }
                 });
