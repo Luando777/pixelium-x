@@ -1240,7 +1240,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     ${itemsHtml}
                 </ul>
                 <div class="order-footer" style="display: flex; justify-content: space-between; align-items: center; margin-top: 10px;">
-                    <a href="${order.voucher}" target="_blank" style="color: var(--neon-cyan); text-decoration: none; font-size: 0.9rem;">📎 Ver Comprobante</a>
+                    <a href="#" onclick="viewVoucher('${order.voucher}'); return false;" style="color: var(--neon-cyan); text-decoration: none; font-size: 0.9rem;">📎 Ver Comprobante</a>
                     <div class="order-total">Total: S/${order.total.toFixed(2)}</div>
                 </div>
                 ${isPending ? `<button class="btn-deliver" onclick="updateOrderStatus('${order.id}', 'Entregado')" style="width:100%; margin-top:10px; padding:8px; background:#00ff88; color:#000; border:none; border-radius:4px; font-weight:bold; cursor:pointer;">✅ Marcar como Entregado</button>` : ''}
@@ -1248,6 +1248,22 @@ document.addEventListener('DOMContentLoaded', () => {
             adminOrdersList.appendChild(orderCard);
         });
     }
+
+    // --- FIX: LIGHTBOX FOR VOUCHERS (Prevents about:blank) ---
+    window.viewVoucher = (base64) => {
+        if (!base64) return alert("No hay comprobante disponible.");
+        const lightbox = document.getElementById('lightbox');
+        const lightboxImg = document.getElementById('lightbox-img');
+
+        if (lightbox && lightboxImg) {
+            lightboxImg.src = base64;
+            lightbox.style.display = 'flex';
+        } else {
+            // Fallback if lightbox doesn't exist in HTML
+            const newWin = window.open("");
+            newWin.document.write('<img src="' + base64 + '" style="max-width:100%;">');
+        }
+    };
 
     window.updateOrderStatus = async (orderId, status) => {
         if (!confirm(`¿Estás seguro de marcar este pedido como ${status}?`)) return;
