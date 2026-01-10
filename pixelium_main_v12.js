@@ -1545,8 +1545,6 @@ document.addEventListener('DOMContentLoaded', () => {
     if (closeProductModalBtn) {
         closeProductModalBtn.addEventListener('click', () => {
             productModal.style.display = 'none';
-            // Reload page to apply changes cleanly if something was cleared
-            if (confirm("¿Recargar página para ver cambios?")) location.reload();
         });
     }
 
