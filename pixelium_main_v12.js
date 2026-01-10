@@ -1448,35 +1448,16 @@ document.addEventListener('DOMContentLoaded', () => {
             customProducts = products;
 
             // --- REAL AUTO-RECOVERY FROM STOCK (REQUESTED BY USER) ---
-            // FORCED CLEANUP MODE: Run every time for now
-            // if (!hasSynced) {
-            setTimeout(syncProductsFromStock, 3000); // Wait for stock to load
-            // hasSynced = true;
-            // }
+            // PURGE MODE: Run once on load to clean up specific ghosts
+            if (!hasSynced) {
+                setTimeout(purgeGhostsOnce, 3000); // Wait for stock to load
+                hasSynced = true;
+            }
 
-            async function syncProductsFromStock() {
-                if (!stockState || Object.keys(stockState).length === 0) return;
+            async function purgeGhostsOnce() {
+                console.log("🧹 STARTING GHOST PURGE SCANN...");
 
-                const productNames = {
-                    'canva-pro': 'Canva PRO', // Exact H3 match
-                    'panel-canva': 'Panel Canva PRO',
-                    'perplexity': 'Perplexity AI - GPT5',
-                    'gemini': 'Gemini Advanced',
-                    'google-one': 'Google One',
-                    'capcut': 'CapCut Pro'
-                };
-
-                // ALLOW ALL PRODUCTS
-                const ignoredKeys = [];
-                const existingTitles = customProducts.map(p => p.title);
-
-                // --- BATCH 1: CLEANUP GHOSTS & COPIES (ENABLED ONE-TIME) ---
                 const deletePromises = [];
-                const targetsToDelete = [
-                    'Canva PRO', 'Panel Canva PRO', 'Perplexity AI - GPT5',
-                    'Gemini Advanced', 'Google One', 'CapCut Pro'
-                ];
-
                 customProducts.forEach(p => {
                     // ROBUST CLEANUP: Delete by Image or Description Signature
                     // This catches ALL auto-generated copies regardless of name
@@ -1486,21 +1467,20 @@ document.addEventListener('DOMContentLoaded', () => {
                         (p.note && p.note === 'Recuperado de Stock') ||
                         p.title.includes('(Original)')) {
 
-                        console.log("🔥 DELETING GHOST/COPY: ", p.title);
+                        console.log("🔥 PURGING GHOST/COPY: ", p.title);
                         deletePromises.push(db.collection('products').doc(p.id).delete());
                     }
                 });
 
                 if (deletePromises.length > 0) {
                     await Promise.all(deletePromises);
-                    console.log("✅ Copies deleted. Originals should be visible.");
+                    console.log("✅ PURGE COMPLETE. DELETED " + deletePromises.length + " GHOSTS.");
+                } else {
+                    console.log("✨ SYSTEM CLEAN. NO GHOSTS FOUND.");
                 }
 
-                // --- BATCH 2: RECOVER MISSING (DISABLED FOREVER) ---
-                /*
-                const createPromises = [];
-                // ... (Disabled)
-                */
+                // --- NO CREATION LOGIC HERE ---
+                // The Auto-Recovery loop is completely removed to prevent regeneration.
             }
             // -------------------------------------
 
