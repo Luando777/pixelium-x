@@ -1437,6 +1437,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // 1. Initialization: Listen to Firestore
     // 1. Initialization: Listen to Firestore
+    // 1. Initialization: Listen to Firestore
+    let hasSynced = false; // PREVENT INFINITE LOOP
     function initProductSystem() {
         db.collection('products').onSnapshot(snapshot => {
             const products = [];
@@ -1447,7 +1449,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
             // --- REAL AUTO-RECOVERY FROM STOCK (REQUESTED BY USER) ---
             // If we have stock keys that are NOT in customProducts, recreate them!
-            setTimeout(syncProductsFromStock, 2000); // Wait for stock to load
+            // ONLY RUN ONCE!
+            if (!hasSynced) {
+                setTimeout(syncProductsFromStock, 3000); // Wait for stock to load
+                hasSynced = true;
+            }
 
             async function syncProductsFromStock() {
                 if (!stockState || Object.keys(stockState).length === 0) return;
