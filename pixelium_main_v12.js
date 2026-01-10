@@ -2100,7 +2100,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
 // --- HELPERS ---
 
-async function uploadImageToImgBB(base64Str, name) {
+window.uploadImageToImgBB = async function (base64Str, name) {
     // POLYFILL: Actually compress and return Base64 (No External API Needed)
     // This solves "undefined" error and keeps data local/free.
     return new Promise((resolve) => {
@@ -2132,4 +2132,4 @@ async function uploadImageToImgBB(base64Str, name) {
             resolve(canvas.toDataURL('image/jpeg', 0.6));
         };
     });
-}
+};
