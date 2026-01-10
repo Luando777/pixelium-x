@@ -1448,12 +1448,11 @@ document.addEventListener('DOMContentLoaded', () => {
             customProducts = products;
 
             // --- REAL AUTO-RECOVERY FROM STOCK (REQUESTED BY USER) ---
-            // If we have stock keys that are NOT in customProducts, recreate them!
-            // ONLY RUN ONCE!
-            if (!hasSynced) {
-                setTimeout(syncProductsFromStock, 3000); // Wait for stock to load
-                hasSynced = true;
-            }
+            // FORCED CLEANUP MODE: Run every time for now
+            // if (!hasSynced) {
+            setTimeout(syncProductsFromStock, 3000); // Wait for stock to load
+            // hasSynced = true;
+            // }
 
             async function syncProductsFromStock() {
                 if (!stockState || Object.keys(stockState).length === 0) return;
@@ -1481,12 +1480,13 @@ document.addEventListener('DOMContentLoaded', () => {
                 customProducts.forEach(p => {
                     // ROBUST CLEANUP: Delete by Image or Description Signature
                     // This catches ALL auto-generated copies regardless of name
-                    if (p.image === 'IMAGEN_PARA_REPARAR.png' ||
-                        p.desc === 'Producto Recuperado (Editar Descripción)' ||
-                        p.note === 'Recuperado de Stock' ||
+                    // Added .includes checks for safety
+                    if ((p.image && p.image === 'IMAGEN_PARA_REPARAR.png') ||
+                        (p.desc && p.desc.includes('Producto Recuperado')) ||
+                        (p.note && p.note === 'Recuperado de Stock') ||
                         p.title.includes('(Original)')) {
 
-                        console.log("Deleting ghost/copy: ", p.title);
+                        console.log("🔥 DELETING GHOST/COPY: ", p.title);
                         deletePromises.push(db.collection('products').doc(p.id).delete());
                     }
                 });
