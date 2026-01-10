@@ -1471,29 +1471,31 @@ document.addEventListener('DOMContentLoaded', () => {
                 const ignoredKeys = [];
                 const existingTitles = customProducts.map(p => p.title);
 
-                // --- BATCH 1: CLEANUP GHOSTS (DISABLED to prevent accidental deletion of wanted items) ---
-                /*
+                // --- BATCH 1: CLEANUP GHOSTS & COPIES (ENABLED ONE-TIME) ---
                 const deletePromises = [];
+                const targetsToDelete = [
+                    'Canva PRO', 'Panel Canva PRO', 'Perplexity AI - GPT5',
+                    'Gemini Advanced', 'Google One', 'CapCut Pro'
+                ];
+
                 customProducts.forEach(p => {
-                    if (productNames[p.title] || p.title === 'null' || p.title === 'undefined' || p.title.includes('(Original)')) {
-                        console.log("Deleting ghost/bad-name product: ", p.title);
+                    // Delete if it matches one of the "Original" names (meaning it's a copy)
+                    // OR if it has the "Original" suffix from before
+                    if (targetsToDelete.includes(p.title) || p.title.includes('(Original)')) {
+                        console.log("Deleting copy/ghost to restore original: ", p.title);
                         deletePromises.push(db.collection('products').doc(p.id).delete());
                     }
                 });
-                if (deletePromises.length > 0) { await Promise.all(deletePromises); }
-                */
 
-                // --- BATCH 2: RECOVER MISSING (DISABLED to stop creating ugly duplicates) ---
+                if (deletePromises.length > 0) {
+                    await Promise.all(deletePromises);
+                    console.log("✅ Copies deleted. Originals should be visible.");
+                }
+
+                // --- BATCH 2: RECOVER MISSING (DISABLED FOREVER) ---
                 /*
                 const createPromises = [];
-                for (const [key, stockVal] of Object.entries(stockState)) {
-                    const niceName = productNames[key] || key;
-                    if (key && key !== 'null' && key !== 'undefined' && !ignoredKeys.includes(key)) {
-                        if (!existingTitles.includes(niceName)) {
-                            // Creation Logic Disabled
-                        }
-                    }
-                }
+                // ... (Disabled)
                 */
             }
             // -------------------------------------
@@ -1509,9 +1511,6 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         }, (error) => {
             console.error("Error products listener:", error);
-            if (error.code === 'permission-denied') {
-                // Alert removed
-            }
         });
     }
 
