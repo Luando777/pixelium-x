@@ -34,3 +34,25 @@ En cuanto le des a Publicar:
 3.  **¡LISTO!** Todos tus productos, tu historial y el stock aparecerán mágicamente.
 
 No es un error de código, ¡era un candado de seguridad que se cerró ayer! 🔓
+
+---
+
+# 📸 SOLUCIÓN PARTE 2: "SUBIENDO IMAGEN CARGANDO..."
+
+Si al crear productos se queda en "Subiendo imagen...", es porque **Storage** también tiene candado.
+
+1.  Ve a tu Firebase Console -> Menú izquierdo **Storage**.
+2.  Pestaña **Reglas**.
+3.  Borra todo y pega esto:
+
+```javascript
+rules_version = '2';
+service firebase.storage {
+  match /b/{bucket}/o {
+    match /{allPaths=**} {
+      allow read, write: if true;
+    }
+  }
+}
+```
+4.  Dale **Publicar**. ¡Listo!

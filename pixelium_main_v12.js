@@ -1455,7 +1455,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 const productNames = {
                     'canva-pro': 'Canva PRO (Personal)',
                     'panel-canva': 'Panel Canva PRO',
-                    'perplexity': 'Perplexity AI - GPT5 (Original)', // Adjusted to match exact H3 if possible, or close enough
+                    'perplexity': 'Perplexity AI - GPT5 (Original)',
                     'gemini': 'Gemini Advanced',
                     'google-one': 'Google One',
                     'capcut': 'CapCut Pro'
@@ -1464,24 +1464,25 @@ document.addEventListener('DOMContentLoaded', () => {
                 // ALLOW ALL PRODUCTS
                 const ignoredKeys = [];
                 const existingTitles = customProducts.map(p => p.title);
-                let recoveredCount = 0;
 
-                // 1. CLEANUP GHOSTS (Raw Keys)
-                // If we find a product whose title is exactly a raw key (e.g. 'google-one'), delete it.
-                // But ONLY if we have a mapping for it (meaning it shouldn't be raw).
-                for (const p of customProducts) {
+                // --- BATCH 1: CLEANUP GHOSTS ---
+                const deletePromises = [];
+                customProducts.forEach(p => {
+                    // Check if title is a RAW key that should be mapped, OR is explicitly null/undefined
                     if (productNames[p.title] || p.title === 'null' || p.title === 'undefined') {
                         console.log("Deleting ghost/raw key product: ", p.title);
-                        await db.collection('products').doc(p.id).delete();
-                        // Reload immediately to flush ghosts
-                        location.reload();
-                        return;
+                        deletePromises.push(db.collection('products').doc(p.id).delete());
                     }
+                });
+
+                if (deletePromises.length > 0) {
+                    await Promise.all(deletePromises);
+                    console.log("✅ Cleanup complete. UI will update via Snapshot.");
                 }
 
-                // 2. RECOVER (Create with Correct Name)
+                // --- BATCH 2: RECOVER MISSING ---
+                const createPromises = [];
                 for (const [key, stockVal] of Object.entries(stockState)) {
-                    // Check if we need to create it
                     const niceName = productNames[key] || key;
 
                     if (key && key !== 'null' && key !== 'undefined' && !ignoredKeys.includes(key)) {
@@ -1489,7 +1490,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         if (!existingTitles.includes(niceName)) {
                             console.log("Found orphan stock key: ", key, ". Recovering as:", niceName);
 
-                            const id = 'custom_' + Date.now() + Math.floor(Math.random() * 10000);
+                            const id = 'custom_' + Date.now() + Math.random().toString(36).substr(2, 9);
                             const newProd = {
                                 id: id,
                                 title: niceName, // USE NICE NAME
@@ -1500,18 +1501,14 @@ document.addEventListener('DOMContentLoaded', () => {
                                 createdAt: new Date(),
                                 note: 'Recuperado de Stock'
                             };
-
-                            try {
-                                await db.collection('products').doc(id).set(newProd);
-                                recoveredCount++;
-                            } catch (e) { console.error(e); }
+                            createPromises.push(db.collection('products').doc(id).set(newProd));
                         }
                     }
                 }
 
-                if (recoveredCount > 0) {
-                    // console.log(`✅ RECUPERACIÓN ÉXITOSA: ${recoveredCount} productos restaurados.`);
-                    location.reload();
+                if (createPromises.length > 0) {
+                    await Promise.all(createPromises);
+                    console.log("✅ Recovery complete. UI will update via Snapshot.");
                 }
             }
             // -------------------------------------
