@@ -1537,8 +1537,8 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // Tab Switcher
-    // Tab Switcher
-    window.switchProductTab = (tab) => {
+    // Tab Switcher V2
+    window.switchProductTabV2 = (tab) => {
         document.querySelectorAll('.auth-tabs .tab-btn').forEach(btn => btn.classList.remove('active'));
 
         const tabAdd = document.getElementById('product-tab-add');
