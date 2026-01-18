@@ -1,8 +1,8 @@
 from PIL import Image
 import os
 
-# Source Image (The Fox)
-source_path = r"C:/Users/luisq/.gemini/antigravity/brain/fec41daa-3bfe-4b54-ada1-162f956ad11f/new_fox_favicon_1768695083912.png"
+# Source Image (The User's Original Fox)
+source_path = r"C:/Users/luisq/.gemini/antigravity/brain/fec41daa-3bfe-4b54-ada1-162f956ad11f/uploaded_image_1768695023630.png"
 dest_dir = r"c:/Users/luisq/Desktop/APP_1 Antigravity/pixelium-x"
 
 img = Image.open(source_path)
