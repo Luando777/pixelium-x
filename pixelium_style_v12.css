@@ -1672,12 +1672,14 @@ body {
 /* Floating WhatsApp Bubble (Stacked above Cart) */
 .floating-whatsapp {
     position: fixed;
-    bottom: 140px; /* 30px (cart bottom) + 80px (cart height) + 30px (gap) */
+    bottom: 140px;
     right: 30px;
-    width: 80px; /* MATCHING CART SIZE */
-    height: 80px; /* MATCHING CART SIZE */
-    background: rgba(10, 10, 15, 0.95);
-    border: 2px solid #25D366; /* WhatsApp Green */
+    width: 80px;
+    height: 80px;
+    background: transparent;
+    /* No background needed, icon is full */
+    border: none;
+    /* Icon itself provides the shape/border usually, but keeping shadow */
     border-radius: 50%;
     display: flex;
     z-index: 9999 !important;
@@ -1688,17 +1690,18 @@ body {
     transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
     animation: float 3.5s ease-in-out infinite;
     text-decoration: none;
+    overflow: hidden;
+    /* Crop logic */
 }
 
 .floating-whatsapp:hover {
     transform: scale(1.1);
     box-shadow: 0 0 25px rgba(37, 211, 102, 0.8);
-    background: rgba(37, 211, 102, 0.1);
 }
 
 .floating-whatsapp img {
-    width: 60%;
-    height: 60%;
-    object-fit: contain;
-    filter: drop-shadow(0 0 2px rgba(255,255,255,0.5));
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    /* Fill the circle */
 }
