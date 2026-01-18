@@ -1672,10 +1672,10 @@ body {
 /* Floating WhatsApp Bubble (Stacked above Cart) */
 .floating-whatsapp {
     position: fixed;
-    bottom: 130px; /* 30px (cart bottom) + 80px (cart height) + 20px (gap) */
+    bottom: 140px; /* 30px (cart bottom) + 80px (cart height) + 30px (gap) */
     right: 30px;
-    width: 60px; /* Slightly smaller than cart (80px) to establish hierarchy */
-    height: 60px;
+    width: 80px; /* MATCHING CART SIZE */
+    height: 80px; /* MATCHING CART SIZE */
     background: rgba(10, 10, 15, 0.95);
     border: 2px solid #25D366; /* WhatsApp Green */
     border-radius: 50%;
@@ -1686,8 +1686,8 @@ body {
     cursor: pointer;
     box-shadow: 0 0 15px rgba(37, 211, 102, 0.4);
     transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-    animation: float 3.5s ease-in-out infinite; /* Slightly different timing */
-    text-decoration: none; /* Remove underline from anchor */
+    animation: float 3.5s ease-in-out infinite;
+    text-decoration: none;
 }
 
 .floating-whatsapp:hover {
@@ -1697,8 +1697,8 @@ body {
 }
 
 .floating-whatsapp img {
-    width: 65%;
-    height: 65%;
+    width: 60%;
+    height: 60%;
     object-fit: contain;
     filter: drop-shadow(0 0 2px rgba(255,255,255,0.5));
 }
