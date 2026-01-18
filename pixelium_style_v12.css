@@ -828,6 +828,18 @@ body {
     animation: float 3s ease-in-out infinite;
 }
 
+.floating-cart:hover {
+    transform: scale(1.1);
+    box-shadow: 0 0 40px var(--neon-cyan), inset 0 0 20px rgba(0, 243, 255, 0.3);
+    border-color: #fff;
+    background: rgba(0, 243, 255, 0.15);
+}
+
+.floating-cart:active {
+    transform: scale(0.95);
+    box-shadow: 0 0 15px var(--neon-cyan);
+}
+
 /* --- NEW NEON STYLES FOR USER REQUEST --- */
 .stock-status {
     background: rgba(57, 255, 20, 0.1) !important;
