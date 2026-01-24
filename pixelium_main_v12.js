@@ -1874,6 +1874,9 @@ document.addEventListener('DOMContentLoaded', () => {
         const sectionTitle = document.querySelector('.section-title');
         if (sectionTitle) sectionTitle.innerHTML = `Viendo: <span style="color:var(--neon-cyan)">${target.title}</span>`;
 
+        // Define P early
+        const p = target;
+
         // STATIC IMAGE MAP (Fallback if DB has no image)
         const imageMap = {
             "Netflix": "netflix.png",
@@ -1905,7 +1908,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         // 4. Render SINGLE Card (Reusing render logic effectively or manual build)
-        const p = target;
+        // const p = target; // MOVED UP
         const cardClass = p.isSpecial ? `card ${p.specialClass || 'special-card'}` : 'card';
         const badgeHtml = p.badge ? `<p class="gold-text">${p.badge}</p>` : '';
         const noteHtml = p.note ? `<p class="activation-note">${p.note}</p>` : '';
