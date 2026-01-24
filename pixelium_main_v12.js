@@ -1753,6 +1753,10 @@ document.addEventListener('DOMContentLoaded', () => {
         const grid = document.querySelector('.services-grid');
         if (!grid) return;
 
+        // CRITICAL: Clear grid to remove Loader and prevent duplicates
+        grid.innerHTML = "";
+
+
         customProducts.forEach(prod => {
             // Deduplication Logic REMOVED (Static HTML deleted, so DB is source of truth)
 
