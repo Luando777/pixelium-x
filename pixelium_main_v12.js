@@ -1749,8 +1749,21 @@ document.addEventListener('DOMContentLoaded', () => {
         const grid = document.querySelector('.services-grid');
         if (!grid) return;
 
+        const staticTitles = [
+            "Canva PRO",
+            "Panel Canva PRO",
+            "Perplexity AI - GPT5",
+            "Gemini Advanced",
+            "Google One",
+            "CapCut Pro"
+        ];
+
         customProducts.forEach(prod => {
+            // Deduplication: Skip if title exists in static list (Fuzzy match)
+            if (staticTitles.some(t => t.toLowerCase().trim() === prod.title.toLowerCase().trim())) return;
+
             if (document.getElementById(prod.id)) return;
+
 
             const card = document.createElement('div');
             card.className = 'card';
