@@ -2069,7 +2069,17 @@ document.addEventListener('DOMContentLoaded', () => {
 
         if (mapKey) {
             displayImage = imageMap[mapKey];
+        } else if (!displayImage || displayImage.includes('logo.png')) {
+            // Fallback
         }
+
+        // FIX: Define imgOnError which was missing
+        let brandIconForError = 'logo.png';
+        const brandKey = Object.keys(brandMap).find(k => p.title.toLowerCase().includes(k));
+        if (brandKey) {
+            brandIconForError = `carrusel/carrucel-${brandMap[brandKey]}.png`;
+        }
+        const imgOnError = `this.onerror=null; this.src='${brandIconForError}'; this.addEventListener('error', function(){this.src='logo.png'});`;
 
         // 4. Render SINGLE Card
         const cardClass = p.isSpecial ? `card ${p.specialClass || 'special-card'}` : 'card';
@@ -2084,7 +2094,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 <div style="position: absolute; top:0; left:0; width:100%; height:100%; background: radial-gradient(circle at center, rgba(0,243,255,0.1) 0%, transparent 70%); pointer-events:none;"></div>
                 
                 <div class="card-icon" style="height: auto; min-height: 300px; padding: 20px; background: rgba(0, 0, 0, 0.4);">
-                    <img src="${displayImage}" alt="${p.title}" class="product-img" style="object-fit: contain; max-height: 400px;" onerror="${imgOnError}">
+                    <img src="${displayImage}" alt="${p.title}" class="product-img" style="object-fit: contain; max-height: 400px; cursor: pointer;" onerror="${imgOnError}">
                 </div>
                 <h3>${p.title}</h3>
                 
@@ -2141,6 +2151,19 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // Trigger Stock Update for single item
         setTimeout(updateStockUI, 500);
+
+        // ENABLE LIGHTBOX (Zoom) logic for this single view
+        const singleImg = grid.querySelector('.product-img');
+        if (singleImg) {
+            singleImg.addEventListener('click', () => {
+                const lightbox = document.getElementById('lightbox');
+                const lightboxImg = document.getElementById('lightbox-img');
+                if (lightbox && lightboxImg) {
+                    lightbox.style.display = "block";
+                    lightboxImg.src = singleImg.src;
+                }
+            });
+        }
 
         // Scroll to grid
         grid.scrollIntoView({ behavior: 'smooth', block: 'start' });
