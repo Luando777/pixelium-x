@@ -1474,6 +1474,10 @@ document.addEventListener('DOMContentLoaded', () => {
             });
             customProducts = products;
 
+            // Hide Loading Indicator
+            const loader = document.getElementById('loading-catalog');
+            if (loader) loader.remove();
+
             // --- REAL AUTO-RECOVERY FROM STOCK (REQUESTED BY USER) ---
             // PURGE MODE: Run once on load to clean up specific ghosts
             if (!hasSynced) {
@@ -1749,18 +1753,10 @@ document.addEventListener('DOMContentLoaded', () => {
         const grid = document.querySelector('.services-grid');
         if (!grid) return;
 
-        const staticTitles = [
-            "Canva PRO",
-            "Panel Canva PRO",
-            "Perplexity AI - GPT5",
-            "Gemini Advanced",
-            "Google One",
-            "CapCut Pro"
-        ];
-
         customProducts.forEach(prod => {
-            // Deduplication: Skip if title exists in static list (Fuzzy match)
-            if (staticTitles.some(t => t.toLowerCase().trim() === prod.title.toLowerCase().trim())) return;
+            // Deduplication Logic REMOVED (Static HTML deleted, so DB is source of truth)
+
+            if (document.getElementById(prod.id)) return;
 
             if (document.getElementById(prod.id)) return;
 
