@@ -1945,37 +1945,35 @@ document.addEventListener('DOMContentLoaded', () => {
             const btnState = currentStock > 0 ? '' : 'disabled';
             const btnText = currentStock > 0 ? 'Agregar al Carrito' : 'Agotado';
 
-            card.innerHTML = `
-             // IMAGE OVERRIDE LOGIC (Copy from main render)
-             let displayImage = prod.image;
-             // Force Brand Image if title matches a known key (Reuse brandMap)
-             const mapKey = Object.keys(brandMap).find(k => prod.title.toLowerCase().includes(k));
-             
-             // Fallback Map for non-carousel brands (re-defining for safety or use global)
-             // Ideally we'd make imageMap global, but for now let's use brandMap extended logic or fallback
-             // To keep it simple and fix the immediate bug:
-             if (mapKey) {
-                  displayImage = `carrusel / carrucel - ${ brandMap[mapKey] }.png`;
-             } else {
-                 // Try External URL Map (Duplicate from renderCustomProductsOnGrid? Or keep simple?)
-                 // If the issue is predominantly Adobe/HBO, the brandMap fix above handles it.
-             }
+            // IMAGE LOGIC:
+            // 1. Try Specific Image (prod.image)
+            // 2. Fallback to Brand (carrusel/...)
+            // 3. Fallback to Logo (logo.png)
+            
+            let brandIcon = 'logo.png';
+            const mapKey = Object.keys(brandMap).find(k => prod.title.toLowerCase().includes(k));
+            if (mapKey) {
+                 brandIcon = `carrusel/carrucel-${brandMap[mapKey]}.png`;
+            }
+            
+            // OnError Script: If specific image fails, try brand icon. If that fails, show logo.
+            const imgOnError = `this.onerror=null; this.src='${brandIcon}'; this.addEventListener('error', function(){this.src='logo.png'});`;
 
-             card.innerHTML = `
-                < div class="card-icon" >
-                    <img src="${displayImage}" alt="${prod.title}" class="product-img" onerror="this.onerror=null; this.src='logo.png';">
+            card.innerHTML = `
+                <div class="card-icon">
+                    <img src="${prod.image}" alt="${prod.title}" class="product-img" onerror="${imgOnError}">
                 </div>
                 <h3>${prod.title}</h3>
-                ${ prod.desc ? `<p>${prod.desc}</p>` : '' }
-
-            <div id="stock-${prod.id}" class="stock-status ${stockClass}" data-stock-key="${prod.title}">${stockText}</div>
+                ${prod.desc ? `<p>${prod.desc}</p>` : ''}
                 
-                ${ prod.badge ? `<p class="gold-text">${prod.badge}</p>` : '' }
+                <div id="stock-${prod.id}" class="stock-status ${stockClass}" data-stock-key="${prod.title}">${stockText}</div>
+                
+                ${prod.badge ? `<p class="gold-text">${prod.badge}</p>` : ''}
                 
                 <div class="price-tag">S/${prod.price.toFixed(2)} ${prod.priceAlt ? `<span class="price-alt">($${prod.priceAlt})</span>` : ''}</div>
                 <button class="btn-add" onclick="addToCart('${prod.title}', ${prod.price})" ${btnState}>${btnText}</button>
             `;
-
+            
             // Click image to detail
             const newImg = card.querySelector('.product-img');
             newImg.addEventListener('click', () => {
@@ -1991,10 +1989,10 @@ document.addEventListener('DOMContentLoaded', () => {
         backBtnContainer.style.textAlign = "center";
         backBtnContainer.style.marginTop = "30px";
         backBtnContainer.innerHTML = `
-                < button onclick = "restoreFullCatalog()" class="btn-secondary" style = "background:transparent; color:#00f3ff; border:1px solid #00f3ff; padding:10px 30px; border-radius:30px; cursor:pointer; font-weight:bold; transition:all 0.3s;" >
+            <button onclick="restoreFullCatalog()" class="btn-secondary" style="background:transparent; color:#00f3ff; border:1px solid #00f3ff; padding:10px 30px; border-radius:30px; cursor:pointer; font-weight:bold; transition:all 0.3s;">
                 ⬅ Regresar al Catálogo
-            </button >
-                `;
+            </button>
+        `;
         grid.appendChild(backBtnContainer);
 
         // Scroll
