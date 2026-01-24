@@ -2083,8 +2083,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 <!-- Glowing Backdrop for filtered view -->
                 <div style="position: absolute; top:0; left:0; width:100%; height:100%; background: radial-gradient(circle at center, rgba(0,243,255,0.1) 0%, transparent 70%); pointer-events:none;"></div>
                 
-                <div class="card-icon">
-                    <img src="${displayImage}" alt="${p.title}" class="product-img" onerror="this.onerror=null; this.src='logo.png';">
+                <div class="card-icon" style="height: auto; min-height: 300px; padding: 20px; background: rgba(0, 0, 0, 0.4);">
+                    <img src="${displayImage}" alt="${p.title}" class="product-img" style="object-fit: contain; max-height: 400px;" onerror="${imgOnError}">
                 </div>
                 <h3>${p.title}</h3>
                 
