@@ -1717,6 +1717,7 @@ body {
     object-fit: cover;
     /* Fill the circle */
 }
+
 /* --- INFINITE CAROUSEL STYLES --- */
 .carousel-section {
     padding: 20px 0;
@@ -1748,8 +1749,8 @@ body {
 }
 
 .carousel-item {
-    width: 80px;
-    height: 80px;
+    width: 110px;
+    height: 110px;
     border-radius: 50%;
     background: rgba(255, 255, 255, 0.9);
     display: flex;
@@ -1772,23 +1773,28 @@ body {
     width: 70%;
     height: 70%;
     object-fit: contain;
-    filter: drop-shadow(0 2px 4px rgba(0,0,0,0.2));
+    filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.2));
 }
 
 @keyframes scroll {
-    0% { transform: translateX(0); }
-    100% { transform: translateX(-50%); }
+    0% {
+        transform: translateX(0);
+    }
+
+    100% {
+        transform: translateX(-50%);
+    }
 }
 
 @media (max-width: 768px) {
     .carousel-item {
-        width: 60px;
-        height: 60px;
+        width: 85px;
+        height: 85px;
         gap: 15px;
     }
+
     .carousel-track {
         gap: 15px;
         animation-duration: 20s;
     }
 }
-
