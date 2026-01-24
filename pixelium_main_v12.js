@@ -1478,6 +1478,9 @@ document.addEventListener('DOMContentLoaded', () => {
             const loader = document.getElementById('loading-catalog');
             if (loader) loader.remove();
 
+            // Populate Carousel
+            renderCarousel(customProducts);
+
             // --- REAL AUTO-RECOVERY FROM STOCK (REQUESTED BY USER) ---
             // PURGE MODE: Run once on load to clean up specific ghosts
             if (!hasSynced) {
@@ -1808,6 +1811,36 @@ document.addEventListener('DOMContentLoaded', () => {
             });
 
             grid.appendChild(card);
+        });
+    }
+
+    // --- CAROUSEL RENDER LOGIC ---
+    function renderCarousel(products) {
+        const track = document.getElementById('carousel-track');
+        if (!track) return;
+        track.innerHTML = '';
+
+        // Flatten logic: Double the list for seamless infinite scroll
+        // Sort by order or just random/default
+        const allItems = [...products, ...products];
+        // Need enough items to fill width. If few products, triple them.
+        if (products.length < 10) allItems.push(...products);
+
+        allItems.forEach(p => {
+            const item = document.createElement('div');
+            item.className = 'carousel-item';
+            // Scroll to product on click
+            item.onclick = () => {
+                const target = document.getElementById(p.id);
+                if (target) target.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            };
+
+            const img = document.createElement('img');
+            img.src = p.image || 'logo.png';
+            img.onerror = () => img.src = 'logo.png';
+
+            item.appendChild(img);
+            track.appendChild(item);
         });
     }
 
