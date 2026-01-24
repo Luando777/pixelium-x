@@ -1949,13 +1949,13 @@ document.addEventListener('DOMContentLoaded', () => {
             // 1. Try Specific Image (prod.image)
             // 2. Fallback to Brand (carrusel/...)
             // 3. Fallback to Logo (logo.png)
-            
+
             let brandIcon = 'logo.png';
             const mapKey = Object.keys(brandMap).find(k => prod.title.toLowerCase().includes(k));
             if (mapKey) {
-                 brandIcon = `carrusel/carrucel-${brandMap[mapKey]}.png`;
+                brandIcon = `carrusel/carrucel-${brandMap[mapKey]}.png`;
             }
-            
+
             // OnError Script: If specific image fails, try brand icon. If that fails, show logo.
             const imgOnError = `this.onerror=null; this.src='${brandIcon}'; this.addEventListener('error', function(){this.src='logo.png'});`;
 
@@ -1973,7 +1973,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 <div class="price-tag">S/${prod.price.toFixed(2)} ${prod.priceAlt ? `<span class="price-alt">($${prod.priceAlt})</span>` : ''}</div>
                 <button class="btn-add" onclick="addToCart('${prod.title}', ${prod.price})" ${btnState}>${btnText}</button>
             `;
-            
+
             // Click image to detail
             const newImg = card.querySelector('.product-img');
             newImg.addEventListener('click', () => {
@@ -2000,6 +2000,7 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     // --- FILTER GRID LOGIC (ROUTING VIEW) ---
+    // --- FILTER GRID LOGIC (ROUTING VIEW) ---
     window.filterGridByProduct = (prodId) => {
         const grid = document.querySelector('.services-grid');
         if (!grid) return;
@@ -2022,13 +2023,12 @@ document.addEventListener('DOMContentLoaded', () => {
         // Define P early
         const p = target;
 
-        // STATIC IMAGE MAP (Fallback if DB has no image or local file missing)
-        // Using external URLs for major brands since local files are missing
+        // STATIC IMAGE MAP (Fallback)
         const imageMap = {
             // Streaming
             "Netflix": "https://upload.wikimedia.org/wikipedia/commons/0/08/Netflix_2015_logo.svg",
             "Disney": "https://upload.wikimedia.org/wikipedia/commons/3/3e/Disney%2B_logo.svg",
-            "HBO": "https://upload.wikimedia.org/wikipedia/commons/1/17/HBO_Max_Logo.svg", // Catch-all for HBO Max, Standar, Platino
+            "HBO": "https://upload.wikimedia.org/wikipedia/commons/1/17/HBO_Max_Logo.svg",
             "Prime Video": "https://upload.wikimedia.org/wikipedia/commons/f/f1/Prime_Video.png",
             "Amazon Prime": "https://upload.wikimedia.org/wikipedia/commons/f/f1/Prime_Video.png",
             "Spotify": "https://upload.wikimedia.org/wikipedia/commons/2/26/Spotify_logo_with_text.svg",
@@ -2041,7 +2041,7 @@ document.addEventListener('DOMContentLoaded', () => {
             "Youtube": "https://upload.wikimedia.org/wikipedia/commons/b/b8/YouTube_Logo_2017.svg",
             "Apple TV": "https://upload.wikimedia.org/wikipedia/commons/2/28/Apple_TV_Plus_Logo.svg",
 
-            // Software / Antivirus / VPN
+            // Software / Antivirus
             "Adobe": "https://upload.wikimedia.org/wikipedia/commons/4/42/Adobe_Creative_Cloud_rainbow_icon.svg",
             "Creative Cloud": "https://upload.wikimedia.org/wikipedia/commons/4/42/Adobe_Creative_Cloud_rainbow_icon.svg",
             "Microsoft": "https://upload.wikimedia.org/wikipedia/commons/4/44/Microsoft_logo.svg",
@@ -2052,49 +2052,43 @@ document.addEventListener('DOMContentLoaded', () => {
             "Eset": "https://upload.wikimedia.org/wikipedia/commons/0/05/ESET_logo.svg",
             "McAfee": "https://upload.wikimedia.org/wikipedia/commons/0/0c/McAfee_logo_2024.svg",
 
-            // Design / AI (Using Local if present, else External)
+            // Design / AI
             "Canva": "canva.png",
-            "Panel Canva": "panel-canva.png",
             "Gemini": "gemini.png",
             "Google One": "google-one.png",
             "Perplexity": "perplexity.png",
             "Capcut": "capcut.png",
-            "Iptv": "iptv.png", // Assuming this might exist or fallback
-            "Magis": "display_magis.png" // Placeholder
+            "Iptv": "iptv.png",
+            "Magis": "display_magis.png"
         };
 
         let displayImage = p.image;
 
         // PRIORITY: Force Brand Image if title matches a known key
-        // This fixes cases where DB has broken paths like "disney.png" -> Fox Fallback
         const mapKey = Object.keys(imageMap).find(k => p.title.toLowerCase().includes(k.toLowerCase()));
 
         if (mapKey) {
             displayImage = imageMap[mapKey];
-        } else if (!displayImage || displayImage.includes('logo.png')) {
-            // Fallback
         }
 
-        // 4. Render SINGLE Card (Reusing render logic effectively or manual build)
-        // const p = target; // MOVED UP
-        const cardClass = p.isSpecial ? `card ${ p.specialClass || 'special-card' } ` : 'card';
-        const badgeHtml = p.badge ? `< p class="gold-text" > ${ p.badge }</p > ` : '';
-        const noteHtml = p.note ? `< p class="activation-note" > ${ p.note }</p > ` : '';
-        const priceAltHtml = p.priceAlt ? `< span class="price-alt" > ${ p.priceAlt }</span > ` : '';
+        // 4. Render SINGLE Card
+        const cardClass = p.isSpecial ? `card ${p.specialClass || 'special-card'}` : 'card';
+        const badgeHtml = p.badge ? `<p class="gold-text">${p.badge}</p>` : '';
+        const noteHtml = p.note ? `<p class="activation-note">${p.note}</p>` : '';
+        const priceAltHtml = p.priceAlt ? `<span class="price-alt">($${p.priceAlt})</span>` : '';
         const pid = p.id;
 
         const html = `
-                < div class="${cardClass}" style = "margin: 0 auto; max-width: 500px; grid-column: 1 / -1; position: relative; overflow: hidden;" >
-                < !--Glowing Backdrop for filtered view-- >
+            <div class="${cardClass}" style="margin: 0 auto; max-width: 500px; grid-column: 1 / -1; position: relative; overflow: hidden;">
+                <!-- Glowing Backdrop for filtered view -->
                 <div style="position: absolute; top:0; left:0; width:100%; height:100%; background: radial-gradient(circle at center, rgba(0,243,255,0.1) 0%, transparent 70%); pointer-events:none;"></div>
                 
                 <div class="card-icon">
-                    <img src="${displayImage}?v=opt" alt="${p.title}" class="product-img" onerror="this.onerror=null; this.src='logo.png';">
+                    <img src="${displayImage}" alt="${p.title}" class="product-img" onerror="this.onerror=null; this.src='logo.png';">
                 </div>
                 <h3>${p.title}</h3>
                 
-                ${
-                p.isSpecial ? `
+                ${p.isSpecial ? `
                     <div class="card-content">
                             <p class="highlight-text">${p.description}</p>
                             ${p.id === 'canva-pro' || p.title === 'Canva PRO' ? `
@@ -2111,37 +2105,37 @@ document.addEventListener('DOMContentLoaded', () => {
                 ` : `
                     <p>${p.description}</p>
                 `}
-
-            <div id="stock-${pid}" class="stock-status stock-available" data-stock-key="${pid}">
-                Verificando stock...
-            </div>
-
-                ${ badgeHtml }
-                ${ noteHtml }
-
-            <div class="warranty-info">
-                <i class="fas fa-star warranty-star"></i>
-                <span>${p.warranty}</span>
-            </div>
-
-                ${ p.isSpecial ? '' : `<div class="price-tag">S/${p.price}.00 ${priceAltHtml}</div>` }
                 
-                ${ p.id === 'panel-canva' || p.title === 'Panel Canva PRO' ? `<div class="price-tag">S/${p.price}.00 ${priceAltHtml}</div>` : '' }
+                ${p.isSpecial ? '</div>' : ''} 
 
-            <button id="btn-${pid}" class="btn-primary" style="width:100%; margin-top:15px; font-size:1.1rem;"
-                onclick="addToCart('${p.title}', ${p.price})">
-                Agregar al Carrito
-            </button>
-                
-                ${ p.isSpecial ? '</div>' : '' } 
-            </div >
-
-                <div style="grid-column: 1 / -1; text-align: center; margin-top: 30px;">
-                    <button onclick="restoreFullCatalog()" class="btn-secondary" style="background:transparent; color:#00f3ff; border:1px solid #00f3ff; padding:10px 30px; border-radius:30px; cursor:pointer; font-weight:bold; transition:all 0.3s;">
-                        ⬅ Regresar al Catálogo
-                    </button>
+                <div id="stock-${pid}" class="stock-status stock-available" data-stock-key="${pid}">
+                    Verificando stock...
                 </div>
-            `;
+
+                ${badgeHtml}
+                ${noteHtml}
+
+                <div class="warranty-info">
+                    <i class="fas fa-star warranty-star"></i>
+                    <span>${p.warranty}</span>
+                </div>
+
+                ${p.isSpecial ? '' : `<div class="price-tag">S/${p.price.toFixed(2)} ${priceAltHtml}</div>`}
+                
+                ${p.id === 'panel-canva' || p.title === 'Panel Canva PRO' ? `<div class="price-tag">S/${p.price.toFixed(2)} ${priceAltHtml}</div>` : ''}
+
+                <button id="btn-${pid}" class="btn-primary" style="width:100%; margin-top:15px; font-size:1.1rem;"
+                    onclick="addToCart('${p.title}', ${p.price})">
+                    Agregar al Carrito
+                </button>
+            </div>
+
+            <div style="grid-column: 1 / -1; text-align: center; margin-top: 30px;">
+                <button onclick="restoreFullCatalog()" class="btn-secondary" style="background:transparent; color:#00f3ff; border:1px solid #00f3ff; padding:10px 30px; border-radius:30px; cursor:pointer; font-weight:bold; transition:all 0.3s;">
+                    ⬅ Regresar al Catálogo
+                </button>
+            </div>
+        `;
 
         grid.innerHTML = html;
 
@@ -2192,7 +2186,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const row = document.createElement('div');
             row.className = 'stock-item-row';
             row.innerHTML = `
-                < span class="stock-item-name" > ${ title } (Original)</span >
+                < span class="stock-item-name" > ${title} (Original)</span >
                     <button onclick="toggleProductVisibility('${title}')" style="background: ${isHidden ? '#39ff14' : '#ff4444'}; border:none; border-radius:4px; padding:  5px; cursor:pointer; color:black; font-weight:bold;">
                         ${isHidden ? 'Mostrar' : 'Ocultar'}
                     </button>
@@ -2239,7 +2233,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
             row.innerHTML = `
                 < span class="stock-item-name" style = "color: ${isBroken ? '#ff9900' : 'inherit'}" >
-                    ${ prod.title } ${ isBroken ? '(ROTO)' : '(Custom)' }
+                    ${prod.title} ${isBroken ? '(ROTO)' : '(Custom)'}
             </span >
                 `;
             row.appendChild(actionContainer);
@@ -2272,7 +2266,7 @@ document.addEventListener('DOMContentLoaded', () => {
             return;
         }
 
-        const fileInput = document.getElementById(`repair - file - ${ index } `);
+        const fileInput = document.getElementById(`repair - file - ${index} `);
         const file = fileInput.files[0];
         if (!file) return;
 
@@ -2430,107 +2424,107 @@ document.addEventListener('DOMContentLoaded', () => {
             const row = document.createElement('div');
             row.className = 'stock-item-row';
             row.innerHTML = `
-                < span class="stock-item-name" > ${ title }</span >
+                < span class="stock-item-name" > ${title}</span >
                     <input type="number" step="0.50" class="stock-input price-input-field"
                         data-title="${title}"
                         value="${currentPrice}">
                         `;
-                        priceAdminList.appendChild(row);
+            priceAdminList.appendChild(row);
         });
     }
 
-                        if (btnSavePrices) {
-                            btnSavePrices.addEventListener('click', () => {
-                                const inputs = document.querySelectorAll('.price-input-field');
-                                const updates = {};
-                                inputs.forEach(input => {
-                                    const title = input.getAttribute('data-title');
-                                    const val = parseFloat(input.value);
-                                    if (!isNaN(val)) {
-                                        updates[title] = val;
-                                    }
-                                });
+    if (btnSavePrices) {
+        btnSavePrices.addEventListener('click', () => {
+            const inputs = document.querySelectorAll('.price-input-field');
+            const updates = {};
+            inputs.forEach(input => {
+                const title = input.getAttribute('data-title');
+                const val = parseFloat(input.value);
+                if (!isNaN(val)) {
+                    updates[title] = val;
+                }
+            });
 
-                                // Save to Firestore
-                                db.collection('prices').doc('main').set(updates, { merge: true })
-                                    .then(() => {
-                                        alert("¡Precios Globales Actualizados! ☁️💰");
-                                        priceModal.style.display = 'none';
-                                    })
-                                    .catch(err => alert("Error: " + err.message));
-                            });
+            // Save to Firestore
+            db.collection('prices').doc('main').set(updates, { merge: true })
+                .then(() => {
+                    alert("¡Precios Globales Actualizados! ☁️💰");
+                    priceModal.style.display = 'none';
+                })
+                .catch(err => alert("Error: " + err.message));
+        });
     }
 
-                        // --- LOGIC: APPLY OVERRIDES (CORE) ---
-                        function applyPriceOverrides() {
-                            document.querySelectorAll('.services-grid .card').forEach(card => {
-                                const title = card.querySelector('h3').innerText.trim();
+    // --- LOGIC: APPLY OVERRIDES (CORE) ---
+    function applyPriceOverrides() {
+        document.querySelectorAll('.services-grid .card').forEach(card => {
+            const title = card.querySelector('h3').innerText.trim();
 
-                                if (priceState[title] !== undefined) {
-                                    const newPrice = priceState[title];
+            if (priceState[title] !== undefined) {
+                const newPrice = priceState[title];
 
-                                    // 1. Update Visual Text
-                                    const priceTag = card.querySelector('.price-tag');
-                                    if (priceTag) {
-                                        // Keep the structural span for alt price if exists, just update text node
-                                        // Easier: Just rebuild innerHTML to keep format "S/XX <span...>"
-                                        // Check if there is an alt price span
-                                        const altSpan = priceTag.querySelector('.price-alt');
-                                        const altHtml = altSpan ? altSpan.outerHTML : '';
-                                        priceTag.innerHTML = `S/${newPrice.toFixed(2)} ${altHtml}`;
-                                    }
+                // 1. Update Visual Text
+                const priceTag = card.querySelector('.price-tag');
+                if (priceTag) {
+                    // Keep the structural span for alt price if exists, just update text node
+                    // Easier: Just rebuild innerHTML to keep format "S/XX <span...>"
+                    // Check if there is an alt price span
+                    const altSpan = priceTag.querySelector('.price-alt');
+                    const altHtml = altSpan ? altSpan.outerHTML : '';
+                    priceTag.innerHTML = `S/${newPrice.toFixed(2)} ${altHtml}`;
+                }
 
-                                    // 2. Update Add to Cart Button Logic
-                                    const btn = card.querySelector('.btn-add');
-                                    if (btn) {
-                                        // Remove old onclick attribute to be safe
-                                        btn.removeAttribute('onclick');
-                                        // Clone button to strip existing event listeners (if added via JS)
-                                        // But since most are inline HTML onclick, we can just override onclick prop
-                                        btn.onclick = (e) => {
-                                            e.preventDefault();
-                                            e.stopPropagation();
-                                            addToCart(title, newPrice);
-                                        };
-                                    }
-                                }
-                            });
+                // 2. Update Add to Cart Button Logic
+                const btn = card.querySelector('.btn-add');
+                if (btn) {
+                    // Remove old onclick attribute to be safe
+                    btn.removeAttribute('onclick');
+                    // Clone button to strip existing event listeners (if added via JS)
+                    // But since most are inline HTML onclick, we can just override onclick prop
+                    btn.onclick = (e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        addToCart(title, newPrice);
+                    };
+                }
+            }
+        });
     }
 
 }); // End of DOMContentLoaded
 
-                        // --- HELPERS ---
+// --- HELPERS ---
 
-                        window.uploadImageToImgBB = async function (base64Str, name) {
+window.uploadImageToImgBB = async function (base64Str, name) {
     // POLYFILL: Actually compress and return Base64 (No External API Needed)
     // This solves "undefined" error and keeps data local/free.
     return new Promise((resolve) => {
         const img = new Image();
-                        img.src = "data:image/jpeg;base64," + base64Str;
+        img.src = "data:image/jpeg;base64," + base64Str;
         img.onload = () => {
             const canvas = document.createElement('canvas');
-                        const ctx = canvas.getContext('2d');
-                        const MAX_WIDTH = 800;
-                        const MAX_HEIGHT = 800;
-                        let width = img.width;
-                        let height = img.height;
+            const ctx = canvas.getContext('2d');
+            const MAX_WIDTH = 800;
+            const MAX_HEIGHT = 800;
+            let width = img.width;
+            let height = img.height;
 
             if (width > height) {
                 if (width > MAX_WIDTH) {
-                            height *= MAX_WIDTH / width;
-                        width = MAX_WIDTH;
+                    height *= MAX_WIDTH / width;
+                    width = MAX_WIDTH;
                 }
             } else {
                 if (height > MAX_HEIGHT) {
-                            width *= MAX_HEIGHT / height;
-                        height = MAX_HEIGHT;
+                    width *= MAX_HEIGHT / height;
+                    height = MAX_HEIGHT;
                 }
             }
-                        canvas.width = width;
-                        canvas.height = height;
-                        ctx.drawImage(img, 0, 0, width, height);
-                        // Compress to 0.6 quality
-                        resolve(canvas.toDataURL('image/jpeg', 0.6));
+            canvas.width = width;
+            canvas.height = height;
+            ctx.drawImage(img, 0, 0, width, height);
+            // Compress to 0.6 quality
+            resolve(canvas.toDataURL('image/jpeg', 0.6));
         };
     });
 };
