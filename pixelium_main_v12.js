@@ -1846,8 +1846,41 @@ document.addEventListener('DOMContentLoaded', () => {
             };
 
             const img = document.createElement('img');
-            img.src = p.image || 'logo.png';
-            img.onerror = () => img.src = 'logo.png';
+
+            // CUSTOM CAROUSEL IMAGE LOGIC (User provided folder "carrusel")
+            // Pattern: carrusel/carrucel-NAME.png
+            const customMap = {
+                "adobe": "adobe",
+                "canva": "canva",
+                "chatgpt": "chatgpt",
+                "crunchyroll": "crunchyroll",
+                "gemini": "gemini",
+                "google": "gogleone",
+                "one": "gogleone",
+                "hbo": "hbo",
+                "netflix": "netflix",
+                "paramount": "paramount",
+                "perplexity": "perplexity",
+                "spotify": "spotify",
+                "youtube": "youtube"
+            };
+
+            let carouselImgSrc = p.image || 'logo.png';
+
+            // Check if title matches any custom key
+            const titleLower = p.title.toLowerCase();
+            const customKey = Object.keys(customMap).find(k => titleLower.includes(k));
+
+            if (customKey) {
+                carouselImgSrc = `carrusel/carrucel-${customMap[customKey]}.png`;
+            }
+
+            img.src = carouselImgSrc;
+            img.onerror = () => {
+                // Fallback to default if custom image fails or is missing
+                img.src = p.image || 'logo.png';
+                img.onerror = () => img.src = 'logo.png';
+            };
 
             item.appendChild(img);
             track.appendChild(item);
