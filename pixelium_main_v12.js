@@ -1896,6 +1896,17 @@ document.addEventListener('DOMContentLoaded', () => {
             "Youtube": "https://upload.wikimedia.org/wikipedia/commons/b/b8/YouTube_Logo_2017.svg",
             "Apple TV": "https://upload.wikimedia.org/wikipedia/commons/2/28/Apple_TV_Plus_Logo.svg",
 
+            // Software / Antivirus / VPN
+            "Adobe": "https://upload.wikimedia.org/wikipedia/commons/4/42/Adobe_Creative_Cloud_rainbow_icon.svg",
+            "Creative Cloud": "https://upload.wikimedia.org/wikipedia/commons/4/42/Adobe_Creative_Cloud_rainbow_icon.svg",
+            "Microsoft": "https://upload.wikimedia.org/wikipedia/commons/4/44/Microsoft_logo.svg",
+            "Office": "https://upload.wikimedia.org/wikipedia/commons/d/d2/Microsoft_Office_logo_%282019%E2%80%93present%29.svg",
+            "Windows": "https://upload.wikimedia.org/wikipedia/commons/8/87/Windows_logo_-_2021.svg",
+            "NordVPN": "https://upload.wikimedia.org/wikipedia/commons/d/d3/NordVPN_horizontal_logo.svg",
+            "Kaspersky": "https://upload.wikimedia.org/wikipedia/commons/6/6f/Kaspersky_logo.svg",
+            "Eset": "https://upload.wikimedia.org/wikipedia/commons/0/05/ESET_logo.svg",
+            "McAfee": "https://upload.wikimedia.org/wikipedia/commons/0/0c/McAfee_logo_2024.svg",
+
             // Design / AI (Using Local if present, else External)
             "Canva": "canva.png",
             "Panel Canva": "panel-canva.png",
@@ -1908,13 +1919,15 @@ document.addEventListener('DOMContentLoaded', () => {
         };
 
         let displayImage = p.image;
-        // Logic: 
-        // 1. If p.image is missing OR is the default logo -> Search Map
-        // 2. If valid image -> Keep it
-        if (!displayImage || displayImage.includes('logo.png')) {
-            // Try to find by partial match key (Case Insensitive)
-            const mapKey = Object.keys(imageMap).find(k => p.title.toLowerCase().includes(k.toLowerCase()));
-            if (mapKey) displayImage = imageMap[mapKey];
+
+        // PRIORITY: Force Brand Image if title matches a known key
+        // This fixes cases where DB has broken paths like "disney.png" -> Fox Fallback
+        const mapKey = Object.keys(imageMap).find(k => p.title.toLowerCase().includes(k.toLowerCase()));
+
+        if (mapKey) {
+            displayImage = imageMap[mapKey];
+        } else if (!displayImage || displayImage.includes('logo.png')) {
+            // Fallback
         }
 
         // 4. Render SINGLE Card (Reusing render logic effectively or manual build)
