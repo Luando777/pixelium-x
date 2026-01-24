@@ -1823,61 +1823,85 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- CAROUSEL RENDER LOGIC ---
     // --- CAROUSEL RENDER LOGIC ---
+    // --- BRAND MAP (Global for reuse) ---
+    const brandMap = {
+        "adobe": "adobe",
+        "canva": "canva",
+        "chatgpt": "chatgpt",
+        "crunchyroll": "crunchyroll",
+        "gemini": "gemini",
+        "google": "gogleone",
+        "one": "gogleone",
+        "hbo": "hbo",
+        "netflix": "netflix",
+        "paramount": "paramount",
+        "perplexity": "perplexity",
+        "spotify": "spotify",
+        "youtube": "youtube",
+        "capcut": "capcut"
+    };
+
+    // --- CAROUSEL RENDER LOGIC ---
     function renderCarousel(products) {
         const track = document.getElementById('carousel-track');
         if (!track) return;
         track.innerHTML = '';
 
-        // Flatten logic: Double the list for seamless infinite scroll
-        // Sort by order or just random/default
-        const allItems = [...products, ...products];
-        // Need enough items to fill width. If few products, triple them.
-        if (products.length < 10) allItems.push(...products);
+        // Deduplication Logic: Show only ONE item per Brand
+        const renderedBrands = new Set();
+        const uniqueItems = [];
+
+        products.forEach(p => {
+            const titleLower = p.title.toLowerCase();
+            // Find brand key
+            const brandKey = Object.keys(brandMap).find(k => titleLower.includes(k));
+
+            if (brandKey) {
+                if (!renderedBrands.has(brandKey)) {
+                    renderedBrands.add(brandKey);
+                    // Store the brand key on the product object loosely for rendering
+                    p._brandKey = brandMap[brandKey];
+                    p._rawBrandKey = brandKey;
+                    uniqueItems.push(p);
+                }
+            } else {
+                // If no brand match, keep it
+                uniqueItems.push(p);
+            }
+        });
+
+        // Flatten logic: Double the list
+        const allItems = [...uniqueItems, ...uniqueItems];
+        if (uniqueItems.length < 10) allItems.push(...uniqueItems);
 
         allItems.forEach(p => {
             const item = document.createElement('div');
             item.className = 'carousel-item';
 
-            // ROUTING LOGIC: Filter Grid + Update URL
+            // ROUTING LOGIC: Filter Grid by BRAND
+            const brandKey = p._rawBrandKey;
+
             item.onclick = () => {
-                const newUrl = `${window.location.pathname}?view=${p.id}`;
-                window.history.pushState({ path: newUrl }, '', newUrl);
-                filterGridByProduct(p.id);
+                if (brandKey) {
+                    const newUrl = `${window.location.pathname}?brand=${brandKey}`;
+                    window.history.pushState({ path: newUrl }, '', newUrl);
+                    filterGridByBrand(brandKey);
+                } else {
+                    // Fallback for non-branded items
+                    filterGridByProduct(p.id);
+                }
             };
 
             const img = document.createElement('img');
-
-            // CUSTOM CAROUSEL IMAGE LOGIC (User provided folder "carrusel")
-            // Pattern: carrusel/carrucel-NAME.png
-            const customMap = {
-                "adobe": "adobe",
-                "canva": "canva",
-                "chatgpt": "chatgpt",
-                "crunchyroll": "crunchyroll",
-                "gemini": "gemini",
-                "google": "gogleone",
-                "one": "gogleone",
-                "hbo": "hbo",
-                "netflix": "netflix",
-                "paramount": "paramount",
-                "perplexity": "perplexity",
-                "spotify": "spotify",
-                "youtube": "youtube"
-            };
-
             let carouselImgSrc = p.image || 'logo.png';
 
-            // Check if title matches any custom key
-            const titleLower = p.title.toLowerCase();
-            const customKey = Object.keys(customMap).find(k => titleLower.includes(k));
-
-            if (customKey) {
-                carouselImgSrc = `carrusel/carrucel-${customMap[customKey]}.png`;
+            // Use Brand Image
+            if (p._brandKey) {
+                carouselImgSrc = `carrusel/carrucel-${p._brandKey}.png`;
             }
 
             img.src = carouselImgSrc;
             img.onerror = () => {
-                // Fallback to default if custom image fails or is missing
                 img.src = p.image || 'logo.png';
                 img.onerror = () => img.src = 'logo.png';
             };
@@ -1886,6 +1910,96 @@ document.addEventListener('DOMContentLoaded', () => {
             track.appendChild(item);
         });
     }
+
+    // --- FILTER GRID BY BRAND (SHOW VARIATIONS) ---
+    window.filterGridByBrand = (brandKey) => {
+        const grid = document.querySelector('.services-grid');
+        if (!grid) return;
+
+        // 1. Clear Grid
+        grid.innerHTML = '';
+
+        // 2. Find ALL matched products
+        const matches = customProducts.filter(p => p.title.toLowerCase().includes(brandKey.toLowerCase()));
+
+        if (matches.length === 0) {
+            grid.innerHTML = '<p style="grid-column: 1/-1; text-align: center;">No hay productos disponibles para esta marca.</p>';
+            return;
+        }
+
+        // 3. Update Header
+        const sectionTitle = document.querySelector('.section-title');
+        const brandName = brandKey.charAt(0).toUpperCase() + brandKey.slice(1);
+        if (sectionTitle) sectionTitle.innerHTML = `Explorando: <span style="color:var(--neon-cyan)">${brandName}</span>`;
+
+        // 4. Render Standard Cards for matches
+        matches.forEach(prod => {
+            const card = document.createElement('div');
+            card.className = 'card';
+            card.id = prod.id;
+
+            // Stock Logic
+            const currentStock = stockState[prod.title] !== undefined ? stockState[prod.title] : prod.stock;
+            const stockClass = currentStock > 0 ? 'stock-available' : 'stock-out';
+            const stockText = currentStock > 0 ? `Stock: ${currentStock}` : 'Sin Stock';
+            const btnState = currentStock > 0 ? '' : 'disabled';
+            const btnText = currentStock > 0 ? 'Agregar al Carrito' : 'Agotado';
+
+            card.innerHTML = `
+             // IMAGE OVERRIDE LOGIC (Copy from main render)
+             let displayImage = prod.image;
+             // Force Brand Image if title matches a known key (Reuse brandMap)
+             const mapKey = Object.keys(brandMap).find(k => prod.title.toLowerCase().includes(k));
+             
+             // Fallback Map for non-carousel brands (re-defining for safety or use global)
+             // Ideally we'd make imageMap global, but for now let's use brandMap extended logic or fallback
+             // To keep it simple and fix the immediate bug:
+             if (mapKey) {
+                  displayImage = `carrusel / carrucel - ${ brandMap[mapKey] }.png`;
+             } else {
+                 // Try External URL Map (Duplicate from renderCustomProductsOnGrid? Or keep simple?)
+                 // If the issue is predominantly Adobe/HBO, the brandMap fix above handles it.
+             }
+
+             card.innerHTML = `
+                < div class="card-icon" >
+                    <img src="${displayImage}" alt="${prod.title}" class="product-img" onerror="this.onerror=null; this.src='logo.png';">
+                </div>
+                <h3>${prod.title}</h3>
+                ${ prod.desc ? `<p>${prod.desc}</p>` : '' }
+
+            <div id="stock-${prod.id}" class="stock-status ${stockClass}" data-stock-key="${prod.title}">${stockText}</div>
+                
+                ${ prod.badge ? `<p class="gold-text">${prod.badge}</p>` : '' }
+                
+                <div class="price-tag">S/${prod.price.toFixed(2)} ${prod.priceAlt ? `<span class="price-alt">($${prod.priceAlt})</span>` : ''}</div>
+                <button class="btn-add" onclick="addToCart('${prod.title}', ${prod.price})" ${btnState}>${btnText}</button>
+            `;
+
+            // Click image to detail
+            const newImg = card.querySelector('.product-img');
+            newImg.addEventListener('click', () => {
+                filterGridByProduct(prod.id);
+            });
+
+            grid.appendChild(card);
+        });
+
+        // Add Back Button
+        const backBtnContainer = document.createElement('div');
+        backBtnContainer.style.gridColumn = "1 / -1";
+        backBtnContainer.style.textAlign = "center";
+        backBtnContainer.style.marginTop = "30px";
+        backBtnContainer.innerHTML = `
+                < button onclick = "restoreFullCatalog()" class="btn-secondary" style = "background:transparent; color:#00f3ff; border:1px solid #00f3ff; padding:10px 30px; border-radius:30px; cursor:pointer; font-weight:bold; transition:all 0.3s;" >
+                ⬅ Regresar al Catálogo
+            </button >
+                `;
+        grid.appendChild(backBtnContainer);
+
+        // Scroll
+        grid.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    };
 
     // --- FILTER GRID LOGIC (ROUTING VIEW) ---
     window.filterGridByProduct = (prodId) => {
@@ -1965,15 +2079,15 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // 4. Render SINGLE Card (Reusing render logic effectively or manual build)
         // const p = target; // MOVED UP
-        const cardClass = p.isSpecial ? `card ${p.specialClass || 'special-card'}` : 'card';
-        const badgeHtml = p.badge ? `<p class="gold-text">${p.badge}</p>` : '';
-        const noteHtml = p.note ? `<p class="activation-note">${p.note}</p>` : '';
-        const priceAltHtml = p.priceAlt ? `<span class="price-alt"> ${p.priceAlt}</span>` : '';
+        const cardClass = p.isSpecial ? `card ${ p.specialClass || 'special-card' } ` : 'card';
+        const badgeHtml = p.badge ? `< p class="gold-text" > ${ p.badge }</p > ` : '';
+        const noteHtml = p.note ? `< p class="activation-note" > ${ p.note }</p > ` : '';
+        const priceAltHtml = p.priceAlt ? `< span class="price-alt" > ${ p.priceAlt }</span > ` : '';
         const pid = p.id;
 
         const html = `
-            <div class="${cardClass}" style="margin: 0 auto; max-width: 500px; grid-column: 1 / -1; position: relative; overflow: hidden;">
-                <!-- Glowing Backdrop for filtered view -->
+                < div class="${cardClass}" style = "margin: 0 auto; max-width: 500px; grid-column: 1 / -1; position: relative; overflow: hidden;" >
+                < !--Glowing Backdrop for filtered view-- >
                 <div style="position: absolute; top:0; left:0; width:100%; height:100%; background: radial-gradient(circle at center, rgba(0,243,255,0.1) 0%, transparent 70%); pointer-events:none;"></div>
                 
                 <div class="card-icon">
@@ -1981,7 +2095,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 </div>
                 <h3>${p.title}</h3>
                 
-                ${p.isSpecial ? `
+                ${
+                p.isSpecial ? `
                     <div class="card-content">
                             <p class="highlight-text">${p.description}</p>
                             ${p.id === 'canva-pro' || p.title === 'Canva PRO' ? `
@@ -1999,36 +2114,36 @@ document.addEventListener('DOMContentLoaded', () => {
                     <p>${p.description}</p>
                 `}
 
-                <div id="stock-${pid}" class="stock-status stock-available" data-stock-key="${pid}">
-                    Verificando stock...
-                </div>
-
-                ${badgeHtml}
-                ${noteHtml}
-
-                <div class="warranty-info">
-                    <i class="fas fa-star warranty-star"></i>
-                    <span>${p.warranty}</span>
-                </div>
-
-                ${p.isSpecial ? '' : `<div class="price-tag">S/${p.price}.00 ${priceAltHtml}</div>`}
-                
-                ${p.id === 'panel-canva' || p.title === 'Panel Canva PRO' ? `<div class="price-tag">S/${p.price}.00 ${priceAltHtml}</div>` : ''}
-
-                <button id="btn-${pid}" class="btn-primary" style="width:100%; margin-top:15px; font-size:1.1rem;"
-                    onclick="addToCart('${p.title}', ${p.price})">
-                    Agregar al Carrito
-                </button>
-                
-                ${p.isSpecial ? '</div>' : ''} 
+            <div id="stock-${pid}" class="stock-status stock-available" data-stock-key="${pid}">
+                Verificando stock...
             </div>
-            
-            <div style="grid-column: 1 / -1; text-align: center; margin-top: 30px;">
-                <button onclick="restoreFullCatalog()" class="btn-secondary" style="background:transparent; color:#00f3ff; border:1px solid #00f3ff; padding:10px 30px; border-radius:30px; cursor:pointer; font-weight:bold; transition:all 0.3s;">
-                    ⬅ Regresar al Catálogo
-                </button>
+
+                ${ badgeHtml }
+                ${ noteHtml }
+
+            <div class="warranty-info">
+                <i class="fas fa-star warranty-star"></i>
+                <span>${p.warranty}</span>
             </div>
-        `;
+
+                ${ p.isSpecial ? '' : `<div class="price-tag">S/${p.price}.00 ${priceAltHtml}</div>` }
+                
+                ${ p.id === 'panel-canva' || p.title === 'Panel Canva PRO' ? `<div class="price-tag">S/${p.price}.00 ${priceAltHtml}</div>` : '' }
+
+            <button id="btn-${pid}" class="btn-primary" style="width:100%; margin-top:15px; font-size:1.1rem;"
+                onclick="addToCart('${p.title}', ${p.price})">
+                Agregar al Carrito
+            </button>
+                
+                ${ p.isSpecial ? '</div>' : '' } 
+            </div >
+
+                <div style="grid-column: 1 / -1; text-align: center; margin-top: 30px;">
+                    <button onclick="restoreFullCatalog()" class="btn-secondary" style="background:transparent; color:#00f3ff; border:1px solid #00f3ff; padding:10px 30px; border-radius:30px; cursor:pointer; font-weight:bold; transition:all 0.3s;">
+                        ⬅ Regresar al Catálogo
+                    </button>
+                </div>
+            `;
 
         grid.innerHTML = html;
 
@@ -2079,11 +2194,11 @@ document.addEventListener('DOMContentLoaded', () => {
             const row = document.createElement('div');
             row.className = 'stock-item-row';
             row.innerHTML = `
-            <span class="stock-item-name">${title} (Original)</span>
-            <button onclick="toggleProductVisibility('${title}')" style="background: ${isHidden ? '#39ff14' : '#ff4444'}; border:none; border-radius:4px; padding:  5px; cursor:pointer; color:black; font-weight:bold;">
-                ${isHidden ? 'Mostrar' : 'Ocultar'}
-            </button>
-        `;
+                < span class="stock-item-name" > ${ title } (Original)</span >
+                    <button onclick="toggleProductVisibility('${title}')" style="background: ${isHidden ? '#39ff14' : '#ff4444'}; border:none; border-radius:4px; padding:  5px; cursor:pointer; color:black; font-weight:bold;">
+                        ${isHidden ? 'Mostrar' : 'Ocultar'}
+                    </button>
+            `;
             productAdminList.appendChild(row);
         });
 
@@ -2098,20 +2213,20 @@ document.addEventListener('DOMContentLoaded', () => {
 
             if (isBroken) {
                 actionHtml = `
-                    <input type="file" id="repair-file-${index}" hidden accept="image/*" onchange="uploadRepairImage(${index}, '${prod.id}')">
+                < input type = "file" id = "repair-file-${index}" hidden accept = "image/*" onchange = "uploadRepairImage(${index}, '${prod.id}')" >
                     <button onclick="document.getElementById('repair-file-${index}').click()" style="background: #ff9900; border:none; border-radius:4px; padding: 5px 10px; cursor:pointer; color:black; font-weight:bold; margin-right: 5px;">
                         🔧 REPARAR IMAGEN
                     </button>
                     <button onclick="deleteCustomProduct(${index})" style="background: #ff4444; border:none; border-radius:4px; padding: 5px; cursor:pointer; color:white; font-weight:bold;">
                         🗑️
                     </button>
-                 `;
+            `;
             } else {
                 actionHtml = `
-                    <button onclick="deleteCustomProduct(${index})" style="background: #ff4444; border:none; border-radius:4px; padding: 5px; cursor:pointer; color:white; font-weight:bold;">
-                        Borrar
-                    </button>
-                 `;
+                < button onclick = "deleteCustomProduct(${index})" style = "background: #ff4444; border:none; border-radius:4px; padding: 5px; cursor:pointer; color:white; font-weight:bold;" >
+                    Borrar
+                    </button >
+                `;
             }
 
             const editBtn = document.createElement('button');
@@ -2125,10 +2240,10 @@ document.addEventListener('DOMContentLoaded', () => {
             actionContainer.appendChild(editBtn);
 
             row.innerHTML = `
-            <span class="stock-item-name" style="color: ${isBroken ? '#ff9900' : 'inherit'}">
-                ${prod.title} ${isBroken ? '(ROTO)' : '(Custom)'}
-            </span>
-            `;
+                < span class="stock-item-name" style = "color: ${isBroken ? '#ff9900' : 'inherit'}" >
+                    ${ prod.title } ${ isBroken ? '(ROTO)' : '(Custom)' }
+            </span >
+                `;
             row.appendChild(actionContainer);
             productAdminList.appendChild(row);
         });
@@ -2159,7 +2274,7 @@ document.addEventListener('DOMContentLoaded', () => {
             return;
         }
 
-        const fileInput = document.getElementById(`repair-file-${index}`);
+        const fileInput = document.getElementById(`repair - file - ${ index } `);
         const file = fileInput.files[0];
         if (!file) return;
 
@@ -2317,107 +2432,107 @@ document.addEventListener('DOMContentLoaded', () => {
             const row = document.createElement('div');
             row.className = 'stock-item-row';
             row.innerHTML = `
-                <span class="stock-item-name">${title}</span>
-                <input type="number" step="0.50" class="stock-input price-input-field"
-                    data-title="${title}"
-                    value="${currentPrice}">
-                    `;
-            priceAdminList.appendChild(row);
+                < span class="stock-item-name" > ${ title }</span >
+                    <input type="number" step="0.50" class="stock-input price-input-field"
+                        data-title="${title}"
+                        value="${currentPrice}">
+                        `;
+                        priceAdminList.appendChild(row);
         });
     }
 
-    if (btnSavePrices) {
-        btnSavePrices.addEventListener('click', () => {
-            const inputs = document.querySelectorAll('.price-input-field');
-            const updates = {};
-            inputs.forEach(input => {
-                const title = input.getAttribute('data-title');
-                const val = parseFloat(input.value);
-                if (!isNaN(val)) {
-                    updates[title] = val;
-                }
-            });
+                        if (btnSavePrices) {
+                            btnSavePrices.addEventListener('click', () => {
+                                const inputs = document.querySelectorAll('.price-input-field');
+                                const updates = {};
+                                inputs.forEach(input => {
+                                    const title = input.getAttribute('data-title');
+                                    const val = parseFloat(input.value);
+                                    if (!isNaN(val)) {
+                                        updates[title] = val;
+                                    }
+                                });
 
-            // Save to Firestore
-            db.collection('prices').doc('main').set(updates, { merge: true })
-                .then(() => {
-                    alert("¡Precios Globales Actualizados! ☁️💰");
-                    priceModal.style.display = 'none';
-                })
-                .catch(err => alert("Error: " + err.message));
-        });
+                                // Save to Firestore
+                                db.collection('prices').doc('main').set(updates, { merge: true })
+                                    .then(() => {
+                                        alert("¡Precios Globales Actualizados! ☁️💰");
+                                        priceModal.style.display = 'none';
+                                    })
+                                    .catch(err => alert("Error: " + err.message));
+                            });
     }
 
-    // --- LOGIC: APPLY OVERRIDES (CORE) ---
-    function applyPriceOverrides() {
-        document.querySelectorAll('.services-grid .card').forEach(card => {
-            const title = card.querySelector('h3').innerText.trim();
+                        // --- LOGIC: APPLY OVERRIDES (CORE) ---
+                        function applyPriceOverrides() {
+                            document.querySelectorAll('.services-grid .card').forEach(card => {
+                                const title = card.querySelector('h3').innerText.trim();
 
-            if (priceState[title] !== undefined) {
-                const newPrice = priceState[title];
+                                if (priceState[title] !== undefined) {
+                                    const newPrice = priceState[title];
 
-                // 1. Update Visual Text
-                const priceTag = card.querySelector('.price-tag');
-                if (priceTag) {
-                    // Keep the structural span for alt price if exists, just update text node
-                    // Easier: Just rebuild innerHTML to keep format "S/XX <span...>"
-                    // Check if there is an alt price span
-                    const altSpan = priceTag.querySelector('.price-alt');
-                    const altHtml = altSpan ? altSpan.outerHTML : '';
-                    priceTag.innerHTML = `S/${newPrice.toFixed(2)} ${altHtml}`;
-                }
+                                    // 1. Update Visual Text
+                                    const priceTag = card.querySelector('.price-tag');
+                                    if (priceTag) {
+                                        // Keep the structural span for alt price if exists, just update text node
+                                        // Easier: Just rebuild innerHTML to keep format "S/XX <span...>"
+                                        // Check if there is an alt price span
+                                        const altSpan = priceTag.querySelector('.price-alt');
+                                        const altHtml = altSpan ? altSpan.outerHTML : '';
+                                        priceTag.innerHTML = `S/${newPrice.toFixed(2)} ${altHtml}`;
+                                    }
 
-                // 2. Update Add to Cart Button Logic
-                const btn = card.querySelector('.btn-add');
-                if (btn) {
-                    // Remove old onclick attribute to be safe
-                    btn.removeAttribute('onclick');
-                    // Clone button to strip existing event listeners (if added via JS)
-                    // But since most are inline HTML onclick, we can just override onclick prop
-                    btn.onclick = (e) => {
-                        e.preventDefault();
-                        e.stopPropagation();
-                        addToCart(title, newPrice);
-                    };
-                }
-            }
-        });
+                                    // 2. Update Add to Cart Button Logic
+                                    const btn = card.querySelector('.btn-add');
+                                    if (btn) {
+                                        // Remove old onclick attribute to be safe
+                                        btn.removeAttribute('onclick');
+                                        // Clone button to strip existing event listeners (if added via JS)
+                                        // But since most are inline HTML onclick, we can just override onclick prop
+                                        btn.onclick = (e) => {
+                                            e.preventDefault();
+                                            e.stopPropagation();
+                                            addToCart(title, newPrice);
+                                        };
+                                    }
+                                }
+                            });
     }
 
 }); // End of DOMContentLoaded
 
-// --- HELPERS ---
+                        // --- HELPERS ---
 
-window.uploadImageToImgBB = async function (base64Str, name) {
+                        window.uploadImageToImgBB = async function (base64Str, name) {
     // POLYFILL: Actually compress and return Base64 (No External API Needed)
     // This solves "undefined" error and keeps data local/free.
     return new Promise((resolve) => {
         const img = new Image();
-        img.src = "data:image/jpeg;base64," + base64Str;
+                        img.src = "data:image/jpeg;base64," + base64Str;
         img.onload = () => {
             const canvas = document.createElement('canvas');
-            const ctx = canvas.getContext('2d');
-            const MAX_WIDTH = 800;
-            const MAX_HEIGHT = 800;
-            let width = img.width;
-            let height = img.height;
+                        const ctx = canvas.getContext('2d');
+                        const MAX_WIDTH = 800;
+                        const MAX_HEIGHT = 800;
+                        let width = img.width;
+                        let height = img.height;
 
             if (width > height) {
                 if (width > MAX_WIDTH) {
-                    height *= MAX_WIDTH / width;
-                    width = MAX_WIDTH;
+                            height *= MAX_WIDTH / width;
+                        width = MAX_WIDTH;
                 }
             } else {
                 if (height > MAX_HEIGHT) {
-                    width *= MAX_HEIGHT / height;
-                    height = MAX_HEIGHT;
+                            width *= MAX_HEIGHT / height;
+                        height = MAX_HEIGHT;
                 }
             }
-            canvas.width = width;
-            canvas.height = height;
-            ctx.drawImage(img, 0, 0, width, height);
-            // Compress to 0.6 quality
-            resolve(canvas.toDataURL('image/jpeg', 0.6));
+                        canvas.width = width;
+                        canvas.height = height;
+                        ctx.drawImage(img, 0, 0, width, height);
+                        // Compress to 0.6 quality
+                        resolve(canvas.toDataURL('image/jpeg', 0.6));
         };
     });
 };
