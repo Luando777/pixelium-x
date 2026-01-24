@@ -1481,6 +1481,13 @@ document.addEventListener('DOMContentLoaded', () => {
             // Populate Carousel
             renderCarousel(customProducts);
 
+            // Routing Check: Auto-open product if URL has ?view=ID
+            const urlParams = new URLSearchParams(window.location.search);
+            const viewId = urlParams.get('view');
+            if (viewId) {
+                setTimeout(() => filterGridByProduct(viewId), 500); // Small delay to ensure DOM is ready
+            }
+
             // --- REAL AUTO-RECOVERY FROM STOCK (REQUESTED BY USER) ---
             // PURGE MODE: Run once on load to clean up specific ghosts
             if (!hasSynced) {
@@ -1815,6 +1822,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // --- CAROUSEL RENDER LOGIC ---
+    // --- CAROUSEL RENDER LOGIC ---
     function renderCarousel(products) {
         const track = document.getElementById('carousel-track');
         if (!track) return;
@@ -1829,10 +1837,12 @@ document.addEventListener('DOMContentLoaded', () => {
         allItems.forEach(p => {
             const item = document.createElement('div');
             item.className = 'carousel-item';
-            // Scroll to product on click
+
+            // ROUTING LOGIC: Filter Grid + Update URL
             item.onclick = () => {
-                const target = document.getElementById(p.id);
-                if (target) target.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                const newUrl = `${window.location.pathname}?view=${p.id}`;
+                window.history.pushState({ path: newUrl }, '', newUrl);
+                filterGridByProduct(p.id);
             };
 
             const img = document.createElement('img');
@@ -1843,6 +1853,125 @@ document.addEventListener('DOMContentLoaded', () => {
             track.appendChild(item);
         });
     }
+
+    // --- FILTER GRID LOGIC (ROUTING VIEW) ---
+    window.filterGridByProduct = (prodId) => {
+        const grid = document.querySelector('.services-grid');
+        if (!grid) return;
+
+        // 1. Clear Grid
+        grid.innerHTML = '';
+
+        // 2. Find target product
+        const target = customProducts.find(p => p.id === prodId);
+
+        if (!target) {
+            grid.innerHTML = '<p style="grid-column: 1/-1; text-align: center;">Producto no encontrado.</p>';
+            return;
+        }
+
+        // 3. Update Header
+        const sectionTitle = document.querySelector('.section-title');
+        if (sectionTitle) sectionTitle.innerHTML = `Viendo: <span style="color:var(--neon-cyan)">${target.title}</span>`;
+
+        // 4. Render SINGLE Card (Reusing render logic effectively or manual build)
+        const p = target;
+        const cardClass = p.isSpecial ? `card ${p.specialClass || 'special-card'}` : 'card';
+        const badgeHtml = p.badge ? `<p class="gold-text">${p.badge}</p>` : '';
+        const noteHtml = p.note ? `<p class="activation-note">${p.note}</p>` : '';
+        const priceAltHtml = p.priceAlt ? `<span class="price-alt"> ${p.priceAlt}</span>` : '';
+        const pid = p.id;
+
+        const html = `
+            <div class="${cardClass}" style="margin: 0 auto; max-width: 500px; grid-column: 1 / -1;">
+                <div class="card-icon">
+                    <img src="${p.image}?v=opt" alt="${p.title}" class="product-img" onerror="this.onerror=null; this.src='logo.png';">
+                </div>
+                <h3>${p.title}</h3>
+                
+                ${p.isSpecial ? `
+                    <div class="card-content">
+                            <p class="highlight-text">${p.description}</p>
+                            ${p.id === 'canva-pro' || p.title === 'Canva PRO' ? `
+                            <ul class="price-list">
+                                <li>✨ 1 año por <strong>S/10 soles</strong> (3 personas)</li>
+                                <li>✨ 1 año por <strong>S/15 soles</strong> (1 persona)</li>
+                            </ul>` : ''}
+                            ${p.id === 'panel-canva' || p.title === 'Panel Canva PRO' ? `
+                            <ul class="feature-list">
+                                <li>🔥 Administra tu propio panel</li>
+                                <li>✅ Activación a tu correo</li>
+                                <li>⚡ Garantía total</li>
+                            </ul>` : ''}
+                ` : `
+                    <p>${p.description}</p>
+                `}
+
+                <div id="stock-${pid}" class="stock-status stock-available" data-stock-key="${pid}">
+                    Verificando stock...
+                </div>
+
+                ${badgeHtml}
+                ${noteHtml}
+
+                <div class="warranty-info">
+                    <i class="fas fa-star warranty-star"></i>
+                    <span>${p.warranty}</span>
+                </div>
+
+                ${p.isSpecial ? '' : `<div class="price-tag">S/${p.price}.00 ${priceAltHtml}</div>`}
+                
+                ${p.id === 'panel-canva' || p.title === 'Panel Canva PRO' ? `<div class="price-tag">S/${p.price}.00 ${priceAltHtml}</div>` : ''}
+
+                <button id="btn-${pid}" class="btn-primary" style="width:100%; margin-top:15px; font-size:1.1rem;"
+                    onclick="addToCart('${p.title}', ${p.price})">
+                    Agregar al Carrito
+                </button>
+                
+                ${p.isSpecial ? '</div>' : ''} 
+            </div>
+            
+            <div style="grid-column: 1 / -1; text-align: center; margin-top: 30px;">
+                <button onclick="restoreFullCatalog()" class="btn-secondary" style="background:transparent; color:#00f3ff; border:1px solid #00f3ff; padding:10px 30px; border-radius:30px; cursor:pointer; font-weight:bold; transition:all 0.3s;">
+                    ⬅ Regresar al Catálogo
+                </button>
+            </div>
+        `;
+
+        grid.innerHTML = html;
+
+        // Trigger Stock Update for single item
+        setTimeout(updateStockUI, 500);
+
+        // Scroll to grid
+        grid.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    };
+
+    window.restoreFullCatalog = () => {
+        // Clear URL param
+        const newUrl = window.location.pathname;
+        window.history.pushState({ path: newUrl }, '', newUrl);
+
+        // Reset Title
+        const sectionTitle = document.querySelector('.section-title');
+        if (sectionTitle) sectionTitle.innerText = "Nuestros Productos";
+
+        // Re-render Full Grid
+        const grid = document.querySelector('.services-grid');
+        if (grid) grid.innerHTML = '';
+        renderCustomProductsOnGrid();
+    };
+
+    // Listen for PopState (Browser Back Button)
+    window.addEventListener('popstate', () => {
+        const urlParams = new URLSearchParams(window.location.search);
+        const viewId = urlParams.get('view');
+        if (viewId) {
+            filterGridByProduct(viewId);
+        } else {
+            restoreFullCatalog();
+        }
+    });
 
     // --- LOGIC: ADMIN LIST ---
     function renderAdminProductList() {
