@@ -1874,6 +1874,36 @@ document.addEventListener('DOMContentLoaded', () => {
         const sectionTitle = document.querySelector('.section-title');
         if (sectionTitle) sectionTitle.innerHTML = `Viendo: <span style="color:var(--neon-cyan)">${target.title}</span>`;
 
+        // STATIC IMAGE MAP (Fallback if DB has no image)
+        const imageMap = {
+            "Netflix": "netflix.png",
+            "Disney+": "disney.png",
+            "Disney Premiun": "disney.png",
+            "HBO Max": "hbo.png",
+            "HBO PLATINO": "hbo.png",
+            "Prime Video": "prime.png",
+            "Amazon Prime": "prime.png",
+            "Spotify": "spotify.png",
+            "Crunchyroll": "crunchyroll.png",
+            "Paramount+": "paramount.png",
+            "Canva PRO": "canva.png",
+            "Panel Canva PRO": "panel-canva.png",
+            "Youtube Premium": "youtube.png",
+            "Apple TV": "apple.png",
+            "Vix+": "vix.png",
+            "Plex": "plex.png",
+            "Iptv": "iptv.png",
+            "Magis TV": "magis.png",
+            "Rakuten Viki": "viki.png"
+        };
+
+        let displayImage = p.image;
+        if (!displayImage || displayImage.includes('logo.png')) {
+            // Try to find by exact title or key
+            const mapKey = Object.keys(imageMap).find(k => p.title.includes(k));
+            if (mapKey) displayImage = imageMap[mapKey];
+        }
+
         // 4. Render SINGLE Card (Reusing render logic effectively or manual build)
         const p = target;
         const cardClass = p.isSpecial ? `card ${p.specialClass || 'special-card'}` : 'card';
@@ -1883,9 +1913,12 @@ document.addEventListener('DOMContentLoaded', () => {
         const pid = p.id;
 
         const html = `
-            <div class="${cardClass}" style="margin: 0 auto; max-width: 500px; grid-column: 1 / -1;">
+            <div class="${cardClass}" style="margin: 0 auto; max-width: 500px; grid-column: 1 / -1; position: relative; overflow: hidden;">
+                <!-- Glowing Backdrop for filtered view -->
+                <div style="position: absolute; top:0; left:0; width:100%; height:100%; background: radial-gradient(circle at center, rgba(0,243,255,0.1) 0%, transparent 70%); pointer-events:none;"></div>
+                
                 <div class="card-icon">
-                    <img src="${p.image}?v=opt" alt="${p.title}" class="product-img" onerror="this.onerror=null; this.src='logo.png';">
+                    <img src="${displayImage}?v=opt" alt="${p.title}" class="product-img" onerror="this.onerror=null; this.src='logo.png';">
                 </div>
                 <h3>${p.title}</h3>
                 
