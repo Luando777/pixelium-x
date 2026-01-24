@@ -1877,33 +1877,43 @@ document.addEventListener('DOMContentLoaded', () => {
         // Define P early
         const p = target;
 
-        // STATIC IMAGE MAP (Fallback if DB has no image)
+        // STATIC IMAGE MAP (Fallback if DB has no image or local file missing)
+        // Using external URLs for major brands since local files are missing
         const imageMap = {
-            "Netflix": "netflix.png",
-            "Disney+": "disney.png",
-            "Disney Premiun": "disney.png",
-            "HBO Max": "hbo.png",
-            "HBO PLATINO": "hbo.png",
-            "Prime Video": "prime.png",
-            "Amazon Prime": "prime.png",
-            "Spotify": "spotify.png",
-            "Crunchyroll": "crunchyroll.png",
-            "Paramount+": "paramount.png",
-            "Canva PRO": "canva.png",
-            "Panel Canva PRO": "panel-canva.png",
-            "Youtube Premium": "youtube.png",
-            "Apple TV": "apple.png",
-            "Vix+": "vix.png",
-            "Plex": "plex.png",
-            "Iptv": "iptv.png",
-            "Magis TV": "magis.png",
-            "Rakuten Viki": "viki.png"
+            // Streaming
+            "Netflix": "https://upload.wikimedia.org/wikipedia/commons/0/08/Netflix_2015_logo.svg",
+            "Disney": "https://upload.wikimedia.org/wikipedia/commons/3/3e/Disney%2B_logo.svg",
+            "HBO": "https://upload.wikimedia.org/wikipedia/commons/1/17/HBO_Max_Logo.svg", // Catch-all for HBO Max, Standar, Platino
+            "Prime Video": "https://upload.wikimedia.org/wikipedia/commons/f/f1/Prime_Video.png",
+            "Amazon Prime": "https://upload.wikimedia.org/wikipedia/commons/f/f1/Prime_Video.png",
+            "Spotify": "https://upload.wikimedia.org/wikipedia/commons/2/26/Spotify_logo_with_text.svg",
+            "Crunchyroll": "https://upload.wikimedia.org/wikipedia/commons/0/08/Crunchyroll_Logo.png",
+            "Paramount": "https://upload.wikimedia.org/wikipedia/commons/a/a5/Paramount_Plus.svg",
+            "Vix": "https://upload.wikimedia.org/wikipedia/commons/b/b6/Vix_logo_2024.svg",
+            "Plex": "https://upload.wikimedia.org/wikipedia/commons/7/7b/Plex_logo_2022.svg",
+            "Rakuten": "https://upload.wikimedia.org/wikipedia/commons/9/92/Rakuten_Viki_Logo_2019.svg",
+            "Viki": "https://upload.wikimedia.org/wikipedia/commons/9/92/Rakuten_Viki_Logo_2019.svg",
+            "Youtube": "https://upload.wikimedia.org/wikipedia/commons/b/b8/YouTube_Logo_2017.svg",
+            "Apple TV": "https://upload.wikimedia.org/wikipedia/commons/2/28/Apple_TV_Plus_Logo.svg",
+
+            // Design / AI (Using Local if present, else External)
+            "Canva": "canva.png",
+            "Panel Canva": "panel-canva.png",
+            "Gemini": "gemini.png",
+            "Google One": "google-one.png",
+            "Perplexity": "perplexity.png",
+            "Capcut": "capcut.png",
+            "Iptv": "iptv.png", // Assuming this might exist or fallback
+            "Magis": "display_magis.png" // Placeholder
         };
 
         let displayImage = p.image;
+        // Logic: 
+        // 1. If p.image is missing OR is the default logo -> Search Map
+        // 2. If valid image -> Keep it
         if (!displayImage || displayImage.includes('logo.png')) {
-            // Try to find by exact title or key
-            const mapKey = Object.keys(imageMap).find(k => p.title.includes(k));
+            // Try to find by partial match key (Case Insensitive)
+            const mapKey = Object.keys(imageMap).find(k => p.title.toLowerCase().includes(k.toLowerCase()));
             if (mapKey) displayImage = imageMap[mapKey];
         }
 
