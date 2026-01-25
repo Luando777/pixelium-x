@@ -1926,10 +1926,7 @@ document.addEventListener('DOMContentLoaded', () => {
         // 2. Find ALL matched products
         const matches = customProducts.filter(p => p.title.toLowerCase().includes(brandKey.toLowerCase()));
 
-        grid.innerHTML = '';
 
-        // 2. Find ALL matched products
-        const matches = customProducts.filter(p => p.title.toLowerCase().includes(brandKey.toLowerCase()));
 
         if (matches.length === 0) {
             grid.innerHTML = '<p style="grid-column: 1/-1; text-align: center;">No hay productos disponibles para esta marca.</p>';
