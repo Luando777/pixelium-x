@@ -1824,6 +1824,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // --- CAROUSEL RENDER LOGIC ---
     // --- CAROUSEL RENDER LOGIC ---
     // --- BRAND MAP (Global for reuse) ---
+    // --- BRAND MAP (Global for reuse) ---
     const brandMap = {
         "adobe": "adobe",
         "canva": "canva",
@@ -1838,7 +1839,10 @@ document.addEventListener('DOMContentLoaded', () => {
         "perplexity": "perplexity",
         "spotify": "spotify",
         "youtube": "youtube",
-        "capcut": "capcut"
+        "capcut": "capcut",
+        "disney": "disney",
+        "prime": "primevideo",
+        "amazon": "primevideo"
     };
 
     // --- CAROUSEL RENDER LOGIC ---
@@ -1857,8 +1861,8 @@ document.addEventListener('DOMContentLoaded', () => {
             const brandKey = Object.keys(brandMap).find(k => titleLower.includes(k));
 
             if (brandKey) {
-                if (!renderedBrands.has(brandKey)) {
-                    renderedBrands.add(brandKey);
+                if (!renderedBrands.has(brandMap[brandKey])) { // Check against TARGET VALUE to avoid Prime/Amazon dupes
+                    renderedBrands.add(brandMap[brandKey]);
                     // Store the brand key on the product object loosely for rendering
                     p._brandKey = brandMap[brandKey];
                     p._rawBrandKey = brandKey;
@@ -1885,7 +1889,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (brandKey) {
                     const newUrl = `${window.location.pathname}?brand=${brandKey}`;
                     window.history.pushState({ path: newUrl }, '', newUrl);
-                    filterGridByBrand(brandKey);
+                    filterGridByBrand(brandKey); // Pass the raw key for filtering
                 } else {
                     // Fallback for non-branded items
                     filterGridByProduct(p.id);
@@ -1917,6 +1921,11 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!grid) return;
 
         // 1. Clear Grid
+        grid.innerHTML = '';
+
+        // 2. Find ALL matched products
+        const matches = customProducts.filter(p => p.title.toLowerCase().includes(brandKey.toLowerCase()));
+
         grid.innerHTML = '';
 
         // 2. Find ALL matched products
@@ -2027,10 +2036,10 @@ document.addEventListener('DOMContentLoaded', () => {
         const imageMap = {
             // Streaming
             "Netflix": "https://upload.wikimedia.org/wikipedia/commons/0/08/Netflix_2015_logo.svg",
-            "Disney": "https://upload.wikimedia.org/wikipedia/commons/3/3e/Disney%2B_logo.svg",
+            "Disney": "carrusel/carrucel-disney.png",
             "HBO": "https://upload.wikimedia.org/wikipedia/commons/1/17/HBO_Max_Logo.svg",
-            "Prime Video": "https://upload.wikimedia.org/wikipedia/commons/f/f1/Prime_Video.png",
-            "Amazon Prime": "https://upload.wikimedia.org/wikipedia/commons/f/f1/Prime_Video.png",
+            "Prime Video": "carrusel/carrucel-primevideo.png",
+            "Amazon Prime": "carrusel/carrucel-primevideo.png",
             "Spotify": "https://upload.wikimedia.org/wikipedia/commons/2/26/Spotify_logo_with_text.svg",
             "Crunchyroll": "https://upload.wikimedia.org/wikipedia/commons/0/08/Crunchyroll_Logo.png",
             "Paramount": "https://upload.wikimedia.org/wikipedia/commons/a/a5/Paramount_Plus.svg",
