@@ -2202,73 +2202,8 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     // --- LOGIC: ADMIN LIST ---
-    function renderAdminProductList() {
-        if (!productAdminList) return;
-        productAdminList.innerHTML = '';
+    // Local renderAdminProductList removed to use Global Fix
 
-        document.querySelectorAll('.services-grid .card').forEach(card => {
-            if (card.id.startsWith('custom_')) return;
-
-            const title = card.querySelector('h3').innerText.trim();
-            const isHidden = hiddenProducts.includes(title);
-
-            const row = document.createElement('div');
-            row.className = 'stock-item-row';
-            row.innerHTML = `
-                < span class="stock-item-name" > ${title} (Original)</span >
-                    <button onclick="toggleProductVisibility('${title}')" style="background: ${isHidden ? '#39ff14' : '#ff4444'}; border:none; border-radius:4px; padding:  5px; cursor:pointer; color:black; font-weight:bold;">
-                        ${isHidden ? 'Mostrar' : 'Ocultar'}
-                    </button>
-            `;
-            productAdminList.appendChild(row);
-        });
-
-        customProducts.forEach((prod, index) => {
-            const isBroken = prod.image && (prod.image.includes('ibb.co') || prod.image.includes('imgbb.com'));
-
-            const row = document.createElement('div');
-            row.className = 'stock-item-row';
-            row.style.flexWrap = 'wrap'; // Allow wrapping for repair controls
-
-            let actionHtml = '';
-
-            if (isBroken) {
-                actionHtml = `
-                < input type = "file" id = "repair-file-${index}" hidden accept = "image/*" onchange = "uploadRepairImage(${index}, '${prod.id}')" >
-                    <button onclick="document.getElementById('repair-file-${index}').click()" style="background: #ff9900; border:none; border-radius:4px; padding: 5px 10px; cursor:pointer; color:black; font-weight:bold; margin-right: 5px;">
-                        🔧 REPARAR IMAGEN
-                    </button>
-                    <button onclick="deleteCustomProduct(${index})" style="background: #ff4444; border:none; border-radius:4px; padding: 5px; cursor:pointer; color:white; font-weight:bold;">
-                        🗑️
-                    </button>
-            `;
-            } else {
-                actionHtml = `
-                < button onclick = "deleteCustomProduct(${index})" style = "background: #ff4444; border:none; border-radius:4px; padding: 5px; cursor:pointer; color:white; font-weight:bold;" >
-                    Borrar
-                    </button >
-                `;
-            }
-
-            const editBtn = document.createElement('button');
-            editBtn.innerText = "✏️ Edit Desc";
-            editBtn.style.cssText = "background: #00f3ff; border:none; border-radius:4px; padding: 5px 10px; cursor:pointer; color:black; font-weight:bold; margin-left: 5px;";
-            editBtn.onclick = () => editProductDesc(prod.id, prod.desc || '');
-
-            const actionContainer = document.createElement('div');
-            actionContainer.style.cssText = "display:flex; align-items:center;";
-            actionContainer.innerHTML = actionHtml; // Keep existing action buttons
-            actionContainer.appendChild(editBtn);
-
-            row.innerHTML = `
-                < span class="stock-item-name" style = "color: ${isBroken ? '#ff9900' : 'inherit'}" >
-                    ${prod.title} ${isBroken ? '(ROTO)' : '(Custom)'}
-            </span >
-                `;
-            row.appendChild(actionContainer);
-            productAdminList.appendChild(row);
-        });
-    }
 
     // --- LOGIC: EDIT DESCRIPTION ---
     window.editProductDesc = async (id, oldDesc) => {
