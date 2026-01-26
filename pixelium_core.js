@@ -2501,11 +2501,17 @@ window.renderAdminProductList = function () {
     list.innerHTML = '';
 
     // 1. Render STOCK Items (Originals)
-    const stockKeys = Object.keys(stockState);
+    // FILTER: Hide "Custom_" keys (shown below) and "Null" garbage
+    const stockKeys = Object.keys(stockState).filter(k =>
+        !k.toLowerCase().startsWith('custom_') &&
+        k.toLowerCase() !== 'null' &&
+        k.trim() !== ''
+    );
+
     if (stockKeys.length > 0) {
         const header = document.createElement('h4');
         header.style.color = '#00f3ff';
-        header.innerText = "📦 Stock Original (Base de Datos)";
+        header.innerText = "📦 Stock Original";
         list.appendChild(header);
 
         stockKeys.forEach(key => {
@@ -2582,5 +2588,37 @@ window.deleteCustomProduct = async function (id) {
         alert("Error al eliminar: " + e.message);
     }
 };
+
+// --- AUTO-PURGE SCRIPT (EXECUTED ON LOAD) ---
+// Deletes "Custom_..." and "Null" keys from stock/main automatically.
+(async function () {
+    try {
+        const docRef = db.collection('stock').doc('main');
+        const doc = await docRef.get();
+        if (!doc.exists) return;
+
+        const data = doc.data();
+        const updates = {};
+        let count = 0;
+
+        for (const [key, val] of Object.entries(data)) {
+            const k = key.toLowerCase();
+            if (k.startsWith('custom_') || k === 'custom_null' || k === 'null' || k === 'undefined' || k.trim() === '') {
+                updates[key] = firebase.firestore.FieldValue.delete();
+                count++;
+            }
+        }
+
+        if (count > 0) {
+            console.log(`🧹 DELETING ${count} GARBAGE RECORDS...`);
+            await docRef.update(updates);
+            console.log("✅ CLEANUP COMPLETE.");
+            // Silent reload to reflect changes
+            window.location.reload();
+        }
+    } catch (e) {
+        console.error("Auto-Purge Error:", e);
+    }
+})();
 
 
