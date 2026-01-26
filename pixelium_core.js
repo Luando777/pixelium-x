@@ -2653,8 +2653,8 @@ window.deleteCustomProduct = async function (id) {
     }
 };
 
-// --- SMART MERGE & PURGE SCRIPT (AUTO-FIX DATABASE) ---
-// Merges "ugly" keys (canva-pro) into "pretty" keys (Canva PRO) and deletes duplicates.
+// --- TARGETED DB CLEANUP (THE "ASSASSIN" SCRIPT) ---
+// deletes specific "ugly" keys if their "pretty" version exists.
 (async function () {
     try {
         const docRef = db.collection('stock').doc('main');
@@ -2663,75 +2663,60 @@ window.deleteCustomProduct = async function (id) {
 
         const data = doc.data();
         const updates = {};
-        const deletes = {};
         let changesCount = 0;
 
-        // 1. Identify "TARGET" keys (The good ones: Title Case, Spaces, No Hyphens)
-        // We assume keys with spaces and uppercase letters are the "UI Titles"
-        const prettyKeys = Object.keys(data).filter(k =>
-            !k.startsWith('custom_') &&
-            k.includes(' ') &&
-            /[A-Z]/.test(k)
-        );
+        // MAP: Ugly Key -> Pretty Key equivalent
+        // If "Pretty" exists, "Ugly" dies.
+        const targets = {
+            'canva-pro': 'Canva PRO',
+            'panel-canva': 'Panel Canva PRO',
+            'gemini': 'Gemini Advanced',
+            'google-one': 'Google One',
+            'perplexity': 'Perplexity AI',
+            'capcut': 'CapCut Pro',
+            'netflix': 'Netflix',
+            'disney': 'Disney Premium',
+            'prime-video': 'Prime Video'
+        };
 
-        // 2. Scan for "UGLY" keys (Lowercase, Hyphens, matching a pretty key)
-        for (const [key, val] of Object.entries(data)) {
-            // Skip if already a pretty key
-            if (prettyKeys.includes(key)) continue;
+        // Also check generic normalization
+        const keys = Object.keys(data);
 
-            // Garbage collection (Custom_... and Null)
-            if (key.startsWith('custom_') || key === 'null' || key === 'undefined' || key.trim() === '') {
-                updates[key] = firebase.firestore.FieldValue.delete();
-                changesCount++;
-                continue;
+        for (const [ugly, prettySub] of Object.entries(targets)) {
+            // Does the specific Ugly Key exist?
+            if (data[ugly] !== undefined) {
+                // Does a "Pretty" version exist? 
+                // We look for a key that INCLUDES the pretty substring (relaxed match)
+                // e.g. "Canva PRO (Personal)" matches "Canva PRO"
+                const bestMatch = keys.find(k => k.includes(prettySub) && k !== ugly);
+
+                if (bestMatch) {
+                    console.log(`🎯 TARGET ACQUIRED: Deleting '${ugly}' because '${bestMatch}' exists.`);
+                    updates[ugly] = firebase.firestore.FieldValue.delete();
+                    changesCount++;
+                }
             }
+        }
 
-            // Normalization check
-            // ugly: "canva-pro" -> "canvapro"
-            // pretty: "Canva PRO" -> "canvapro"
-            const normKey = key.toLowerCase().replace(/[-_\s]/g, '');
-
-            // Find a matching Pretty Key
-            const match = prettyKeys.find(pk => pk.toLowerCase().replace(/[-_\s]/g, '') === normKey);
-
-            if (match) {
-                // FOUND DUPLICATE! Merge Logic.
-                // Prevent double adding if we run multiple times (Logic check needed?)
-                // Actually, just add the value of Ugly to Pretty, and Delete Ugly.
-
-                const currentPrettyVal = data[match] || 0;
-                const uglyVal = val || 0;
-
-                // Only merge if stock differs? Or just merge?
-                // Danger: If they are independent stocks? 
-                // Assumption: They represent the same product physically.
-                // Aggressive Fix: Sum them up.
-
-                // We update the PRETTY key with SUM
-                // But wait, if updates[match] is already set in this loop?
-                // We need to track the *running* new value.
-
-                // Simplified: Just DELETE the ugly one and assume the Pretty One is the master.
-                // User said "Delete the rest".
-                // Merging might inflate stock artificially if they were duplicates of the same stock update.
-                // Safest approach: DELETE THE UGLY KEY. KEEP THE PRETTY KEY as is.
-
-                console.log(`🧹 Merging/Deleting Duplicate: '${key}' -> keeping '${match}'`);
+        // Also run the Generic "Custom_" garbage collector one last time
+        for (const [key, val] of Object.entries(data)) {
+            const k = key.toLowerCase();
+            if (k.startsWith('custom_') || k === 'null' || k === 'undefined' || k.trim() === '') {
                 updates[key] = firebase.firestore.FieldValue.delete();
                 changesCount++;
             }
         }
 
         if (changesCount > 0) {
-            console.log(`🔥 EXECUTING DB CLEANUP: ${changesCount} modifications.`);
+            console.log(`🔥 EXECUTING TARGETED CLEANUP: ${changesCount} deletions.`);
             await docRef.update(updates);
             // Reload to show clean state
-            setTimeout(() => window.location.reload(), 1000);
+            setTimeout(() => window.location.reload(), 1500);
         } else {
-            console.log("✨ DB Clean. No duplicates found.");
+            console.log("✨ DB Clean. No known duplicates found.");
         }
 
     } catch (e) {
-        console.error("Smart Purge Error:", e);
+        console.error("Targeted Purge Error:", e);
     }
 })();
