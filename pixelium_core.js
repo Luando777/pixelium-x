@@ -1400,26 +1400,77 @@ document.addEventListener('DOMContentLoaded', () => {
     function renderStockManager() {
         stockListContainer.innerHTML = '';
 
-        // Map nice names to keys
-        const productNames = {
-            'canva-pro': 'Canva PRO (Personal)',
-            'panel-canva': 'Panel Canva PRO',
-            'perplexity': 'Perplexity AI',
-            'gemini': 'Gemini Advanced',
-            'google-one': 'Google One',
-            'capcut': 'CapCut Pro'
-        };
+        // FILTER 1: Exclude HIDDEN products (User considers them "not in catalog")
+        // FILTER 2: Exclude GHOSTS (Items with "(Original)" suffix created by old sync)
 
-        for (const [key, value] of Object.entries(stockState)) {
+        const visibleProducts = customProducts.filter(p => {
+            const isHidden = hiddenProducts.includes(p.title);
+            const isGhost = p.title.includes('(Original)');
+            return !isHidden && !isGhost;
+        });
+
+        // Sort products alphabetically
+        const sortedProducts = [...visibleProducts].sort((a, b) => a.title.localeCompare(b.title));
+
+        if (sortedProducts.length === 0) {
+            stockListContainer.innerHTML = '<p style="color:#888;">No hay productos visibles.</p>';
+            return;
+        }
+
+        sortedProducts.forEach(prod => {
+            const title = prod.title;
+            const val = stockState[title] !== undefined ? stockState[title] : (prod.stock || 0);
+
             const row = document.createElement('div');
             row.className = 'stock-item-row';
             row.innerHTML = `
-            <span class="stock-item-name">${productNames[key] || key}</span>
-            <input type="number" class="stock-input" data-key="${key}" value="${value}" min="0">
-        `;
+            <span class="stock-item-name" style="font-size:0.9rem;">${title}</span>
+            <input type="number" class="stock-input" data-key="${title}" value="${val}" min="0">
+            `;
             stockListContainer.appendChild(row);
-        }
+        });
     }
+
+    // --- PRODUCT ASSASSIN (DELETE GHOST DOCUMENTS) ---
+    // Deletes actual product documents that are known garbage/duplicates
+    (async function () {
+        // Wait for customProducts to load
+        setTimeout(async () => {
+            if (!customProducts || customProducts.length === 0) return;
+
+            const batch = db.batch();
+            let count = 0;
+
+            customProducts.forEach(p => {
+                const titleLower = p.title.toLowerCase();
+                let shouldDelete = false;
+
+                // 1. Delete "Original" duplicates (e.g. "Perplexity... (Original)")
+                if (p.title.includes('(Original)')) shouldDelete = true;
+
+                // 2. Specific Trash List (Observed in screenshot)
+                // "Netflix" (if lowercase or generic "netflix" vs "Netflix") -> Be careful.
+                // "Perplexity AI - GPT5" -> If "Perplexity AI - GPT5 (Original)" exists, delete the Original.
+                // If "Perplexity AI - GPT5" is also unwanted? User said "not in catalog".
+                // We trust the "Original" tag is the main culprit.
+
+                if (shouldDelete) {
+                    console.log(`💀 PRODUCT ASSASSIN: Marking '${p.title}' (ID: ${p.id}) for deletion.`);
+                    const ref = db.collection('products').doc(p.id);
+                    batch.delete(ref);
+                    count++;
+                }
+            });
+
+            if (count > 0) {
+                console.log(`💀 COMMITTING PRODUCT GENOCIDE: ${count} items.`);
+                await batch.commit();
+                console.log("💀 DONE.");
+                // Reload to reflect changes
+                setTimeout(() => window.location.reload(), 2000);
+            }
+        }, 3000); // 3s delay to ensure load
+    })();
 
     if (btnSaveStock) {
         btnSaveStock.addEventListener('click', () => {
