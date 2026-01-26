@@ -2558,4 +2558,94 @@ window.uploadImageToImgBB = async function (base64Str, name) {
     });
 };
 
+// --- FIX: ADMIN LIST RENDERER (Restored & Cleaned) ---
+window.renderAdminProductList = function () {
+    const list = document.getElementById('product-admin-list');
+    if (!list) return;
+
+    list.innerHTML = '';
+
+    // 1. Render STOCK Items (Originals)
+    const stockKeys = Object.keys(stockState);
+    if (stockKeys.length > 0) {
+        const header = document.createElement('h4');
+        header.style.color = '#00f3ff';
+        header.innerText = "📦 Stock Original (Base de Datos)";
+        list.appendChild(header);
+
+        stockKeys.forEach(key => {
+            const row = document.createElement('div');
+            row.className = 'stock-item-row';
+            row.style.display = 'flex';
+            row.style.justifyContent = 'space-between';
+            row.style.alignItems = 'center';
+            row.style.padding = '8px';
+            row.style.borderBottom = '1px solid #333';
+
+            const name = key.charAt(0).toUpperCase() + key.slice(1);
+            const val = stockState[key];
+
+            row.innerHTML = `
+                <span style="color:white;">${name}</span>
+                <span style="color:${val > 0 ? '#00ff88' : 'red'}; font-weight:bold;">${val}</span>
+            `;
+            list.appendChild(row);
+        });
+    }
+
+    // 2. Render CUSTOM Items (Dynamics)
+    if (customProducts.length > 0) {
+        const header = document.createElement('h4');
+        header.style.color = '#ff00ff';
+        header.style.marginTop = '20px';
+        header.innerText = "✨ Productos Personalizados (Custom)";
+        list.appendChild(header);
+
+        customProducts.forEach(prod => {
+            const row = document.createElement('div');
+            row.className = 'stock-item-row';
+            row.style.display = 'flex';
+            row.style.justifyContent = 'space-between';
+            row.style.alignItems = 'center';
+            row.style.padding = '8px';
+            row.style.background = '#111';
+            row.style.marginBottom = '5px';
+            row.style.borderRadius = '4px';
+
+            const stockVal = stockState[prod.title] !== undefined ? stockState[prod.title] : prod.stock;
+
+            row.innerHTML = `
+                <div style="display:flex; flex-direction:column;">
+                    <span style="color:white; font-weight:bold;">${prod.title}</span>
+                    <span style="color:#aaa; font-size:0.8rem;">ID: ${prod.id}</span>
+                </div>
+                <div style="display:flex; gap:10px; align-items:center;">
+                    <span style="color:${stockVal > 0 ? '#00ff88' : 'red'}; margin-right:10px;">Stock: ${stockVal}</span>
+                    <button onclick="deleteCustomProduct('${prod.id}')" style="background:red; color:white; border:none; padding:5px 10px; border-radius:4px; cursor:pointer;">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                </div>
+            `;
+            list.appendChild(row);
+        });
+    } else {
+        const empty = document.createElement('p');
+        empty.innerText = "No hay productos personalizados creados.";
+        empty.style.color = "#888";
+        empty.style.textAlign = "center";
+        list.appendChild(empty);
+    }
+};
+
+window.deleteCustomProduct = async function (id) {
+    if (!confirm("¿Seguro que deseas eliminar este producto permanentemente?")) return;
+    try {
+        await db.collection('products').doc(id).delete();
+        alert("Producto eliminado correctamente.");
+    } catch (e) {
+        console.error(e);
+        alert("Error al eliminar: " + e.message);
+    }
+};
+
 
