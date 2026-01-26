@@ -2586,8 +2586,13 @@ window.uploadImageToImgBB = async function (base64Str, name) {
             }, { merge: true });
 
             console.log("✅ CapCut Pro Added to DB");
+            alert("✨ SE AGREGÓ CAPCUT PRO AL CATÁLOGO AUTOMÁTICAMENTE ✨\n\nPor favor recarga la página para verlo.");
+        } else {
+            console.log("CapCut Pro already exists.");
+            // alert("Nota: CapCut Pro ya existe en la base de datos.");
         }
     } catch (e) {
         console.error("Error auto-inserting CapCut:", e);
+        alert("Error al insertar CapCut: " + e.message);
     }
 })();
