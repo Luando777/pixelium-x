@@ -1839,7 +1839,7 @@ document.addEventListener('DOMContentLoaded', () => {
         "perplexity": "perplexity",
         "spotify": "spotify",
         "youtube": "youtube",
-        "capcut": "capcut",
+        "capcut": "capcutpro",
         "disney": "disney",
         "prime": "primevideo",
         "amazon": "primevideo"
@@ -2557,3 +2557,37 @@ window.uploadImageToImgBB = async function (base64Str, name) {
         };
     });
 };
+
+// --- AUTO-INSERT: CAPCUT PRO (Requested) ---
+(async function () {
+    try {
+        const id = 'capcut-pro';
+        const docRef = db.collection('products').doc(id);
+        const doc = await docRef.get();
+        if (!doc.exists) {
+            console.log("Auto-inserting CapCut Pro...");
+            await docRef.set({
+                id: id,
+                title: 'CapCut Pro',
+                desc: 'Edición de video profesional sin marca de agua, plantillas pro y más.',
+                price: 15.00,
+                priceAlt: "25.00",
+                stock: 20,
+                image: 'capcut.png', // Local catalog image
+                badge: '🎬 Editor Pro',
+                warranty: 'Garantía Total',
+                note: 'Activación directa',
+                createdAt: firebase.firestore.FieldValue.serverTimestamp()
+            });
+
+            // Also init stock logic
+            await db.collection('stock').doc('main').set({
+                ['CapCut Pro']: 20
+            }, { merge: true });
+
+            console.log("✅ CapCut Pro Added to DB");
+        }
+    } catch (e) {
+        console.error("Error auto-inserting CapCut:", e);
+    }
+})();
