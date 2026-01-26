@@ -2508,38 +2508,77 @@ window.renderAdminProductList = function () {
         k.trim() !== ''
     );
 
-    // STEP B: Visual Deduplication (Hide "Canva-pro" if "Canva PRO" exists)
-    // 1. Sort by "Prettiness" (Spaces > Uppercase) so pretty keys process first
+    // STEP B: Aggressive Visual Deduplication
+    // Goal: Hide "Gemini" if "Gemini Advanced" exists. Hide "Canva-pro" if "Canva PRO" exists.
+
+    // 1. Sort by Quality (Length DESC + Formatting)
+    // Longer, formatted names come first and claim the spot.
     rawKeys.sort((a, b) => {
-        const scoreA = (a.includes(' ') ? 2 : 0) + (/[A-Z]/.test(a) ? 1 : 0);
-        const scoreB = (b.includes(' ') ? 2 : 0) + (/[A-Z]/.test(b) ? 1 : 0);
-        return scoreB - scoreA;
+        const normA = a.replace(/[-_]/g, ' ').toLowerCase();
+        const normB = b.replace(/[-_]/g, ' ').toLowerCase();
+
+        // If one is clearly formatted (Has Caps/Spaces) and the other isn't, prefer formatted
+        const scoreA = (a.includes(' ') ? 5 : 0) + (/[A-Z]/.test(a) ? 2 : 0);
+        const scoreB = (b.includes(' ') ? 5 : 0) + (/[A-Z]/.test(b) ? 2 : 0);
+
+        if (scoreA !== scoreB) return scoreB - scoreA;
+
+        // If formatting is similar, prefer LONGER names (More specific)
+        return normB.length - normA.length;
     });
 
-    // 2. Filter using Set to track normalized names
-    const seenNorms = new Set();
-    const stockKeys = []; // usage of standard name for compatibility below
+    const finalKeys = [];
+    const keptNorms = [];
 
     rawKeys.forEach(key => {
-        // Normalize: "Canva-pro" -> "canva pro" | "Canva PRO" -> "canva pro"
         const norm = key.replace(/[-_]/g, ' ').replace(/\s+/g, ' ').trim().toLowerCase();
 
-        // Special exception: don't dedup distinct timeframes or versions if they normalize too aggressively?
-        // "Pro" vs "Pro 1 mes" -> "pro" vs "pro 1 mes". Safe.
+        // CHECK: Is this key redundant? 
+        // It is redundant if its normalized form is a SUBSTRING of an already kept key.
+        // OR if an already kept key is a substring of IT (but we sorted by length, so we see longest first).
 
-        if (!seenNorms.has(norm)) {
-            seenNorms.add(norm);
-            stockKeys.push(key);
+        // Exception: "Canva PRO" vs "Canva PRO (Personal)". 
+        // "canva pro" is inside "canva pro (personal)". 
+        // Since we sort by length, "(Personal)" is processed FIRST.
+        // Then "Canva PRO" comes. Is "canva pro" a substring of "canva pro (personal)"? YES.
+        // So "Canva PRO" would be hidden. THIS IS RISKY.
+
+        // Let's refine: Only hide if it's an "Ugly" variant or EXACT match.
+        // Ugly = Contains hyphens when keeper doesn't?
+
+        // User said: "Eliminate duplicates".
+        // He hates "Canva-pro" vs "Canva PRO".
+        // He hates "Gemini" vs "Gemini Advanced".
+
+        // Let's try: Hide if EXACT match of normalized form OR if it's a "bad format" substring.
+
+        const isRedundant = keptNorms.some(existing => {
+            // 1. Exact match (case/format insensitive)
+            if (existing === norm) return true;
+
+            // 2. Substring match, BUT only if the current key looks "raw" (no spaces, or hyphenated)
+            // Example: "gemini" (raw) inside "gemini advanced". -> Hide "gemini".
+            // Example: "canva-pro" (raw) inside "canva pro". -> Hide "canva-pro".
+
+            const isRaw = !key.includes(' ') || key.includes('-');
+            if (isRaw && existing.includes(norm)) return true;
+
+            return false;
+        });
+
+        if (!isRedundant) {
+            finalKeys.push(key);
+            keptNorms.push(norm);
         }
     });
 
-    if (stockKeys.length > 0) {
+    if (finalKeys.length > 0) {
         const header = document.createElement('h4');
         header.style.color = '#00f3ff';
         header.innerText = "📦 Stock Original";
         list.appendChild(header);
 
-        stockKeys.forEach(key => {
+        finalKeys.forEach(key => {
             const row = document.createElement('div');
             row.className = 'stock-item-row';
             row.style.display = 'flex';
