@@ -2501,12 +2501,37 @@ window.renderAdminProductList = function () {
     list.innerHTML = '';
 
     // 1. Render STOCK Items (Originals)
-    // FILTER: Hide "Custom_" keys (shown below) and "Null" garbage
-    const stockKeys = Object.keys(stockState).filter(k =>
+    // STEP A: Raw Filter (Garbage)
+    let rawKeys = Object.keys(stockState).filter(k =>
         !k.toLowerCase().startsWith('custom_') &&
         k.toLowerCase() !== 'null' &&
         k.trim() !== ''
     );
+
+    // STEP B: Visual Deduplication (Hide "Canva-pro" if "Canva PRO" exists)
+    // 1. Sort by "Prettiness" (Spaces > Uppercase) so pretty keys process first
+    rawKeys.sort((a, b) => {
+        const scoreA = (a.includes(' ') ? 2 : 0) + (/[A-Z]/.test(a) ? 1 : 0);
+        const scoreB = (b.includes(' ') ? 2 : 0) + (/[A-Z]/.test(b) ? 1 : 0);
+        return scoreB - scoreA;
+    });
+
+    // 2. Filter using Set to track normalized names
+    const seenNorms = new Set();
+    const stockKeys = []; // usage of standard name for compatibility below
+
+    rawKeys.forEach(key => {
+        // Normalize: "Canva-pro" -> "canva pro" | "Canva PRO" -> "canva pro"
+        const norm = key.replace(/[-_]/g, ' ').replace(/\s+/g, ' ').trim().toLowerCase();
+
+        // Special exception: don't dedup distinct timeframes or versions if they normalize too aggressively?
+        // "Pro" vs "Pro 1 mes" -> "pro" vs "pro 1 mes". Safe.
+
+        if (!seenNorms.has(norm)) {
+            seenNorms.add(norm);
+            stockKeys.push(key);
+        }
+    });
 
     if (stockKeys.length > 0) {
         const header = document.createElement('h4');
