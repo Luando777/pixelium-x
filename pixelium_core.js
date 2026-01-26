@@ -2558,41 +2558,4 @@ window.uploadImageToImgBB = async function (base64Str, name) {
     });
 };
 
-// --- AUTO-INSERT: CAPCUT PRO (Requested) ---
-(async function () {
-    try {
-        const id = 'capcut-pro';
-        const docRef = db.collection('products').doc(id);
-        const doc = await docRef.get();
-        if (!doc.exists) {
-            console.log("Auto-inserting CapCut Pro...");
-            await docRef.set({
-                id: id,
-                title: 'CapCut Pro',
-                desc: 'Edición de video profesional sin marca de agua, plantillas pro y más.',
-                price: 15.00,
-                priceAlt: "25.00",
-                stock: 20,
-                image: 'capcut.png', // Local catalog image
-                badge: '🎬 Editor Pro',
-                warranty: 'Garantía Total',
-                note: 'Activación directa',
-                createdAt: firebase.firestore.FieldValue.serverTimestamp()
-            });
 
-            // Also init stock logic
-            await db.collection('stock').doc('main').set({
-                ['CapCut Pro']: 20
-            }, { merge: true });
-
-            console.log("✅ CapCut Pro Added to DB");
-            alert("✨ SE AGREGÓ CAPCUT PRO AL CATÁLOGO AUTOMÁTICAMENTE ✨\n\nPor favor recarga la página para verlo.");
-        } else {
-            console.log("CapCut Pro already exists.");
-            // alert("Nota: CapCut Pro ya existe en la base de datos.");
-        }
-    } catch (e) {
-        console.error("Error auto-inserting CapCut:", e);
-        alert("Error al insertar CapCut: " + e.message);
-    }
-})();
