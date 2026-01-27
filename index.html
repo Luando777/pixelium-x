@@ -59,7 +59,7 @@
         <ul class="nav-links">
             <li><a href="javascript:void(0)" onclick="navigateTo('home')">Inicio</a></li>
             <li><a href="javascript:void(0)" onclick="navigateTo('products')">Productos</a></li>
-            <li><a href="javascript:void(0)" onclick="navigateTo('about')">Nosotros</a></li>
+            <li><a href="javascript:void(0)" onclick="navigateTo('home')">Nosotros</a></li>
 
             <!-- Admin Group Grid -->
             <li class="admin-group-li">
@@ -117,24 +117,8 @@
                 </div>
             </div>
         </section>
-    </div>
 
-    <!-- COMPONENT: PRODUCTS (Productos) -->
-    <div id="view-products" class="spa-view" style="display: none;">
-        <section id="products" class="services">
-            <h2 class="section-title">Nuestros Productos</h2>
-            <div class="services-grid">
-                <!-- Dynamic Products Loading Placeholder -->
-                <div id="loading-catalog" style="grid-column: 1 / -1; text-align: center; color: var(--neon-cyan);">
-                    <i class="fas fa-circle-notch fa-spin fa-3x"></i>
-                    <p>Cargando Catálogo...</p>
-                </div>
-            </div>
-        </section>
-    </div>
-
-    <!-- COMPONENT: ABOUT (Nosotros) -->
-    <div id="view-about" class="spa-view" style="display: none;">
+        <!-- MOVED: About Section is now part of Home -->
         <section id="about" class="about-section">
             <h2 class="section-title">Nosotros</h2>
             <div class="about-content">
@@ -176,6 +160,23 @@
             </div>
         </section>
     </div>
+
+    <!-- COMPONENT: PRODUCTS (Productos) -->
+    <div id="view-products" class="spa-view" style="display: none;">
+        <section id="products" class="services">
+            <h2 class="section-title">Nuestros Productos</h2>
+            <div class="services-grid">
+                <!-- Dynamic Products Loading Placeholder -->
+                <div id="loading-catalog" style="grid-column: 1 / -1; text-align: center; color: var(--neon-cyan);">
+                    <i class="fas fa-circle-notch fa-spin fa-3x"></i>
+                    <p>Cargando Catálogo...</p>
+                </div>
+            </div>
+        </section>
+    </div>
+
+    <!-- COMPONENT: ABOUT (Merged into Home) -->
+    <!-- div id="view-about" removed -->
 
     <!-- Auth Modal -->
     <div id="auth-modal" class="modal">
