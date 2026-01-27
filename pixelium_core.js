@@ -1,5 +1,4 @@
 console.log("Pixelium System Online V10 SAFE");
-// alert("✅ SISTEMA V10 (SAFE): Reparación Ultra-Rápida (Base64).");
 
 const firebaseConfig = {
     apiKey: "AIzaSyCANk2vWDYkiZXnpwkufTgRrbSqGJhAHNI",
@@ -75,6 +74,41 @@ auth.onAuthStateChanged(user => {
     }
 });
 
+// --- SPA NAVIGATION LOGIC ---
+// --- SPA NAVIGATION LOGIC ---
+window.navigateTo = function (viewName) {
+    // 1. Hide all views
+    const views = document.querySelectorAll('.spa-view');
+    views.forEach(el => el.style.display = 'none');
+
+    // 2. Show target view
+    const target = document.getElementById(`view-${viewName}`);
+    if (target) {
+        target.style.display = 'block';
+        window.scrollTo(0, 0); // Scroll to top of the NEW view
+    } else {
+        console.error(`View not found: view-${viewName}`);
+        // Fallback: Show Home
+        const home = document.getElementById('view-home');
+        if (home) home.style.display = 'block';
+    }
+
+    // 3. Close Mobile Menu if open
+    const navLinks = document.querySelector('.nav-links');
+    if (navLinks && navLinks.classList.contains('active')) {
+        navLinks.classList.remove('active');
+    }
+
+    return false; // Prevent default link behavior
+};
+
+// INITIALIZATION: Show Home by default (fixes "linear" flash)
+document.addEventListener('DOMContentLoaded', () => {
+    // Only navigate to home if no other logic (like URL params) dictates otherwise
+    // For now, force home to ensure "Tabbed" look immediately
+    window.navigateTo('home');
+});
+
 // Modal Logic
 window.openAuthModal = (tab) => {
     const modal = document.getElementById('auth-modal');
@@ -113,7 +147,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const btnLogin = document.getElementById('btn-login-action');
     if (btnLogin) {
         btnLogin.addEventListener('click', () => {
-            const email = document.getElementById('login-email').value;
+            const email = document.getElementById('login-email').value.trim().toLowerCase();
             const pass = document.getElementById('login-password').value;
             const errorEl = document.getElementById('login-error');
 
@@ -134,7 +168,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         } else if (err.code === 'auth/too-many-requests') {
                             errorEl.innerText = "⚠️ Muchos intentos. Espera un momento.";
                         } else {
-                            errorEl.innerText = "Error: " + err.message;
+                            errorEl.innerText = `Error (${err.code}): ` + err.message;
                         }
                     }
                 });
@@ -145,16 +179,16 @@ document.addEventListener('DOMContentLoaded', () => {
     const btnRegister = document.getElementById('btn-register-action');
     if (btnRegister) {
         btnRegister.addEventListener('click', () => {
-            const email = document.getElementById('register-email').value;
+            const email = document.getElementById('register-email').value.trim().toLowerCase();
             const pass = document.getElementById('register-password').value;
             const errorEl = document.getElementById('register-error');
 
-            // Validation
-            const validDomains = ['@gmail.com', '@outlook.com', '.edu'];
+            // Validation (Expanded & Case Insensitive)
+            const validDomains = ['@gmail.com', '@outlook.com', '@hotmail.com', '@yahoo.com', '.edu', '@icloud.com'];
             const isValid = validDomains.some(d => email.endsWith(d));
 
             if (!isValid) {
-                if (errorEl) errorEl.innerText = "Solo correos Gmail, Outlook o Universitarios (.edu)";
+                if (errorEl) errorEl.innerText = "Solo correos Gmail, Outlook, Hotmail, Yahoo, iCloud o .edu";
                 return;
             }
 
@@ -173,7 +207,15 @@ document.addEventListener('DOMContentLoaded', () => {
                 })
                 .catch(err => {
                     console.error(err);
-                    if (errorEl) errorEl.innerText = "Error: " + err.message;
+                    if (errorEl) {
+                        if (err.code === 'auth/email-already-in-use') {
+                            errorEl.innerText = "⚠️ Este correo ya está registrado via Web o Google.";
+                        } else if (err.code === 'auth/weak-password') {
+                            errorEl.innerText = "⚠️ La contraseña es muy débil (mínimo 6 caracteres).";
+                        } else {
+                            errorEl.innerText = `Error (${err.code}): ` + err.message;
+                        }
+                    }
                 });
         });
     }
@@ -1854,7 +1896,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 <span>${prod.warranty}</span>
             </div>` : ''}
             
-            <div class="price-tag">S/${prod.price.toFixed(2)} ${prod.priceAlt ? `<span class="price-alt">($${prod.priceAlt})</span>` : ''}</div>
+            <div class="price-tag">S/${prod.price.toFixed(2)}</div>
             <button class="btn-add" onclick="addToCart('${prod.title}', ${prod.price})" ${btnState}>${btnText}</button>
             `;
 
