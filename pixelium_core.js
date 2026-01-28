@@ -2004,9 +2004,13 @@ document.addEventListener('DOMContentLoaded', () => {
             const brandKey = p._rawBrandKey;
 
             item.onclick = () => {
+                // FORCE NAVIGATION TO PRODUCTS VIEW
+                window.navigateTo('products');
+
                 if (brandKey) {
-                    const newUrl = `${window.location.pathname}?brand=${brandKey}`;
-                    window.history.pushState({ path: newUrl }, '', newUrl);
+                    // Update URL for "deep linking" feel (Optional but good)
+                    // window.history.pushState({ view: 'products' }, '', `#products?brand=${brandKey}`);
+
                     filterGridByBrand(brandKey); // Pass the raw key for filtering
                 } else {
                     // Fallback for non-branded items
