@@ -112,7 +112,7 @@
         <!-- NEW: Infinite Product Carousel -->
         <section class="carousel-section">
             <div class="carousel-container">
-                <div class="carousel-track" id="carousel-track">
+                <div class="carousel-track brand-carousel" id="carousel-track">
                     <!-- JS will populate this twice for infinite effect -->
                 </div>
             </div>
@@ -164,6 +164,16 @@
     <!-- COMPONENT: PRODUCTS (Productos) -->
     <!-- Added padding-top to prevent Navbar overlap -->
     <div id="view-products" class="spa-view" style="display: none; padding-top: 120px;">
+
+        <!-- NEW: Carousel also in Products View -->
+        <section class="carousel-section" style="margin-bottom: 30px;">
+            <div class="carousel-container">
+                <div class="carousel-track brand-carousel">
+                    <!-- JS will populate this -->
+                </div>
+            </div>
+        </section>
+
         <section id="products" class="services">
             <h2 class="section-title">Nuestros Productos</h2>
             <div class="services-grid">
@@ -304,7 +314,7 @@
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-storage.js"></script>
 
     <!-- Main Logic -->
-    <script src="pixelium_core.js?v=SPA_V43_CAROUSEL"></script>
+    <script src="pixelium_core.js?v=SPA_V44_DOUBLE_CAROUSEL"></script>
 
     <!-- Admin Modal -->
     <!-- Admin Modal -->

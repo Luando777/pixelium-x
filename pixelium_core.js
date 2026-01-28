@@ -1965,9 +1965,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- CAROUSEL RENDER LOGIC ---
     function renderCarousel(products) {
-        const track = document.getElementById('carousel-track');
-        if (!track) return;
-        track.innerHTML = '';
+        // Target ALL carousel tracks (Home and Products view)
+        const tracks = document.querySelectorAll('.brand-carousel');
+        if (tracks.length === 0) return;
+
+        // Clear all tracks
+        tracks.forEach(t => t.innerHTML = '');
 
         // Deduplication Logic: Show only ONE item per Brand
         const renderedBrands = new Set();
@@ -2033,7 +2036,27 @@ document.addEventListener('DOMContentLoaded', () => {
             };
 
             item.appendChild(img);
-            track.appendChild(item);
+
+            // Append clone to EACH track
+            tracks.forEach(track => {
+                // We must clone the item for each track because a node can only exist in one place
+                const clone = item.cloneNode(true);
+                clone.onclick = item.onclick; // Cloning doesn't copy event listeners, so re-attach? 
+                // Wait, cloneNode doesn't copy listeners. We need to attach listener to clone.
+
+                clone.onclick = () => {
+                    // FORCE NAVIGATION TO PRODUCTS VIEW
+                    window.navigateTo('products');
+
+                    if (brandKey) {
+                        filterGridByBrand(brandKey);
+                    } else {
+                        filterGridByProduct(p.id);
+                    }
+                };
+
+                track.appendChild(clone);
+            });
         });
     }
 
