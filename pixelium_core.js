@@ -76,7 +76,7 @@ auth.onAuthStateChanged(user => {
 
 // --- SPA NAVIGATION LOGIC ---
 // --- SPA NAVIGATION LOGIC ---
-window.navigateTo = function (viewName) {
+window.navigateTo = function (viewName, pushHistory = true) {
     // 1. Hide all views
     const views = document.querySelectorAll('.spa-view');
     views.forEach(el => el.style.display = 'none');
@@ -86,6 +86,11 @@ window.navigateTo = function (viewName) {
     if (target) {
         target.style.display = 'block';
         window.scrollTo(0, 0); // Scroll to top of the NEW view
+
+        // 3. Update History (Browser Back Button Support)
+        if (pushHistory) {
+            history.pushState({ view: viewName }, '', `#${viewName}`);
+        }
     } else {
         console.error(`View not found: view-${viewName}`);
         // Fallback: Show Home
@@ -93,7 +98,7 @@ window.navigateTo = function (viewName) {
         if (home) home.style.display = 'block';
     }
 
-    // 3. Close Mobile Menu if open
+    // 4. Close Mobile Menu if open
     const navLinks = document.querySelector('.nav-links');
     if (navLinks && navLinks.classList.contains('active')) {
         navLinks.classList.remove('active');
@@ -102,11 +107,31 @@ window.navigateTo = function (viewName) {
     return false; // Prevent default link behavior
 };
 
-// INITIALIZATION: Show Home by default (fixes "linear" flash)
+// Handle Browser Back Button
+window.addEventListener('popstate', (event) => {
+    if (event.state && event.state.view) {
+        window.navigateTo(event.state.view, false);
+    } else {
+        // If no state (e.g., initial load popped), go home
+        window.navigateTo('home', false);
+    }
+});
+
+// INITIALIZATION: Show Home by default and SET BASE HISTORY
 document.addEventListener('DOMContentLoaded', () => {
-    // Only navigate to home if no other logic (like URL params) dictates otherwise
-    // For now, force home to ensure "Tabbed" look immediately
-    window.navigateTo('home');
+    const hash = window.location.hash.replace('#', '');
+
+    if (hash) {
+        // If user loads with #products, we render products
+        // AND we replace the current history entry to match.
+        history.replaceState({ view: hash }, '', `#${hash}`);
+        window.navigateTo(hash, false);
+    } else {
+        // If user loads root /, we render home
+        // AND we replace the current history entry so "Back" works later.
+        history.replaceState({ view: 'home' }, '', '#home');
+        window.navigateTo('home', false);
+    }
 });
 
 // Modal Logic
