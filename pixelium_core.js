@@ -10,6 +10,10 @@ const firebaseConfig = {
     measurementId: "G-XZ79GZYR6F"
 };
 
+// --- GLOBAL STATE ---
+let hiddenProducts = JSON.parse(localStorage.getItem('hiddenProducts')) || [];
+let customProducts = [];
+
 // --- CART LOGIC ---
 let cart = JSON.parse(localStorage.getItem('cart')) || [];
 
@@ -1576,9 +1580,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // State
     // Load from Firestore (Real-time)
-    let hiddenProducts = JSON.parse(localStorage.getItem('hiddenProducts')) || []; // Keep hidden local for now or migrate later? Request was Prices & Products. Let's do Products (Custom).
     // Actually, migration of customProducts to Firestore
-    let customProducts = [];
 
     // 1. Initialization: Listen to Firestore
     // 1. Initialization: Listen to Firestore
