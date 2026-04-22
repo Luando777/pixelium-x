@@ -2241,7 +2241,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 
                 ${p.isSpecial ? '</div>' : ''} 
 
-                <div id="stock-${pid}" class="stock-status stock-available" data-stock-key="${pid}">
+                <div id="stock-${pid}" class="stock-status stock-available" data-stock-key="${target.title}">
                     Verificando stock...
                 </div>
 
