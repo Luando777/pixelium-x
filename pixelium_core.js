@@ -2729,15 +2729,30 @@ window.renderAdminProductList = function () {
             row.style.display = 'flex';
             row.style.justifyContent = 'space-between';
             row.style.alignItems = 'center';
-            row.style.padding = '8px';
-            row.style.borderBottom = '1px solid #333';
+            row.style.padding = '10px';
+            row.style.background = 'rgba(0, 243, 255, 0.05)';
+            row.style.marginBottom = '8px';
+            row.style.borderRadius = '8px';
+            row.style.border = '1px solid rgba(0, 243, 255, 0.2)';
 
             const name = key.charAt(0).toUpperCase() + key.slice(1);
             const val = stockState[key];
 
+            const isHidden = hiddenProducts.includes(key);
+            const eyeIcon = isHidden ? 'fa-eye-slash' : 'fa-eye';
+            const eyeColor = isHidden ? '#888' : '#00f3ff';
+
             row.innerHTML = `
-                <span style="color:white;">${name}</span>
-                <span style="color:${val > 0 ? '#00ff88' : 'red'}; font-weight:bold;">${val}</span>
+                <span style="color:${isHidden ? '#888' : 'white'}; text-decoration:${isHidden ? 'line-through' : 'none'}; flex: 1; font-weight: 500;">${name}</span>
+                <div style="display:flex; gap:10px; align-items:center;">
+                    <span style="color:${val > 0 ? '#00ff88' : '#ff4444'}; font-weight:bold; width:35px; text-align:right; font-size: 0.9rem;">${val}</span>
+                    <button onclick="toggleHideProduct('${key.replace(/'/g, "\\'")}')" style="background:transparent; color:${eyeColor}; border:1px solid ${eyeColor}; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; border-radius:6px; cursor:pointer; transition: all 0.2s;" title="Ocultar/Mostrar">
+                        <i class="fas ${eyeIcon}"></i>
+                    </button>
+                    <button onclick="deleteStockProduct('${key.replace(/'/g, "\\'")}')" style="background:#ff4444; color:white; border:none; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; border-radius:6px; cursor:pointer; transition: all 0.2s;" title="Borrar">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
             `;
             list.appendChild(row);
         });
@@ -2757,22 +2772,26 @@ window.renderAdminProductList = function () {
             row.style.display = 'flex';
             row.style.justifyContent = 'space-between';
             row.style.alignItems = 'center';
-            row.style.padding = '8px';
-            row.style.background = '#111';
-            row.style.marginBottom = '5px';
-            row.style.borderRadius = '4px';
+            row.style.padding = '10px';
+            row.style.background = 'rgba(255, 255, 255, 0.05)';
+            row.style.marginBottom = '8px';
+            row.style.borderRadius = '8px';
+            row.style.border = '1px solid rgba(255, 0, 255, 0.2)';
 
             const stockVal = stockState[prod.title] !== undefined ? stockState[prod.title] : prod.stock;
 
             row.innerHTML = `
-                <div style="display:flex; flex-direction:column;">
-                    <span style="color:white; font-weight:bold;">${prod.title}</span>
-                    <span style="color:#aaa; font-size:0.8rem;">ID: ${prod.id}</span>
+                <div style="display:flex; align-items:center; gap: 12px; flex: 1;">
+                    <img src="${prod.image}" style="width: 40px; height: 40px; border-radius: 4px; object-fit: cover; border: 1px solid #333;" onerror="this.src='logo.png'">
+                    <div style="display:flex; flex-direction:column;">
+                        <span style="color:white; font-weight:bold; font-size: 0.95rem;">${prod.title}</span>
+                        <span style="color:#aaa; font-size:0.75rem;">ID: ${prod.id}</span>
+                    </div>
                 </div>
-                <div style="display:flex; gap:10px; align-items:center;">
-                    <span style="color:${stockVal > 0 ? '#00ff88' : 'red'}; margin-right:10px;">Stock: ${stockVal}</span>
-                    <button onclick="deleteCustomProduct('${prod.id}')" style="background:red; color:white; border:none; padding:5px 10px; border-radius:4px; cursor:pointer;">
-                        <i class="fas fa-trash"></i>
+                <div style="display:flex; gap:12px; align-items:center;">
+                    <span style="color:${stockVal > 0 ? '#00ff88' : '#ff4444'}; font-weight: bold; font-size: 0.9rem;">${stockVal}</span>
+                    <button onclick="deleteCustomProductAction('${prod.id}')" style="background:#ff0055; color:white; border:none; padding:8px 12px; border-radius:6px; cursor:pointer; transition: all 0.2s;" onmouseover="this.style.opacity='0.8'" onmouseout="this.style.opacity='1'">
+                        <i class="fas fa-trash-alt"></i>
                     </button>
                 </div>
             `;
@@ -2787,7 +2806,34 @@ window.renderAdminProductList = function () {
     }
 };
 
-window.deleteCustomProduct = async function (id) {
+window.toggleHideProduct = function(key) {
+    if (hiddenProducts.includes(key)) {
+        hiddenProducts = hiddenProducts.filter(p => p !== key);
+    } else {
+        hiddenProducts.push(key);
+    }
+    localStorage.setItem('hiddenProducts', JSON.stringify(hiddenProducts));
+    
+    // Attempt to re-render visibility
+    if (typeof applyProductVisibility === 'function') applyProductVisibility();
+    renderAdminProductList();
+};
+
+window.deleteStockProduct = async function(key) {
+    if (!confirm("¿Seguro que deseas eliminar este producto (Stock Original) permanentemente?")) return;
+    try {
+        await db.collection('stock').doc('main').update({
+            [key]: firebase.firestore.FieldValue.delete()
+        });
+        alert("Producto eliminado del stock correctamente.");
+        // stockState listener will auto-update the list
+    } catch (e) {
+        console.error(e);
+        alert("Error al eliminar: " + e.message);
+    }
+};
+
+window.deleteCustomProductAction = async function (id) {
     if (!confirm("¿Seguro que deseas eliminar este producto permanentemente?")) return;
     try {
         await db.collection('products').doc(id).delete();
