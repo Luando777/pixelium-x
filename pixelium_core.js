@@ -2173,58 +2173,9 @@ document.addEventListener('DOMContentLoaded', () => {
         const sectionTitle = document.querySelector('.section-title');
         if (sectionTitle) sectionTitle.innerHTML = `Viendo: <span style="color:var(--neon-cyan)">${target.title}</span>`;
 
-        // Define P early
         const p = target;
+        let displayImage = p.image || 'logo.png';
 
-        // STATIC IMAGE MAP (Fallback)
-        const imageMap = {
-            // Streaming
-            "Netflix": "https://upload.wikimedia.org/wikipedia/commons/0/08/Netflix_2015_logo.svg",
-            "Disney": "carrusel/carrucel-disney.png",
-            "HBO": "https://upload.wikimedia.org/wikipedia/commons/1/17/HBO_Max_Logo.svg",
-            "Prime Video": "carrusel/carrucel-primevideo.png",
-            "Amazon Prime": "carrusel/carrucel-primevideo.png",
-            "Spotify": "https://upload.wikimedia.org/wikipedia/commons/2/26/Spotify_logo_with_text.svg",
-            "Crunchyroll": "https://upload.wikimedia.org/wikipedia/commons/0/08/Crunchyroll_Logo.png",
-            "Paramount": "https://upload.wikimedia.org/wikipedia/commons/a/a5/Paramount_Plus.svg",
-            "Vix": "https://upload.wikimedia.org/wikipedia/commons/b/b6/Vix_logo_2024.svg",
-            "Plex": "https://upload.wikimedia.org/wikipedia/commons/7/7b/Plex_logo_2022.svg",
-            "Rakuten": "https://upload.wikimedia.org/wikipedia/commons/9/92/Rakuten_Viki_Logo_2019.svg",
-            "Viki": "https://upload.wikimedia.org/wikipedia/commons/9/92/Rakuten_Viki_Logo_2019.svg",
-            "Youtube": "https://upload.wikimedia.org/wikipedia/commons/b/b8/YouTube_Logo_2017.svg",
-            "Apple TV": "https://upload.wikimedia.org/wikipedia/commons/2/28/Apple_TV_Plus_Logo.svg",
-
-            // Software / Antivirus
-            "Adobe": "https://upload.wikimedia.org/wikipedia/commons/4/42/Adobe_Creative_Cloud_rainbow_icon.svg",
-            "Creative Cloud": "https://upload.wikimedia.org/wikipedia/commons/4/42/Adobe_Creative_Cloud_rainbow_icon.svg",
-            "Microsoft": "https://upload.wikimedia.org/wikipedia/commons/4/44/Microsoft_logo.svg",
-            "Office": "https://upload.wikimedia.org/wikipedia/commons/d/d2/Microsoft_Office_logo_%282019%E2%80%93present%29.svg",
-            "Windows": "https://upload.wikimedia.org/wikipedia/commons/8/87/Windows_logo_-_2021.svg",
-            "NordVPN": "https://upload.wikimedia.org/wikipedia/commons/d/d3/NordVPN_horizontal_logo.svg",
-            "Kaspersky": "https://upload.wikimedia.org/wikipedia/commons/6/6f/Kaspersky_logo.svg",
-            "Eset": "https://upload.wikimedia.org/wikipedia/commons/0/05/ESET_logo.svg",
-            "McAfee": "https://upload.wikimedia.org/wikipedia/commons/0/0c/McAfee_logo_2024.svg",
-
-            // Design / AI
-            "Canva": "canva.png",
-            "Gemini": "gemini.png",
-            "Google One": "google-one.png",
-            "Perplexity": "perplexity.png",
-            "Capcut": "capcut.png",
-            "Iptv": "iptv.png",
-            "Magis": "display_magis.png"
-        };
-
-        let displayImage = p.image;
-
-        // PRIORITY: Force Brand Image if title matches a known key
-        const mapKey = Object.keys(imageMap).find(k => p.title.toLowerCase().includes(k.toLowerCase()));
-
-        if (mapKey) {
-            displayImage = imageMap[mapKey];
-        } else if (!displayImage || displayImage.includes('logo.png')) {
-            // Fallback
-        }
 
         // FIX: Define imgOnError which was missing
         let brandIconForError = 'logo.png';
