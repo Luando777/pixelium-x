@@ -1745,6 +1745,12 @@ document.addEventListener('DOMContentLoaded', () => {
                 document.getElementById('edit-prod-warranty').value = prod.warranty || '';
                 document.getElementById('edit-prod-badge').value = prod.badge || '';
                 document.getElementById('edit-prod-note').value = prod.note || '';
+                
+                // Reset image input and preview
+                const imgInput = document.getElementById('edit-prod-img');
+                if (imgInput) imgInput.value = '';
+                const previewCont = document.getElementById('edit-img-preview-container');
+                if (previewCont) previewCont.style.display = 'none';
             }
         });
     }
@@ -1767,7 +1773,20 @@ document.addEventListener('DOMContentLoaded', () => {
                 note: document.getElementById('edit-prod-note').value
             };
 
+            const imgInput = document.getElementById('edit-prod-img');
+
             try {
+                // If a NEW image is selected, process it
+                if (imgInput && imgInput.files[0]) {
+                    btnSaveEdit.innerText = "Procesando imagen...";
+                    const base64Image = await compressImage(imgInput.files[0]);
+                    
+                    if (base64Image.length > 900000) {
+                        throw new Error("Imagen muy pesada. Intenta con otra.");
+                    }
+                    updates.image = base64Image;
+                }
+
                 await db.collection('products').doc(prodId).update(updates);
 
                 alert("¡Información Actualizada! ✅");

@@ -401,6 +401,14 @@
                     <label style="color:#ccc;">Nota (Entrega):</label>
                     <input type="text" id="edit-prod-note" class="neon-input">
 
+                    <label style="color:#ccc; margin-top: 10px; display: block;">Cambiar Foto (Opcional):</label>
+                    <input type="file" id="edit-prod-img" class="neon-input" accept="image/*" style="padding: 10px;">
+                    
+                    <div id="edit-img-preview-container" style="margin-top: 10px; text-align: center; display: none;">
+                        <p style="color: #888; font-size: 0.8rem;">Vista Previa Nueva Foto:</p>
+                        <img id="edit-img-preview" src="" style="max-width: 100px; border-radius: 8px; border: 1px solid var(--neon-cyan);">
+                    </div>
+
                     <button id="btn-save-edit" class="btn-primary full-width" style="margin-top: 15px;">
                         💾 Guardar Cambios de Info
                     </button>
