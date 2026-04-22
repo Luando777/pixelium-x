@@ -1664,7 +1664,7 @@ document.addEventListener('DOMContentLoaded', () => {
         btnProductsAdmin.addEventListener('click', () => {
             productModal.style.display = 'block';
             renderAdminProductList();
-            switchProductTab('add');
+            switchProductTabV2('add');
         });
     }
 
