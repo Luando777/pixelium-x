@@ -1,4 +1,4 @@
-console.log("Pixelium System Online V10 SAFE");
+console.log("Pixelium System Online V11 FORCE REFRESH");
 
 const firebaseConfig = {
     apiKey: "AIzaSyCANk2vWDYkiZXnpwkufTgRrbSqGJhAHNI",
