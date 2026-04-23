@@ -112,12 +112,13 @@ window.navigateTo = function (viewName, pushHistory = true) {
 };
 
 window.scrollToSection = function(sectionId) {
+    console.log("Scrolling to section:", sectionId);
     // 1. If we are NOT in the home view, go there first
     const homeView = document.getElementById('view-home');
-    if (homeView.style.display === 'none') {
+    if (!homeView || homeView.style.display === 'none') {
         window.navigateTo('home');
-        // Wait a bit for the view to render before scrolling
-        setTimeout(() => performScroll(sectionId), 100);
+        // Wait a bit longer for the view to be fully visible
+        setTimeout(() => performScroll(sectionId), 300);
     } else {
         performScroll(sectionId);
     }
@@ -125,7 +126,10 @@ window.scrollToSection = function(sectionId) {
     function performScroll(id) {
         const element = document.getElementById(id);
         if (element) {
-            element.scrollIntoView({ behavior: 'smooth' });
+            console.log("Element found, performing scroll...");
+            element.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        } else {
+            console.warn("Element not found:", id);
         }
     }
 };
