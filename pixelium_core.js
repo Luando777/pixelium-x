@@ -111,6 +111,25 @@ window.navigateTo = function (viewName, pushHistory = true) {
     return false; // Prevent default link behavior
 };
 
+window.scrollToSection = function(sectionId) {
+    // 1. If we are NOT in the home view, go there first
+    const homeView = document.getElementById('view-home');
+    if (homeView.style.display === 'none') {
+        window.navigateTo('home');
+        // Wait a bit for the view to render before scrolling
+        setTimeout(() => performScroll(sectionId), 100);
+    } else {
+        performScroll(sectionId);
+    }
+
+    function performScroll(id) {
+        const element = document.getElementById(id);
+        if (element) {
+            element.scrollIntoView({ behavior: 'smooth' });
+        }
+    }
+};
+
 // Handle Browser Back Button
 window.addEventListener('popstate', (event) => {
     if (event.state && event.state.view) {
