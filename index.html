@@ -193,38 +193,56 @@
     <div id="auth-modal" class="modal">
         <div class="modal-content auth-content">
             <span class="close-modal" onclick="closeAuthModal()">&times;</span>
-            <div class="auth-tabs">
-                <button class="tab-btn active" onclick="switchTab('login')">Iniciar Sesión</button>
-                <button class="tab-btn" onclick="switchTab('register')">Registrarse</button>
-            </div>
+            
+            <div id="auth-main-view">
+                <h2 style="border:none; margin-bottom:10px; font-size: 1.8rem;">Inicia sesión o regístrate en un momento</h2>
+                <p style="color:var(--text-secondary); text-align:center; margin-bottom:25px;">Usa tu cuenta de Google o Facebook para acceder rápidamente.</p>
 
-            <!-- Login Form -->
-            <div id="login-form" class="auth-form">
-                <h2>Bienvenido de nuevo</h2>
-                <input type="email" id="login-email" placeholder="Correo electrónico" class="neon-input">
-                <div class="password-wrapper" style="position:relative;">
-                    <input type="password" id="login-password" placeholder="Contraseña" class="neon-input"
-                        style="padding-right: 40px;">
-                    <i class="fas fa-eye toggle-password" onclick="togglePasswordVisibility('login-password', this)"
-                        style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); color: var(--neon-cyan); cursor: pointer;"></i>
+                <div class="social-auth-container">
+                    <button class="social-btn google-btn" onclick="signInWithGoogle()">
+                        <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="Google">
+                        Usar Google
+                    </button>
+                    <button class="social-btn facebook-btn" onclick="signInWithFacebook()">
+                        <i class="fab fa-facebook-f"></i>
+                        Usar Facebook
+                    </button>
                 </div>
-                <button class="btn-primary full-width" id="btn-login-action">Entrar</button>
-                <p class="auth-error" id="login-error"></p>
-            </div>
 
-            <!-- Register Form -->
-            <div id="register-form" class="auth-form" style="display: none;">
-                <h2>Crear cuenta</h2>
-                <!-- <p class="small-text">Solo se permiten correos @gmail.com</p> REMOVED -->
-                <input type="email" id="register-email" placeholder="Correo electrónico" class="neon-input">
-                <div class="password-wrapper" style="position:relative;">
-                    <input type="password" id="register-password" placeholder="Contraseña" class="neon-input"
-                        style="padding-right: 40px;">
-                    <i class="fas fa-eye toggle-password" onclick="togglePasswordVisibility('register-password', this)"
-                        style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); color: var(--neon-cyan); cursor: pointer;"></i>
+                <div class="auth-divider">
+                    <span>O usa un correo electrónico</span>
                 </div>
-                <button class="btn-primary full-width" id="btn-register-action">Registrarse</button>
-                <p class="auth-error" id="register-error"></p>
+
+                <div class="auth-tabs">
+                    <button class="tab-btn active" onclick="switchTab('login')">Iniciar Sesión</button>
+                    <button class="tab-btn" onclick="switchTab('register')">Registrarse</button>
+                </div>
+
+                <!-- Login Form -->
+                <div id="login-form" class="auth-form">
+                    <input type="email" id="login-email" placeholder="Correo electrónico" class="neon-input">
+                    <div class="password-wrapper" style="position:relative;">
+                        <input type="password" id="login-password" placeholder="Contraseña" class="neon-input"
+                            style="padding-right: 40px;">
+                        <i class="fas fa-eye toggle-password" onclick="togglePasswordVisibility('login-password', this)"
+                            style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); color: var(--neon-cyan); cursor: pointer;"></i>
+                    </div>
+                    <button class="btn-primary full-width" id="btn-login-action">Entrar</button>
+                    <p class="auth-error" id="login-error"></p>
+                </div>
+
+                <!-- Register Form -->
+                <div id="register-form" class="auth-form" style="display: none;">
+                    <input type="email" id="register-email" placeholder="Correo electrónico" class="neon-input">
+                    <div class="password-wrapper" style="position:relative;">
+                        <input type="password" id="register-password" placeholder="Contraseña" class="neon-input"
+                            style="padding-right: 40px;">
+                        <i class="fas fa-eye toggle-password" onclick="togglePasswordVisibility('register-password', this)"
+                            style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); color: var(--neon-cyan); cursor: pointer;"></i>
+                    </div>
+                    <button class="btn-primary full-width" id="btn-register-action">Registrarse</button>
+                    <p class="auth-error" id="register-error"></p>
+                </div>
             </div>
         </div>
     </div>

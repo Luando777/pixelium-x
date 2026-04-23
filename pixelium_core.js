@@ -152,6 +152,49 @@ window.closeAuthModal = () => {
     if (modal) modal.style.display = 'none';
 };
 
+// --- SOCIAL LOGIN LOGIC ---
+window.signInWithGoogle = () => {
+    const provider = new firebase.auth.GoogleAuthProvider();
+    auth.signInWithPopup(provider)
+        .then(result => {
+            handleSocialUser(result.user);
+            closeAuthModal();
+        })
+        .catch(err => {
+            console.error(err);
+            alert("Error con Google: " + err.message);
+        });
+};
+
+window.signInWithFacebook = () => {
+    const provider = new firebase.auth.FacebookAuthProvider();
+    auth.signInWithPopup(provider)
+        .then(result => {
+            handleSocialUser(result.user);
+            closeAuthModal();
+        })
+        .catch(err => {
+            console.error(err);
+            alert("Error con Facebook: " + err.message);
+        });
+};
+
+async function handleSocialUser(user) {
+    // Check if user doc exists, if not create it
+    const userRef = db.collection('users').doc(user.uid);
+    const doc = await userRef.get();
+    
+    if (!doc.exists) {
+        await userRef.set({
+            email: user.email,
+            role: 'user',
+            createdAt: new Date(),
+            photoURL: user.photoURL || ''
+        });
+        console.log("Nuevo usuario social registrado.");
+    }
+}
+
 window.switchTab = (tab) => {
     const loginForm = document.getElementById('login-form');
     const registerForm = document.getElementById('register-form');
@@ -359,10 +402,22 @@ function updateStockUI() {
         const key = el.getAttribute('data-stock-key');
         if (!key) return;
 
-        // Use stockState (from Firestore) if exists, else fall back to current text if needed or 0
-        const stockVal = stockState[key] !== undefined ? stockState[key] : null;
+        // --- ROBUST STOCK LOOKUP ---
+        let stockVal = stockState[key];
 
-        if (stockVal !== null) {
+        // Fallback 1: Trim (Espacios accidentales)
+        if (stockVal === undefined) {
+            stockVal = stockState[key.trim()];
+        }
+
+        // Fallback 2: Fuzzy Match (Minúsculas y sin espacios)
+        if (stockVal === undefined) {
+            const cleanKey = key.replace(/\s+/g, '').toLowerCase();
+            const foundKey = Object.keys(stockState).find(k => k.replace(/\s+/g, '').toLowerCase() === cleanKey);
+            if (foundKey) stockVal = stockState[foundKey];
+        }
+
+        if (stockVal !== undefined && stockVal !== null) {
             // Update Text
             el.innerText = stockVal > 0 ? `Stock: ${stockVal}` : 'Sin Stock';
 
@@ -2241,8 +2296,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 
                 ${p.isSpecial ? '</div>' : ''} 
 
-                <div id="stock-${pid}" class="stock-status stock-available" data-stock-key="${target.title}">
-                    Verificando stock...
+                <div id="stock-${pid}" class="stock-status stock-available" data-stock-key="${target.title.trim()}">
+                    VERIFICANDO STOCK...
                 </div>
 
                 ${badgeHtml}
