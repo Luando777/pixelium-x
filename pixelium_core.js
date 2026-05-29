@@ -1571,10 +1571,10 @@ document.addEventListener('DOMContentLoaded', () => {
             const val = stockState[title] !== undefined ? stockState[title] : (prod.stock || 0);
 
             const row = document.createElement('div');
-            row.className = 'stock-item-row';
+            row.style.cssText = "display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; padding-bottom: 15px; border-bottom: 1px solid rgba(255,255,255,0.1);";
             row.innerHTML = `
-            <span class="stock-item-name" style="font-size:0.9rem;">${title}</span>
-            <input type="number" class="stock-input" data-key="${title}" value="${val}" min="0">
+            <span class="stock-item-name" style="font-weight: bold; color: white;">${title}</span>
+            <input type="number" class="stock-input" data-key="${title}" value="${val}" min="0" style="width: 80px; padding: 8px; border-radius: 6px; border: 1px solid #39ff14; background: rgba(0,0,0,0.5); color: white; font-size: 1rem; text-align: center;">
             `;
             stockListContainer.appendChild(row);
         });
