@@ -2629,7 +2629,7 @@ document.addEventListener('DOMContentLoaded', () => {
             }
 
             const row = document.createElement('div');
-            row.className = 'stock-item-row';
+            row.style.cssText = "display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; padding-bottom: 15px; border-bottom: 1px solid rgba(255,255,255,0.1);";
             row.innerHTML = `
                 <span class="stock-item-name" style="font-weight: bold; color: white;">${title}</span>
                 <div style="display: flex; align-items: center; gap: 8px;">
