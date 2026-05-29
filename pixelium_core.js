@@ -2631,11 +2631,15 @@ document.addEventListener('DOMContentLoaded', () => {
             const row = document.createElement('div');
             row.className = 'stock-item-row';
             row.innerHTML = `
-                < span class="stock-item-name" > ${title}</span >
+                <span class="stock-item-name" style="font-weight: bold; color: white;">${title}</span>
+                <div style="display: flex; align-items: center; gap: 8px;">
+                    <span style="color: #00f3ff; font-weight: bold;">S/</span>
                     <input type="number" step="0.50" class="stock-input price-input-field"
                         data-title="${title}"
-                        value="${currentPrice}">
-                        `;
+                        value="${currentPrice}"
+                        style="width: 100px; padding: 8px; border-radius: 6px; border: 1px solid #00f3ff; background: rgba(0,0,0,0.5); color: white; font-size: 1rem;">
+                </div>
+            `;
             priceAdminList.appendChild(row);
         });
     }
