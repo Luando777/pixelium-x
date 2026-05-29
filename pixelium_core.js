@@ -11,7 +11,7 @@ const firebaseConfig = {
 };
 
 // --- GLOBAL STATE ---
-let hiddenProducts = JSON.parse(localStorage.getItem('hiddenProducts')) || [];
+let hiddenProducts = [];
 let customProducts = [];
 
 // --- CART LOGIC ---
@@ -1740,6 +1740,22 @@ document.addEventListener('DOMContentLoaded', () => {
     // Call on load
     initProductSystem();
 
+    function initVisibilitySystem() {
+        db.collection('settings').doc('visibility').onSnapshot(doc => {
+            if (doc.exists) {
+                hiddenProducts = doc.data().hidden || [];
+            } else {
+                db.collection('settings').doc('visibility').set({ hidden: [] });
+            }
+            if (typeof applyProductVisibility === 'function') applyProductVisibility();
+            const modal = document.getElementById('product-modal');
+            if (typeof renderAdminProductList === 'function' && modal && modal.style.display === 'block') {
+                renderAdminProductList();
+            }
+        });
+    }
+    initVisibilitySystem();
+
     if (btnProductsAdmin) {
         btnProductsAdmin.addEventListener('click', () => {
             productModal.style.display = 'block';
@@ -2036,6 +2052,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
             grid.appendChild(card);
         });
+
+        // Apply price overrides after rendering to prevent reversion
+        if (typeof applyPriceOverrides === 'function') {
+            applyPriceOverrides();
+        }
     }
 
     // --- CAROUSEL RENDER LOGIC ---
@@ -2219,6 +2240,13 @@ document.addEventListener('DOMContentLoaded', () => {
                 <div id="stock-${prod.id}" class="stock-status ${stockClass}" data-stock-key="${prod.title}">${stockText}</div>
                 
                 ${prod.badge ? `<p class="gold-text">${prod.badge}</p>` : ''}
+                ${prod.note ? `<p class="activation-note">${prod.note}</p>` : ''}
+                
+                ${prod.warranty ? `
+                <div class="warranty-info">
+                    <i class="fas fa-star warranty-star"></i>
+                    <span>${prod.warranty}</span>
+                </div>` : ''}
                 
                 <div class="price-tag">S/${prod.price.toFixed(2)} ${prod.priceAlt ? `<span class="price-alt">($${prod.priceAlt})</span>` : ''}</div>
                 <button class="btn-add" onclick="addToCart('${prod.title}', ${prod.price})" ${btnState}>${btnText}</button>
@@ -2247,6 +2275,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // Scroll
         grid.scrollIntoView({ behavior: 'smooth', block: 'start' });
+
+        // Apply price overrides after rendering
+        if (typeof applyPriceOverrides === 'function') {
+            applyPriceOverrides();
+        }
     };
 
     // --- FILTER GRID LOGIC (ROUTING VIEW) ---
@@ -2335,7 +2368,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 
                 ${p.id === 'panel-canva' || p.title === 'Panel Canva PRO' ? `<div class="price-tag">S/${p.price.toFixed(2)} ${priceAltHtml}</div>` : ''}
 
-                <button id="btn-${pid}" class="btn-primary" style="width:100%; margin-top:15px; font-size:1.1rem;"
+                <button id="btn-${pid}" class="btn-primary btn-add" style="width:100%; margin-top:15px; font-size:1.1rem;"
                     onclick="addToCart('${p.title}', ${p.price})">
                     Agregar al Carrito
                 </button>
@@ -2368,6 +2401,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // Scroll to grid
         grid.scrollIntoView({ behavior: 'smooth', block: 'start' });
+
+        // Apply price overrides after rendering
+        if (typeof applyPriceOverrides === 'function') {
+            applyPriceOverrides();
+        }
     };
 
     window.restoreFullCatalog = () => {
@@ -2495,14 +2533,13 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     window.toggleProductVisibility = (title) => {
-        if (hiddenProducts.includes(title)) {
-            hiddenProducts = hiddenProducts.filter(t => t !== title);
+        let updatedList = [...hiddenProducts];
+        if (updatedList.includes(title)) {
+            updatedList = updatedList.filter(t => t !== title);
         } else {
-            hiddenProducts.push(title);
+            updatedList.push(title);
         }
-        localStorage.setItem('hiddenProducts', JSON.stringify(hiddenProducts));
-        renderAdminProductList();
-        applyProductVisibility();
+        db.collection('settings').doc('visibility').set({ hidden: updatedList }, { merge: true });
     };
 
     window.deleteCustomProduct = async (index) => {
@@ -2563,11 +2600,22 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!priceAdminList) return;
         priceAdminList.innerHTML = '';
 
+        // Build a normalized price state map
+        const normalizedPriceState = {};
+        const normalize = str => str.replace(/[\s\uFE0F\u200B\u200D]+/g, '').toLowerCase();
+        Object.keys(priceState).forEach(key => {
+            normalizedPriceState[normalize(key)] = priceState[key];
+        });
+
         // Scan all cards (Hardcoded + Custom)
         document.querySelectorAll('.services-grid .card').forEach(card => {
-            const title = card.querySelector('h3').innerText.trim();
+            const titleElement = card.querySelector('h3');
+            if (!titleElement) return;
+            const title = titleElement.innerText.trim();
+            const normTitle = normalize(title);
+
             // Get current price from STATE or parse from DOM if not in state
-            let currentPrice = priceState[title];
+            let currentPrice = normalizedPriceState[normTitle];
 
             if (!currentPrice) {
                 // Extract from DOM "S/15.00" -> 15.00
@@ -2616,11 +2664,21 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- LOGIC: APPLY OVERRIDES (CORE) ---
     function applyPriceOverrides() {
-        document.querySelectorAll('.services-grid .card').forEach(card => {
-            const title = card.querySelector('h3').innerText.trim();
+        // Build a normalized price state map to handle browser-specific whitespace variations around emojis
+        const normalizedPriceState = {};
+        const normalize = str => str.replace(/[\s\uFE0F\u200B\u200D]+/g, '').toLowerCase();
+        Object.keys(priceState).forEach(key => {
+            normalizedPriceState[normalize(key)] = priceState[key];
+        });
 
-            if (priceState[title] !== undefined) {
-                const newPrice = priceState[title];
+        document.querySelectorAll('.services-grid .card').forEach(card => {
+            const titleElement = card.querySelector('h3');
+            if (!titleElement) return;
+            const title = titleElement.innerText.trim();
+            const normTitle = normalize(title);
+
+            if (normalizedPriceState[normTitle] !== undefined) {
+                const newPrice = normalizedPriceState[normTitle];
 
                 // 1. Update Visual Text
                 const priceTag = card.querySelector('.price-tag');
@@ -2857,16 +2915,7 @@ window.renderAdminProductList = function () {
 };
 
 window.toggleHideProduct = function(key) {
-    if (hiddenProducts.includes(key)) {
-        hiddenProducts = hiddenProducts.filter(p => p !== key);
-    } else {
-        hiddenProducts.push(key);
-    }
-    localStorage.setItem('hiddenProducts', JSON.stringify(hiddenProducts));
-    
-    // Attempt to re-render visibility
-    if (typeof applyProductVisibility === 'function') applyProductVisibility();
-    renderAdminProductList();
+    window.toggleProductVisibility(key);
 };
 
 window.deleteStockProduct = async function(key) {
