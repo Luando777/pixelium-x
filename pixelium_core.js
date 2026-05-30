@@ -3033,13 +3033,16 @@ function initNewFeatures() {
                     siteMsgContainer.style.display = 'block';
                     siteMsgText.innerText = data.text;
                     
-                    // Adjust position dynamically to avoid hiding behind navbar on desktop
+                    // Adjust position dynamically using ResizeObserver for pixel-perfect placement on all devices
                     const adjustSiteMsgPos = () => {
                         const navbar = document.querySelector('.navbar');
-                        if(navbar) siteMsgContainer.style.top = navbar.offsetHeight + 'px';
+                        if(navbar) siteMsgContainer.style.top = navbar.getBoundingClientRect().height + 'px';
                     };
                     adjustSiteMsgPos();
-                    window.addEventListener('resize', adjustSiteMsgPos);
+                    if (!window.siteMsgObserver) {
+                        window.siteMsgObserver = new ResizeObserver(adjustSiteMsgPos);
+                        window.siteMsgObserver.observe(document.querySelector('.navbar'));
+                    }
                     
                     if(data.text.length > 50) {
                         siteMsgText.style.animation = 'marquee 15s linear infinite';
