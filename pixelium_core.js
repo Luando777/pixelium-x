@@ -3019,91 +3019,90 @@ window.deleteCustomProductAction = async function (id) {
 
 // --- NEW FEATURES: SEARCH, FILTERS & BANNER ---
 function initNewFeatures() {
-    // 1. Promo Banner
-    const bannerContainer = document.getElementById('global-promo-banner');
-    const bannerText = document.getElementById('promo-banner-text');
+    // 1. Promo Banner (Site Message)
+    const siteMsgContainer = document.getElementById('global-site-msg');
+    const siteMsgText = document.getElementById('site-msg-text');
     
-    if(bannerContainer && bannerText) {
-        console.log("Promo banner elements found. Attaching listener...");
+    if(siteMsgContainer && siteMsgText) {
+        console.log("Site message elements found. Attaching listener...");
         db.collection('settings').doc('banner').onSnapshot(doc => {
-            console.log("Banner snapshot updated!", doc.exists, doc.data());
+            console.log("Site message snapshot updated!", doc.exists, doc.data());
             if (doc.exists) {
                 const data = doc.data();
                 if (data.active && data.text) {
-                    bannerContainer.style.display = 'block';
-                    bannerText.innerText = data.text;
+                    siteMsgContainer.style.display = 'block';
+                    siteMsgText.innerText = data.text;
                     
                     // Adjust position dynamically to avoid hiding behind navbar on desktop
-                    const adjustBannerPos = () => {
+                    const adjustSiteMsgPos = () => {
                         const navbar = document.querySelector('.navbar');
-                        if(navbar) bannerContainer.style.top = navbar.offsetHeight + 'px';
+                        if(navbar) siteMsgContainer.style.top = navbar.offsetHeight + 'px';
                     };
-                    adjustBannerPos();
-                    window.addEventListener('resize', adjustBannerPos);
+                    adjustSiteMsgPos();
+                    window.addEventListener('resize', adjustSiteMsgPos);
                     
                     if(data.text.length > 50) {
-                        bannerText.style.animation = 'marquee 15s linear infinite';
-                        bannerText.style.paddingLeft = '100%';
+                        siteMsgText.style.animation = 'marquee 15s linear infinite';
+                        siteMsgText.style.paddingLeft = '100%';
                     } else {
-                        bannerText.style.animation = 'none';
-                        bannerText.style.paddingLeft = '0';
+                        siteMsgText.style.animation = 'none';
+                        siteMsgText.style.paddingLeft = '0';
                     }
                 } else {
-                    bannerContainer.style.display = 'none';
+                    siteMsgContainer.style.display = 'none';
                 }
             }
         }, error => {
-            console.error("Firebase Snapshot Error on Banner:", error);
-            alert("Error al cargar el banner: " + error.message);
+            console.error("Firebase Snapshot Error on Site Message:", error);
         });
     } else {
-        console.error("Promo banner DOM elements NOT FOUND!");
+        console.error("Site message DOM elements NOT FOUND!");
     }
 
-    // Banner Admin Modal
-    const btnAdminBanner = document.getElementById('btn-banner-admin');
-    const bannerModal = document.getElementById('banner-admin-modal');
-    const closeBannerModal = document.querySelector('.close-banner-modal');
-    const saveBannerBtn = document.getElementById('btn-save-banner');
+    // Site Message Admin Modal
+    const btnAdminSiteMsg = document.getElementById('btn-banner-admin');
+    const siteMsgModal = document.getElementById('site-msg-admin-modal');
+    const closeSiteMsgModal = document.querySelector('.close-site-msg');
+    const saveSiteMsgBtn = document.getElementById('btn-save-site-msg');
     
-    if (btnAdminBanner && bannerModal) {
-        btnAdminBanner.addEventListener('click', () => {
-            bannerModal.style.display = 'block';
+    if (btnAdminSiteMsg && siteMsgModal) {
+        btnAdminSiteMsg.addEventListener('click', () => {
+            siteMsgModal.style.display = 'block';
             db.collection('settings').doc('banner').get().then(doc => {
                 if (doc.exists) {
                     const data = doc.data();
-                    document.getElementById('admin-banner-text').value = data.text || '';
-                    document.getElementById('admin-banner-active').checked = !!data.active;
+                    document.getElementById('admin-site-msg-text').value = data.text || '';
+                    document.getElementById('admin-site-msg-active').checked = !!data.active;
                 }
             });
         });
     }
 
-    if (closeBannerModal) {
-        closeBannerModal.addEventListener('click', () => {
-            bannerModal.style.display = 'none';
+    if (closeSiteMsgModal) {
+        closeSiteMsgModal.addEventListener('click', () => {
+            siteMsgModal.style.display = 'none';
         });
     }
 
-    if (saveBannerBtn) {
-        saveBannerBtn.addEventListener('click', () => {
-            const text = document.getElementById('admin-banner-text').value;
-            const active = document.getElementById('admin-banner-active').checked;
+    if (saveSiteMsgBtn) {
+        saveSiteMsgBtn.addEventListener('click', () => {
+            const text = document.getElementById('admin-site-msg-text').value;
+            const active = document.getElementById('admin-site-msg-active').checked;
             
-            saveBannerBtn.innerText = "⏳ Guardando...";
+            saveSiteMsgBtn.innerText = "⏳ Guardando...";
             db.collection('settings').doc('banner').set({ text, active }, {merge: true})
                 .then(() => {
-                    saveBannerBtn.innerText = "✅ ¡Guardado!";
+                    saveSiteMsgBtn.innerText = "✅ ¡Guardado!";
                     setTimeout(() => {
-                        saveBannerBtn.innerText = "💾 Guardar Banner";
-                        bannerModal.style.display = 'none';
+                        saveSiteMsgBtn.innerText = "💾 Guardar Oferta";
+                        siteMsgModal.style.display = 'none';
                     }, 1000);
                 })
                 .catch(err => {
-                    console.error("Error saving banner:", err);
-                    saveBannerBtn.innerText = "❌ Error (Revisa Consola)";
+                    console.error("Error saving site message:", err);
+                    saveSiteMsgBtn.innerText = "❌ Error (Revisa Consola)";
                     alert("Error al guardar: " + err.message);
-                    setTimeout(() => saveBannerBtn.innerText = "💾 Guardar Banner", 3000);
+                    setTimeout(() => saveSiteMsgBtn.innerText = "💾 Guardar Oferta", 3000);
                 });
         });
     }

@@ -99,9 +99,9 @@
         </ul>
     </nav>
 
-    <!-- PROMO BANNER (NEW) -->
-    <div id="global-promo-banner" class="promo-banner-container" style="display: none;">
-        <div class="promo-banner-text" id="promo-banner-text">
+    <!-- SITE MESSAGE (NEW) -->
+    <div id="global-site-msg" class="site-msg-container" style="display: none;">
+        <div class="site-msg-text" id="site-msg-text">
             <!-- Text injected by JS -->
         </div>
     </div>
@@ -507,25 +507,25 @@
         </div>
     </div>
 
-    <!-- Banner Admin Modal -->
-    <div id="banner-admin-modal" class="modal">
+    <!-- Admin Modal for Site Message -->
+    <div id="site-msg-admin-modal" class="modal">
         <div class="modal-content admin-content" style="max-width: 500px !important;">
-            <span class="close-banner-modal" style="color: #aaa; float: right; font-size: 28px; font-weight: bold; cursor: pointer;">&times;</span>
-            <h2 style="color: #ff00ff;">📢 Oferta Dinámica</h2>
-            <p style="color: #aaa; font-size: 0.9rem; margin-bottom: 20px;">
-                Activa o desactiva el banner promocional y cambia su texto.
-            </p>
+            <span class="close-site-msg">&times;</span>
+            <h2>📢 Oferta Dinámica</h2>
+            <p style="color: var(--text-muted); margin-bottom: 20px;">Activa o desactiva la oferta y cambia su texto.</p>
 
-            <label style="color:#ccc; display:block; margin-bottom:10px;">Texto del Banner:</label>
-            <input type="text" id="admin-banner-text" class="neon-input" placeholder="Ej: 🔥 Gran Oferta: Compra 1 mes de Netflix...">
-            
-            <label style="color:#ccc; display:flex; align-items:center; gap:10px; margin-top:20px; margin-bottom:20px; cursor:pointer;">
-                <input type="checkbox" id="admin-banner-active" style="width:20px; height:20px;">
-                Mostrar Banner en la tienda
-            </label>
+            <div class="form-group">
+                <label>Texto de la Oferta:</label>
+                <input type="text" id="admin-site-msg-text" class="neon-input" placeholder="Ej: ¡50% de descuento en Netflix!">
+            </div>
 
-            <button id="btn-save-banner" class="btn-primary full-width" style="border-color: #ff00ff; color: #ff00ff;">
-                💾 Guardar Banner
+            <div class="form-group" style="display: flex; align-items: center; gap: 10px; margin-top: 20px;">
+                <input type="checkbox" id="admin-site-msg-active" style="width: 20px; height: 20px;">
+                <label for="admin-site-msg-active" style="margin: 0; font-size: 1rem;">Mostrar Oferta en la tienda</label>
+            </div>
+
+            <button id="btn-save-site-msg" class="btn-primary full-width" style="margin-top: 20px;">
+                💾 Guardar Oferta
             </button>
         </div>
     </div>
