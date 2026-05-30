@@ -190,7 +190,7 @@
             <!-- SEARCH AND FILTER (NEW) -->
             <div class="search-filter-container">
                 <div class="search-box">
-                    <input type="text" id="product-search-input" placeholder="Buscar producto..." class="neon-search-input" autocomplete="off" spellcheck="false" name="product-search-disable-autofill">
+                    <input type="search" id="product-search-input" placeholder="Buscar producto..." class="neon-search-input" autocomplete="new-password" spellcheck="false" value="">
                 </div>
                 <div class="category-filters" id="category-filters">
                     <button class="filter-btn active" data-category="all">Todos</button>
@@ -355,8 +355,7 @@
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-storage.js"></script>
 
-    <!-- Main Logic -->
-    <script src="pixelium_core.js?v=17"></script>
+    <!-- Main Logic moved to bottom -->
 
     <!-- Admin Modal -->
     <!-- Admin Modal -->
@@ -545,6 +544,8 @@
         <span id="floating-cart-count" class="floating-count">0</span>
     </div>
 
+    <!-- Main Logic (Moved to bottom so all DOM is parsed) -->
+    <script src="pixelium_core.js?v=18"></script>
 </body>
 
 </html>
