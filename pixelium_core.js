@@ -3032,6 +3032,15 @@ function initNewFeatures() {
                 if (data.active && data.text) {
                     bannerContainer.style.display = 'block';
                     bannerText.innerText = data.text;
+                    
+                    // Adjust position dynamically to avoid hiding behind navbar on desktop
+                    const adjustBannerPos = () => {
+                        const navbar = document.querySelector('.navbar');
+                        if(navbar) bannerContainer.style.top = navbar.offsetHeight + 'px';
+                    };
+                    adjustBannerPos();
+                    window.addEventListener('resize', adjustBannerPos);
+                    
                     if(data.text.length > 50) {
                         bannerText.style.animation = 'marquee 15s linear infinite';
                         bannerText.style.paddingLeft = '100%';
@@ -3100,7 +3109,11 @@ function initNewFeatures() {
     }
 
     // 2. Search & Category Filters
-    const searchInput = document.getElementById('product-search-input');
+    const searchInput = document.getElementById('input-buscar-px');
+    if (searchInput) {
+        // Defeat Chrome autofill by clearing value on load
+        setTimeout(() => { searchInput.value = ''; }, 50);
+    }
     const filterBtns = document.querySelectorAll('.filter-btn');
     let currentSearch = '';
     let currentCat = 'all';
