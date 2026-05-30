@@ -3082,6 +3082,11 @@ function initNewFeatures() {
                         saveBannerBtn.innerText = "💾 Guardar Banner";
                         bannerModal.style.display = 'none';
                     }, 1000);
+                })
+                .catch(err => {
+                    console.error("Error saving banner:", err);
+                    saveBannerBtn.innerText = "❌ Error (Revisa Consola)";
+                    setTimeout(() => saveBannerBtn.innerText = "💾 Guardar Banner", 3000);
                 });
         });
     }

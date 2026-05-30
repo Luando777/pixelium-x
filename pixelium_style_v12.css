@@ -1898,9 +1898,11 @@ body {
     font-weight: bold;
     font-size: 1rem;
     overflow: hidden;
-    position: relative;
+    position: fixed;
+    top: 80px;
+    left: 0;
     white-space: nowrap;
-    z-index: 100;
+    z-index: 999;
     animation: gradientFlow 3s ease infinite;
     box-shadow: 0 4px 15px rgba(255, 0, 255, 0.4);
 }
