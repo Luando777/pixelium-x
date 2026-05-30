@@ -1906,12 +1906,12 @@ body {
 }
 
 .site-msg-text {
-    display: inline-block;
+    display: flex;
+    width: max-content;
     white-space: nowrap;
-    animation: marquee 25s linear infinite;
+    animation: marquee 30s linear infinite;
     letter-spacing: 1px;
     text-shadow: 1px 1px 2px rgba(0,0,0,0.5);
-    padding-right: 50px;
 }
 
 @keyframes marquee {

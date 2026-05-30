@@ -3030,8 +3030,11 @@ function initNewFeatures() {
                 const data = doc.data();
                 if (data.active && data.text) {
                     // Create seamless loop text
-                    const scrollText = data.text + " &nbsp; &bull; &nbsp; " + data.text + " &nbsp; &bull; &nbsp; " + data.text;
-                    const fullText = scrollText + " &nbsp; &bull; &nbsp; " + scrollText;
+                    const singleText = data.text + " &nbsp; &bull; &nbsp; ";
+                    // Repeat enough times to guarantee it overflows the widest 4k screens
+                    const repeatedText = singleText.repeat(20);
+                    // Two identical blocks side-by-side to allow CSS to translate -50% perfectly
+                    const fullText = `<span>${repeatedText}</span><span>${repeatedText}</span>`;
 
                     siteMsgContainers.forEach(container => {
                         container.style.display = 'flex';
