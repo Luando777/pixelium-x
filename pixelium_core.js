@@ -3047,3 +3047,97 @@ if (targetGrid) {
     });
     observer.observe(targetGrid, { childList: true });
 }
+
+// --- VIRTUAL PET (ZORRITO) LOGIC ---
+class VirtualPet {
+    constructor(container) {
+        this.container = container;
+        this.petElement = document.createElement('div');
+        this.petElement.className = 'virtual-pet walking-right';
+        this.container.appendChild(this.petElement);
+        
+        this.position = 50; // percentage
+        this.state = 'idle'; // idle, walking, sleeping, annoyed
+        this.direction = 1; // 1 for right, -1 for left
+        this.walkInterval = null;
+        this.sleepTimeout = null;
+        
+        this.petElement.style.left = `${this.position}%`;
+        
+        this.initInteractions();
+        this.startBrain();
+    }
+    
+    initInteractions() {
+        this.petElement.addEventListener('click', (e) => {
+            e.stopPropagation();
+            this.setAnnoyed();
+        });
+    }
+    
+    startBrain() {
+        this.makeDecision();
+        setInterval(() => this.makeDecision(), 4000);
+    }
+    
+    makeDecision() {
+        if (this.state === 'annoyed') return; // Don't interrupt anger
+        
+        const rand = Math.random();
+        if (rand < 0.2) {
+            this.sleep();
+        } else if (rand < 0.5) {
+            this.idle();
+        } else {
+            this.walk();
+        }
+    }
+    
+    walk() {
+        this.state = 'walking';
+        this.direction = Math.random() > 0.5 ? 1 : -1;
+        
+        // Edge collision logic
+        if (this.position > 80) this.direction = -1;
+        if (this.position < 20) this.direction = 1;
+        
+        this.petElement.className = `virtual-pet ${this.direction === 1 ? 'walking-right' : 'walking-left'}`;
+        
+        const moveAmount = Math.floor(Math.random() * 20) + 10;
+        this.position += (moveAmount * this.direction);
+        
+        // Clamp to edges
+        if (this.position > 95) this.position = 95;
+        if (this.position < 5) this.position = 5;
+        
+        this.petElement.style.left = `${this.position}%`;
+    }
+    
+    idle() {
+        this.state = 'idle';
+        this.petElement.className = `virtual-pet ${this.direction === 1 ? 'walking-right' : 'walking-left'}`;
+        this.petElement.style.animation = 'none'; // Stop bobbing
+    }
+    
+    sleep() {
+        this.state = 'sleeping';
+        this.petElement.className = `virtual-pet sleeping`;
+    }
+    
+    setAnnoyed() {
+        this.state = 'annoyed';
+        this.petElement.className = 'virtual-pet annoyed';
+        
+        setTimeout(() => {
+            this.idle();
+            this.walk();
+        }, 2000); // Stays annoyed for 2 seconds then runs away
+    }
+}
+
+// Initialize Pet on all site message containers when DOM is fully ready
+setTimeout(() => {
+    document.querySelectorAll('.site-msg-container').forEach(container => {
+        new VirtualPet(container);
+    });
+}, 1000);
