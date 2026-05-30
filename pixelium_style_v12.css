@@ -1899,26 +1899,24 @@ body {
     font-weight: bold;
     font-size: 1rem;
     overflow: hidden;
-    position: fixed;
-    top: 80px;
-    left: 0;
     white-space: nowrap;
-    z-index: 999;
     animation: gradientFlow 3s ease infinite;
     box-shadow: 0 4px 15px rgba(255, 0, 255, 0.4);
+    display: flex;
 }
 
 .site-msg-text {
     display: inline-block;
-    padding-left: 100%;
-    animation: marquee 15s linear infinite;
+    white-space: nowrap;
+    animation: marquee 25s linear infinite;
     letter-spacing: 1px;
     text-shadow: 1px 1px 2px rgba(0,0,0,0.5);
+    padding-right: 50px;
 }
 
 @keyframes marquee {
     0% { transform: translateX(0); }
-    100% { transform: translateX(-100%); }
+    100% { transform: translateX(-50%); }
 }
 @keyframes gradientFlow {
     0% { background-position: 0% 50%; }

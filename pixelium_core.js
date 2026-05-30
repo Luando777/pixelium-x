@@ -3020,39 +3020,30 @@ window.deleteCustomProductAction = async function (id) {
 // --- NEW FEATURES: SEARCH, FILTERS & BANNER ---
 function initNewFeatures() {
     // 1. Promo Banner (Site Message)
-    const siteMsgContainer = document.getElementById('global-site-msg');
-    const siteMsgText = document.getElementById('site-msg-text');
+    const siteMsgContainers = document.querySelectorAll('.global-site-msg');
     
-    if(siteMsgContainer && siteMsgText) {
+    if(siteMsgContainers.length > 0) {
         console.log("Site message elements found. Attaching listener...");
         db.collection('settings').doc('banner').onSnapshot(doc => {
             console.log("Site message snapshot updated!", doc.exists, doc.data());
             if (doc.exists) {
                 const data = doc.data();
                 if (data.active && data.text) {
-                    siteMsgContainer.style.display = 'block';
-                    siteMsgText.innerText = data.text;
-                    
-                    // Adjust position dynamically using ResizeObserver for pixel-perfect placement on all devices
-                    const adjustSiteMsgPos = () => {
-                        const navbar = document.querySelector('.navbar');
-                        if(navbar) siteMsgContainer.style.top = navbar.getBoundingClientRect().height + 'px';
-                    };
-                    adjustSiteMsgPos();
-                    if (!window.siteMsgObserver) {
-                        window.siteMsgObserver = new ResizeObserver(adjustSiteMsgPos);
-                        window.siteMsgObserver.observe(document.querySelector('.navbar'));
-                    }
-                    
-                    if(data.text.length > 50) {
-                        siteMsgText.style.animation = 'marquee 15s linear infinite';
-                        siteMsgText.style.paddingLeft = '100%';
-                    } else {
-                        siteMsgText.style.animation = 'none';
-                        siteMsgText.style.paddingLeft = '0';
-                    }
+                    // Create seamless loop text
+                    const scrollText = data.text + " &nbsp; &bull; &nbsp; " + data.text + " &nbsp; &bull; &nbsp; " + data.text;
+                    const fullText = scrollText + " &nbsp; &bull; &nbsp; " + scrollText;
+
+                    siteMsgContainers.forEach(container => {
+                        container.style.display = 'flex';
+                        const siteMsgText = container.querySelector('.site-msg-text');
+                        if (siteMsgText) {
+                            siteMsgText.innerHTML = fullText;
+                        }
+                    });
                 } else {
-                    siteMsgContainer.style.display = 'none';
+                    siteMsgContainers.forEach(container => {
+                        container.style.display = 'none';
+                    });
                 }
             }
         }, error => {

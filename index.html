@@ -40,7 +40,7 @@
         href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&family=Orbitron:wght@400;500;700&display=swap"
         rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-    <link rel="stylesheet" href="pixelium_style_v12.css?v=14">
+    <link rel="stylesheet" href="pixelium_style_v12.css?v=15">
 </head>
 
 <body>
@@ -99,13 +99,6 @@
         </ul>
     </nav>
 
-    <!-- SITE MESSAGE (NEW) -->
-    <div id="global-site-msg" class="site-msg-container" style="display: none;">
-        <div class="site-msg-text" id="site-msg-text">
-            <!-- Text injected by JS -->
-        </div>
-    </div>
-
     <!-- COMPONENT: HOME (Inicio) -->
     <div id="view-home" class="spa-view">
         <section id="home" class="hero">
@@ -125,6 +118,10 @@
                 <div class="carousel-track brand-carousel" id="carousel-track">
                     <!-- JS will populate this twice for infinite effect -->
                 </div>
+            </div>
+            <!-- SITE MESSAGE BANNER -->
+            <div class="site-msg-container global-site-msg" style="display: none; position: relative; margin-top: 15px;">
+                <div class="site-msg-text"></div>
             </div>
         </section>
 
@@ -181,6 +178,10 @@
                 <div class="carousel-track brand-carousel">
                     <!-- JS will populate this -->
                 </div>
+            </div>
+            <!-- SITE MESSAGE BANNER -->
+            <div class="site-msg-container global-site-msg" style="display: none; position: relative; margin-top: 15px;">
+                <div class="site-msg-text"></div>
             </div>
         </section>
 
