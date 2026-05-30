@@ -3051,9 +3051,11 @@ if (targetGrid) {
 // --- VIRTUAL PET (ZORRITO) LOGIC ---
 class VirtualPet {
     constructor(container) {
+        console.log("🦊 Injecting Virtual Pet into container:", container);
         this.container = container;
         this.petElement = document.createElement('div');
         this.petElement.className = 'virtual-pet walking-right';
+        this.petElement.textContent = "🦊"; // Fallback
         this.container.appendChild(this.petElement);
         
         this.position = 50; // percentage
