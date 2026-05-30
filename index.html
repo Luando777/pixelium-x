@@ -191,7 +191,9 @@
             <!-- SEARCH AND FILTER (NEW) -->
             <div class="search-filter-container">
                 <div class="search-box">
-                    <input type="search" id="input-buscar-px" name="search_px_items" placeholder="Buscar producto..." class="neon-search-input" autocomplete="off" spellcheck="false" readonly onfocus="this.removeAttribute('readonly');">
+                    <form autocomplete="off" onsubmit="event.preventDefault();">
+                        <input type="search" id="input-buscar-px" name="search_px_query_string" placeholder="Buscar producto..." class="neon-search-input" autocomplete="new-password" spellcheck="false" data-lpignore="true" data-form-type="other">
+                    </form>
                 </div>
                 <div class="category-filters" id="category-filters">
                     <button class="filter-btn active" data-category="all">Todos</button>
@@ -244,7 +246,7 @@
                 </div>
 
                 <!-- Login Form -->
-                <div id="login-form" class="auth-form">
+                <form id="login-form" class="auth-form" onsubmit="event.preventDefault();">
                     <input type="email" id="login-email" placeholder="Correo electrónico" class="neon-input">
                     <div class="password-wrapper" style="position:relative;">
                         <input type="password" id="login-password" placeholder="Contraseña" class="neon-input"
@@ -252,12 +254,12 @@
                         <i class="fas fa-eye toggle-password" onclick="togglePasswordVisibility('login-password', this)"
                             style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); color: var(--neon-cyan); cursor: pointer;"></i>
                     </div>
-                    <button class="btn-primary full-width" id="btn-login-action">Entrar</button>
+                    <button type="button" class="btn-primary full-width" id="btn-login-action">Entrar</button>
                     <p class="auth-error" id="login-error"></p>
-                </div>
+                </form>
 
                 <!-- Register Form -->
-                <div id="register-form" class="auth-form" style="display: none;">
+                <form id="register-form" class="auth-form" style="display: none;" onsubmit="event.preventDefault();">
                     <input type="email" id="register-email" placeholder="Correo electrónico" class="neon-input">
                     <div class="password-wrapper" style="position:relative;">
                         <input type="password" id="register-password" placeholder="Contraseña" class="neon-input"
@@ -265,9 +267,9 @@
                         <i class="fas fa-eye toggle-password" onclick="togglePasswordVisibility('register-password', this)"
                             style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); color: var(--neon-cyan); cursor: pointer;"></i>
                     </div>
-                    <button class="btn-primary full-width" id="btn-register-action">Registrarse</button>
+                    <button type="button" class="btn-primary full-width" id="btn-register-action">Registrarse</button>
                     <p class="auth-error" id="register-error"></p>
-                </div>
+                </form>
             </div>
         </div>
     </div>
