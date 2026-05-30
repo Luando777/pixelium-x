@@ -1799,7 +1799,6 @@ body {
 /* --- INFINITE CAROUSEL STYLES --- */
 .carousel-section {
     padding: 20px 0;
-    overflow: hidden;
     position: relative;
     background: transparent;
     margin-bottom: -20px;
