@@ -1886,3 +1886,106 @@ body {
     from { opacity: 0; transform: translateY(10px); }
     to { opacity: 1; transform: translateY(0); }
 }
+
+/* --- PROMO BANNER --- */
+.promo-banner-container {
+    width: 100%;
+    background: linear-gradient(90deg, #ff00ff, #ff9900, #ff00ff);
+    background-size: 200% auto;
+    color: white;
+    text-align: center;
+    padding: 10px 0;
+    font-weight: bold;
+    font-size: 1rem;
+    overflow: hidden;
+    position: relative;
+    white-space: nowrap;
+    z-index: 100;
+    animation: gradientFlow 3s ease infinite;
+    box-shadow: 0 4px 15px rgba(255, 0, 255, 0.4);
+}
+
+.promo-banner-text {
+    display: inline-block;
+    padding-left: 100%;
+    animation: marquee 15s linear infinite;
+    letter-spacing: 1px;
+    text-shadow: 1px 1px 2px rgba(0,0,0,0.5);
+}
+
+@keyframes marquee {
+    0% { transform: translateX(0); }
+    100% { transform: translateX(-100%); }
+}
+@keyframes gradientFlow {
+    0% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+    100% { background-position: 0% 50%; }
+}
+
+/* --- SEARCH & CATEGORY FILTERS --- */
+.search-filter-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 15px;
+    margin-bottom: 30px;
+    padding: 0 20px;
+}
+
+.search-box {
+    width: 100%;
+    max-width: 600px;
+    position: relative;
+}
+
+.neon-search-input {
+    width: 100%;
+    padding: 12px 20px;
+    border-radius: 25px;
+    border: 2px solid rgba(0, 243, 255, 0.3);
+    background: rgba(0, 0, 0, 0.6);
+    color: white;
+    font-size: 1rem;
+    font-family: var(--font-body);
+    transition: all 0.3s ease;
+    box-shadow: inset 0 0 10px rgba(0,0,0,0.5);
+    text-align: center;
+}
+
+.neon-search-input:focus {
+    outline: none;
+    border-color: var(--neon-cyan);
+    box-shadow: 0 0 15px rgba(0, 243, 255, 0.4);
+}
+
+.category-filters {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    justify-content: center;
+}
+
+.filter-btn {
+    background: transparent;
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    color: rgba(255, 255, 255, 0.8);
+    padding: 8px 16px;
+    border-radius: 20px;
+    cursor: pointer;
+    font-family: var(--font-body);
+    font-size: 0.9rem;
+    transition: all 0.3s ease;
+}
+
+.filter-btn:hover {
+    border-color: var(--neon-magenta);
+    color: white;
+}
+
+.filter-btn.active {
+    background: rgba(255, 0, 255, 0.2);
+    border-color: var(--neon-magenta);
+    color: white;
+    box-shadow: 0 0 10px rgba(255, 0, 255, 0.3);
+}

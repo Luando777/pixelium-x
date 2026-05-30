@@ -52,8 +52,10 @@ auth.onAuthStateChanged(user => {
     const userInfo = document.getElementById('user-info');
     const adminBtns = [
         document.getElementById('admin-btn-container'),
+        document.getElementById('stock-admin-btn-container'),
         document.getElementById('products-admin-btn-container'),
-        document.getElementById('prices-admin-btn-container')
+        document.getElementById('prices-admin-btn-container'),
+        document.getElementById('banner-admin-btn-container')
     ];
 
     if (user) {
@@ -3014,3 +3016,137 @@ window.deleteCustomProductAction = async function (id) {
         console.error("Targeted Purge Error:", e);
     }
 })();
+
+// --- NEW FEATURES: SEARCH, FILTERS & BANNER ---
+function initNewFeatures() {
+    // 1. Promo Banner
+    const bannerContainer = document.getElementById('global-promo-banner');
+    const bannerText = document.getElementById('promo-banner-text');
+    
+    if(bannerContainer && bannerText) {
+        db.collection('settings').doc('banner').onSnapshot(doc => {
+            if (doc.exists) {
+                const data = doc.data();
+                if (data.active && data.text) {
+                    bannerContainer.style.display = 'block';
+                    bannerText.innerText = data.text;
+                    if(data.text.length > 50) {
+                        bannerText.style.animation = 'marquee 15s linear infinite';
+                        bannerText.style.paddingLeft = '100%';
+                    } else {
+                        bannerText.style.animation = 'none';
+                        bannerText.style.paddingLeft = '0';
+                    }
+                } else {
+                    bannerContainer.style.display = 'none';
+                }
+            }
+        });
+    }
+
+    // Banner Admin Modal
+    const btnAdminBanner = document.getElementById('btn-banner-admin');
+    const bannerModal = document.getElementById('banner-admin-modal');
+    const closeBannerModal = document.querySelector('.close-banner-modal');
+    const saveBannerBtn = document.getElementById('btn-save-banner');
+    
+    if (btnAdminBanner && bannerModal) {
+        btnAdminBanner.addEventListener('click', () => {
+            bannerModal.style.display = 'block';
+            db.collection('settings').doc('banner').get().then(doc => {
+                if (doc.exists) {
+                    const data = doc.data();
+                    document.getElementById('admin-banner-text').value = data.text || '';
+                    document.getElementById('admin-banner-active').checked = !!data.active;
+                }
+            });
+        });
+    }
+
+    if (closeBannerModal) {
+        closeBannerModal.addEventListener('click', () => {
+            bannerModal.style.display = 'none';
+        });
+    }
+
+    if (saveBannerBtn) {
+        saveBannerBtn.addEventListener('click', () => {
+            const text = document.getElementById('admin-banner-text').value;
+            const active = document.getElementById('admin-banner-active').checked;
+            
+            saveBannerBtn.innerText = "⏳ Guardando...";
+            db.collection('settings').doc('banner').set({ text, active }, {merge: true})
+                .then(() => {
+                    saveBannerBtn.innerText = "✅ ¡Guardado!";
+                    setTimeout(() => {
+                        saveBannerBtn.innerText = "💾 Guardar Banner";
+                        bannerModal.style.display = 'none';
+                    }, 1000);
+                });
+        });
+    }
+
+    // 2. Search & Category Filters
+    const searchInput = document.getElementById('product-search-input');
+    const filterBtns = document.querySelectorAll('.filter-btn');
+    let currentSearch = '';
+    let currentCat = 'all';
+
+    function getCategory(title) {
+        const t = title.toLowerCase();
+        if (t.includes('netflix') || t.includes('prime') || t.includes('disney') || t.includes('hbo') || t.includes('crunchyroll') || t.includes('paramount') || t.includes('spotify') || t.includes('youtube') || t.includes('max')) return 'streaming';
+        // Diseño is a subset, we must evaluate it explicitly for the UI
+        if (t.includes('canva') || t.includes('adobe') || t.includes('capcut') || t.includes('autocad')) return 'diseño';
+        if (t.includes('autodesk') || t.includes('office') || t.includes('windows') || t.includes('gemini') || t.includes('chatgpt') || t.includes('perplexity') || t.includes('google')) return 'software';
+        return 'otros';
+    }
+
+    function applyFilters() {
+        const cards = document.querySelectorAll('.services-grid .card');
+        cards.forEach(card => {
+            const titleElement = card.querySelector('h3');
+            if (!titleElement) return;
+            const title = titleElement.innerText.toLowerCase();
+            const cat = getCategory(title);
+
+            const matchesSearch = currentSearch === '' || title.includes(currentSearch);
+            const matchesCat = currentCat === 'all' || cat === currentCat;
+
+            if (matchesSearch && matchesCat) {
+                card.style.display = '';
+            } else {
+                card.style.display = 'none';
+            }
+        });
+    }
+
+    if (searchInput) {
+        searchInput.addEventListener('input', (e) => {
+            currentSearch = e.target.value.toLowerCase().trim();
+            applyFilters();
+        });
+    }
+
+    filterBtns.forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            filterBtns.forEach(b => b.classList.remove('active'));
+            e.target.classList.add('active');
+            currentCat = e.target.getAttribute('data-category');
+            applyFilters();
+        });
+    });
+
+    window.applySearchFilters = applyFilters;
+}
+
+initNewFeatures();
+
+const targetGrid = document.querySelector('.services-grid');
+if (targetGrid) {
+    const observer = new MutationObserver(() => {
+        if (typeof window.applySearchFilters === 'function') {
+            window.applySearchFilters();
+        }
+    });
+    observer.observe(targetGrid, { childList: true });
+}
