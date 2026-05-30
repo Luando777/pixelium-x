@@ -3032,7 +3032,7 @@ function initNewFeatures() {
                     // Create seamless loop text
                     const singleText = data.text + " &nbsp; &bull; &nbsp; ";
                     // Repeat enough times to guarantee it overflows the widest 4k screens
-                    const repeatedText = singleText.repeat(20);
+                    const repeatedText = singleText.repeat(8);
                     // Two identical blocks side-by-side to allow CSS to translate -50% perfectly
                     const fullText = `<span>${repeatedText}</span><span>${repeatedText}</span>`;
 
