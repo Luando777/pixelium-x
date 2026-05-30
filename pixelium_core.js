@@ -2247,10 +2247,7 @@ document.addEventListener('DOMContentLoaded', () => {
         // Scroll
         grid.scrollIntoView({ behavior: 'smooth', block: 'start' });
 
-        // Apply price overrides after rendering
-        if (typeof applyPriceOverrides === 'function') {
-            applyPriceOverrides();
-        }
+        // Apply price overrides after rendering (REMOVED: System unified with products DB)
     };
 
     // --- FILTER GRID LOGIC (ROUTING VIEW) ---
@@ -2526,31 +2523,12 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     };
 
-    // --- PRICE MANAGER LOGIC (SEPARATE SYSTEM) ---
+    // --- PRICE MANAGER LOGIC (UNIFIED WITH PRODUCTS) ---
     const priceModal = document.getElementById('price-modal');
     const btnPricesAdmin = document.getElementById('btn-prices-admin');
     const closePriceModalBtn = document.querySelector('.close-price-modal');
     const btnSavePrices = document.getElementById('btn-save-prices');
     const priceAdminList = document.getElementById('price-admin-list');
-
-    // State
-    // Load from Firestore (Real-time)
-    let priceState = {};
-
-    // 1. Initialization: Listen to Prices
-    function initPriceSystem() {
-        db.collection('prices').doc('main').onSnapshot(doc => {
-            if (doc.exists) {
-                priceState = doc.data();
-                applyPriceOverrides();
-            } else {
-                db.collection('prices').doc('main').set({});
-            }
-        });
-    }
-
-    // Call on load
-    initPriceSystem();
 
     if (btnPricesAdmin) {
         btnPricesAdmin.addEventListener('click', () => {
@@ -2562,7 +2540,6 @@ document.addEventListener('DOMContentLoaded', () => {
     if (closePriceModalBtn) {
         closePriceModalBtn.addEventListener('click', () => {
             priceModal.style.display = 'none';
-            applyPriceOverrides(); // Re-apply just in case
         });
     }
 
@@ -2571,43 +2548,16 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!priceAdminList) return;
         priceAdminList.innerHTML = '';
 
-        // Build a normalized price state map
-        const normalizedPriceState = {};
-        const normalize = str => str.replace(/[\s\uFE0F\u200B\u200D]+/g, '').toLowerCase();
-        Object.keys(priceState).forEach(key => {
-            normalizedPriceState[normalize(key)] = priceState[key];
-        });
-
-        // Scan all cards (Hardcoded + Custom)
-        document.querySelectorAll('.services-grid .card').forEach(card => {
-            const titleElement = card.querySelector('h3');
-            if (!titleElement) return;
-            const title = titleElement.innerText.trim();
-            const normTitle = normalize(title);
-
-            // Get current price from STATE or parse from DOM if not in state
-            let currentPrice = normalizedPriceState[normTitle];
-
-            if (!currentPrice) {
-                // Extract from DOM "S/15.00" -> 15.00
-                const priceTag = card.querySelector('.price-tag');
-                if (priceTag) {
-                    const text = priceTag.childNodes[0].nodeValue.trim(); // "S/15.00"
-                    currentPrice = parseFloat(text.replace(/[^\d.]/g, ''));
-                } else {
-                    currentPrice = 0;
-                }
-            }
-
+        customProducts.forEach(prod => {
             const row = document.createElement('div');
             row.style.cssText = "display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; padding-bottom: 15px; border-bottom: 1px solid rgba(255,255,255,0.1);";
             row.innerHTML = `
-                <span class="stock-item-name" style="font-weight: bold; color: white;">${title}</span>
+                <span class="stock-item-name" style="font-weight: bold; color: white;">${prod.title}</span>
                 <div style="display: flex; align-items: center; gap: 8px;">
                     <span style="color: #00f3ff; font-weight: bold;">S/</span>
                     <input type="number" step="0.50" class="stock-input price-input-field"
-                        data-title="${title}"
-                        value="${currentPrice}"
+                        data-id="${prod.id}"
+                        value="${prod.price}"
                         style="width: 100px; padding: 8px; border-radius: 6px; border: 1px solid #00f3ff; background: rgba(0,0,0,0.5); color: white; font-size: 1rem;">
                 </div>
             `;
@@ -2616,69 +2566,25 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     if (btnSavePrices) {
-        btnSavePrices.addEventListener('click', () => {
+        btnSavePrices.addEventListener('click', async () => {
             const inputs = document.querySelectorAll('.price-input-field');
-            const updates = {};
-            inputs.forEach(input => {
-                const title = input.getAttribute('data-title');
-                const val = parseFloat(input.value);
-                if (!isNaN(val)) {
-                    updates[title] = val;
+            const originalText = btnSavePrices.innerHTML;
+            
+            try {
+                btnSavePrices.innerText = "Guardando...";
+                for (let input of inputs) {
+                    const id = input.getAttribute('data-id');
+                    const val = parseFloat(input.value);
+                    if (!isNaN(val) && id) {
+                        await db.collection('products').doc(id).update({ price: val });
+                    }
                 }
-            });
-
-            // Save to Firestore
-            db.collection('prices').doc('main').set(updates, { merge: true })
-                .then(() => {
-                    alert("¡Precios Globales Actualizados! ☁️💰");
-                    priceModal.style.display = 'none';
-                })
-                .catch(err => alert("Error: " + err.message));
-        });
-    }
-
-    // --- LOGIC: APPLY OVERRIDES (CORE) ---
-    function applyPriceOverrides() {
-        // Build a normalized price state map to handle browser-specific whitespace variations around emojis
-        const normalizedPriceState = {};
-        const normalize = str => str.replace(/[\s\uFE0F\u200B\u200D]+/g, '').toLowerCase();
-        Object.keys(priceState).forEach(key => {
-            normalizedPriceState[normalize(key)] = priceState[key];
-        });
-
-        document.querySelectorAll('.services-grid .card').forEach(card => {
-            const titleElement = card.querySelector('h3');
-            if (!titleElement) return;
-            const title = titleElement.innerText.trim();
-            const normTitle = normalize(title);
-
-            if (normalizedPriceState[normTitle] !== undefined) {
-                const newPrice = normalizedPriceState[normTitle];
-
-                // 1. Update Visual Text
-                const priceTag = card.querySelector('.price-tag');
-                if (priceTag) {
-                    // Keep the structural span for alt price if exists, just update text node
-                    // Easier: Just rebuild innerHTML to keep format "S/XX <span...>"
-                    // Check if there is an alt price span
-                    const altSpan = priceTag.querySelector('.price-alt');
-                    const altHtml = altSpan ? altSpan.outerHTML : '';
-                    priceTag.innerHTML = `S/${newPrice.toFixed(2)} ${altHtml}`;
-                }
-
-                // 2. Update Add to Cart Button Logic
-                const btn = card.querySelector('.btn-add');
-                if (btn) {
-                    // Remove old onclick attribute to be safe
-                    btn.removeAttribute('onclick');
-                    // Clone button to strip existing event listeners (if added via JS)
-                    // But since most are inline HTML onclick, we can just override onclick prop
-                    btn.onclick = (e) => {
-                        e.preventDefault();
-                        e.stopPropagation();
-                        addToCart(title, newPrice);
-                    };
-                }
+                alert("¡Precios Actualizados Exitosamente! ☁️💰");
+                priceModal.style.display = 'none';
+            } catch (err) {
+                alert("Error: " + err.message);
+            } finally {
+                btnSavePrices.innerHTML = originalText;
             }
         });
     }
