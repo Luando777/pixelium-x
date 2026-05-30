@@ -106,41 +106,21 @@ body {
     position: relative;
 }
 
-/* --- VIRTUAL PET (ZORRITO) --- */
-.virtual-pet {
-    position: absolute;
-    bottom: 100%; /* Sits on top of the banner */
-    left: 50%;
-    transform: translateX(-50%);
-    width: 60px;
-    height: 60px;
-    background-image: url('fox_sprite.png');
-    background-size: cover;
-    background-position: center;
-    background-repeat: no-repeat;
-    z-index: 9999;
-    transition: left 2s linear, transform 0.3s ease;
-    cursor: pointer;
-    /* Drop shadow to fit the neon theme */
-    filter: drop-shadow(0 0 5px rgba(0, 243, 255, 0.8));
-    
-    /* Fallback emoji styling */
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 40px;
-}
-
 #cart-count {
     position: absolute;
     top: -8px;
-    right: -12px;
-    background: var(--neon-purple);
+    right: -8px;
+    background: var(--neon-magenta);
     color: white;
-    font-size: 0.7rem;
-    padding: 2px 6px;
-    border-radius: 50%;
+    font-size: 0.75rem;
     font-weight: bold;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    box-shadow: 0 0 10px rgba(255, 0, 255, 0.8);
 }
 
 /* User Profile Styles */
@@ -1922,6 +1902,7 @@ body {
     padding: 10px 0;
     font-weight: bold;
     font-size: 1rem;
+    overflow: hidden;
     white-space: nowrap;
     animation: gradientFlow 3s ease infinite;
     box-shadow: 0 4px 15px rgba(255, 0, 255, 0.4);
@@ -2019,57 +2000,4 @@ body {
     color: white;
     box-shadow: 0 0 20px rgba(255, 0, 255, 0.6), inset 0 0 15px rgba(255, 0, 255, 0.3);
     transform: scale(1.05);
-}
-
-/* --- VIRTUAL PET (ZORRITO) ANIMATIONS --- */
-.virtual-pet.walking-right {
-    transform: translateX(-50%) scaleX(1);
-    animation: petBob 0.4s infinite alternate;
-}
-
-.virtual-pet.walking-left {
-    transform: translateX(-50%) scaleX(-1);
-    animation: petBob 0.4s infinite alternate;
-}
-
-.virtual-pet.sleeping {
-    transform: translateX(-50%) scaleY(0.7) translateY(15px);
-    filter: drop-shadow(0 0 2px rgba(255, 0, 255, 0.5));
-}
-
-.virtual-pet.sleeping::after {
-    content: 'Zzz';
-    position: absolute;
-    top: -20px;
-    right: 0;
-    color: white;
-    font-family: 'Inter', sans-serif;
-    font-weight: bold;
-    font-size: 14px;
-    animation: floatZzz 2s infinite linear;
-    text-shadow: 0 0 5px #00f3ff;
-}
-
-.virtual-pet.annoyed {
-    animation: petShake 0.2s infinite;
-    filter: drop-shadow(0 0 10px red) hue-rotate(150deg);
-}
-
-@keyframes petBob {
-    0% { margin-bottom: 0px; }
-    100% { margin-bottom: 10px; }
-}
-
-@keyframes petShake {
-    0% { transform: translateX(calc(-50% + 0px)) scaleX(1); }
-    25% { transform: translateX(calc(-50% - 5px)) scaleX(1); }
-    50% { transform: translateX(calc(-50% + 5px)) scaleX(1); }
-    75% { transform: translateX(calc(-50% - 5px)) scaleX(1); }
-    100% { transform: translateX(calc(-50% + 0px)) scaleX(1); }
-}
-
-@keyframes floatZzz {
-    0% { opacity: 0; transform: translateY(0) scale(0.5); }
-    50% { opacity: 1; transform: translateY(-15px) scale(1.2); }
-    100% { opacity: 0; transform: translateY(-30px) scale(1.5); }
 }
