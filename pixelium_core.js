@@ -3024,7 +3024,9 @@ function initNewFeatures() {
     const bannerText = document.getElementById('promo-banner-text');
     
     if(bannerContainer && bannerText) {
+        console.log("Promo banner elements found. Attaching listener...");
         db.collection('settings').doc('banner').onSnapshot(doc => {
+            console.log("Banner snapshot updated!", doc.exists, doc.data());
             if (doc.exists) {
                 const data = doc.data();
                 if (data.active && data.text) {
@@ -3041,7 +3043,12 @@ function initNewFeatures() {
                     bannerContainer.style.display = 'none';
                 }
             }
+        }, error => {
+            console.error("Firebase Snapshot Error on Banner:", error);
+            alert("Error al cargar el banner: " + error.message);
         });
+    } else {
+        console.error("Promo banner DOM elements NOT FOUND!");
     }
 
     // Banner Admin Modal
@@ -3086,6 +3093,7 @@ function initNewFeatures() {
                 .catch(err => {
                     console.error("Error saving banner:", err);
                     saveBannerBtn.innerText = "❌ Error (Revisa Consola)";
+                    alert("Error al guardar: " + err.message);
                     setTimeout(() => saveBannerBtn.innerText = "💾 Guardar Banner", 3000);
                 });
         });
