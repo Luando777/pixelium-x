@@ -45,41 +45,7 @@ firebase.initializeApp(firebaseConfig);
 const auth = firebase.auth();
 const db = firebase.firestore();
 
-// --- AUTH LOGIC (RESTORED) ---
-// Observer
-auth.onAuthStateChanged(user => {
-    const authButtons = document.getElementById('auth-buttons');
-    const userInfo = document.getElementById('user-info');
-    const adminBtns = [
-        document.getElementById('admin-btn-container'),
-        document.getElementById('stock-admin-btn-container'),
-        document.getElementById('products-admin-btn-container'),
-        document.getElementById('prices-admin-btn-container'),
-        document.getElementById('banner-admin-btn-container')
-    ];
-
-    if (user) {
-        // User Logged In
-        if (authButtons) authButtons.style.display = 'none';
-        if (userInfo) userInfo.style.display = 'block';
-
-        // Check Admin
-        // NOTE: For now, assume admin is a specific EMAIL or just show for all logged users for testing?
-        // Let's implement basic email check as per original plan if possible, OR just show for now.
-        // Original request was "Only Admin", but let's stick to showing if logged in for simplicity 
-        // OR better: check specific email. Let's use specific email if we knew it.
-        // Fallback: If email contains "admin" or just show for all for now to unblock.
-        // FIX: The user likely is the admin. Let's show for all valid users for now to ensure they can see it.
-        adminBtns.forEach(btn => { if (btn) btn.style.display = 'block'; });
-
-    } else {
-        // User Logged Out
-        if (authButtons) authButtons.style.display = 'block';
-        if (userInfo) userInfo.style.display = 'none';
-        adminBtns.forEach(btn => { if (btn) btn.style.display = 'none'; });
-    }
-});
-
+// --- AUTH LOGIC ---
 // --- SPA NAVIGATION LOGIC ---
 // --- SPA NAVIGATION LOGIC ---
 window.navigateTo = function (viewName, pushHistory = true) {
@@ -1231,6 +1197,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const productsAdminBtnContainer = document.getElementById('products-admin-btn-container');
             const pricesAdminBtnContainer = document.getElementById('prices-admin-btn-container');
             const themesAdminBtnContainer = document.getElementById('themes-admin-btn-container');
+            const bannerAdminBtnContainer = document.getElementById('banner-admin-btn-container');
 
             if (user.email === 'caproprimero@gmail.com') {
                 if (adminBtnContainer) adminBtnContainer.style.display = 'block';
@@ -1238,12 +1205,14 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (productsAdminBtnContainer) productsAdminBtnContainer.style.display = 'block';
                 if (pricesAdminBtnContainer) pricesAdminBtnContainer.style.display = 'block';
                 if (themesAdminBtnContainer) themesAdminBtnContainer.style.display = 'block';
+                if (bannerAdminBtnContainer) bannerAdminBtnContainer.style.display = 'block';
             } else {
                 if (adminBtnContainer) adminBtnContainer.style.display = 'none';
                 if (stockAdminBtnContainer) stockAdminBtnContainer.style.display = 'none';
                 if (productsAdminBtnContainer) productsAdminBtnContainer.style.display = 'none';
                 if (pricesAdminBtnContainer) pricesAdminBtnContainer.style.display = 'none';
                 if (themesAdminBtnContainer) themesAdminBtnContainer.style.display = 'none';
+                if (bannerAdminBtnContainer) bannerAdminBtnContainer.style.display = 'none';
             }
 
             closeAuthModal();
