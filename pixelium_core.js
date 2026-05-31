@@ -3048,4 +3048,151 @@ if (targetGrid) {
     observer.observe(targetGrid, { childList: true });
 }
 
+// --- ZORRITO INTERACTIVO (JS ENGINE) ---
+class FoxPet {
+    constructor(container) {
+        // Preload frames
+        this.frames = {
+            walk: Array.from({length: 8}, (_, i) => `zorrito/caminar ${i+1}.png`),
+            sleep: Array.from({length: 4}, (_, i) => `zorrito/dormido ${i+1}.png`),
+            angry: Array.from({length: 4}, (_, i) => `zorrito/enojado ${i+1}.png`)
+        };
+        this.preloadedImages = {};
+        this.preload();
 
+        // DOM Injection
+        this.container = container; 
+        
+        // Wrap the container so the pet sits on top without breaking mobile overflow
+        this.wrapper = document.createElement('div');
+        this.wrapper.className = 'site-msg-wrapper';
+        this.wrapper.style.position = 'relative';
+        this.wrapper.style.width = '100%';
+        
+        this.container.parentNode.insertBefore(this.wrapper, this.container);
+        this.wrapper.appendChild(this.container);
+
+        this.petElement = document.createElement('div');
+        this.petElement.className = 'virtual-pet';
+        this.wrapper.appendChild(this.petElement);
+
+        // State
+        this.state = 'walk'; // walk, sleep, angry, idle
+        this.currentFrameIndex = 0;
+        this.positionX = 50; // percentage
+        this.direction = 1; // 1 (right), -1 (left)
+        this.isHovered = false;
+        
+        this.lastActionTime = Date.now();
+
+        // Initial Styles
+        this.petElement.style.left = `${this.positionX}%`;
+        this.petElement.style.backgroundImage = `url('${this.frames.walk[0]}')`;
+        
+        this.initEvents();
+        this.startEngine();
+    }
+
+    preload() {
+        for (const key in this.frames) {
+            this.preloadedImages[key] = [];
+            this.frames[key].forEach(src => {
+                const img = new Image();
+                img.src = src;
+                this.preloadedImages[key].push(img);
+            });
+        }
+    }
+
+    initEvents() {
+        this.petElement.addEventListener('click', (e) => {
+            e.stopPropagation();
+            this.setAngry();
+        });
+
+        this.petElement.addEventListener('mouseenter', () => {
+            if (this.state !== 'angry') {
+                this.isHovered = true;
+                this.state = 'idle';
+                this.lastActionTime = Date.now();
+            }
+        });
+
+        this.petElement.addEventListener('mouseleave', () => {
+            this.isHovered = false;
+            this.lastActionTime = Date.now();
+            if (this.state !== 'angry') {
+                this.state = 'walk';
+            }
+        });
+    }
+
+    setAngry() {
+        this.state = 'angry';
+        this.currentFrameIndex = 0;
+        this.lastActionTime = Date.now();
+        setTimeout(() => {
+            this.state = this.isHovered ? 'idle' : 'walk';
+            this.lastActionTime = Date.now();
+        }, 3000);
+    }
+
+    startEngine() {
+        // Animation loop (100ms per frame = 10 fps)
+        setInterval(() => this.updateFrame(), 100);
+        // Physics / Logic loop (50ms)
+        setInterval(() => this.updateLogic(), 50);
+    }
+
+    updateFrame() {
+        let frameList = this.frames.walk; 
+        
+        if (this.state === 'angry') frameList = this.frames.angry;
+        else if (this.state === 'sleep') frameList = this.frames.sleep;
+        else if (this.state === 'idle') {
+            this.petElement.style.backgroundImage = `url('${this.frames.walk[0]}')`;
+            this.petElement.style.transform = `translateX(-50%) scaleX(${this.direction})`;
+            return;
+        }
+
+        this.currentFrameIndex = (this.currentFrameIndex + 1) % frameList.length;
+        this.petElement.style.backgroundImage = `url('${frameList[this.currentFrameIndex]}')`;
+        this.petElement.style.transform = `translateX(-50%) scaleX(${this.direction})`;
+    }
+
+    updateLogic() {
+        const now = Date.now();
+        const timeSinceLastAction = now - this.lastActionTime;
+
+        // Auto-sleep after 10 seconds of inactivity
+        if (this.state !== 'sleep' && this.state !== 'angry' && !this.isHovered && timeSinceLastAction > 10000) {
+            this.state = 'sleep';
+            this.currentFrameIndex = 0;
+        }
+
+        // Movement
+        if (this.state === 'walk') {
+            this.positionX += 0.2 * this.direction; // Speed
+
+            if (this.positionX > 90) {
+                this.direction = -1;
+                this.positionX = 90;
+            } else if (this.positionX < 10) {
+                this.direction = 1;
+                this.positionX = 10;
+            }
+
+            this.petElement.style.left = `${this.positionX}%`;
+        }
+    }
+}
+
+// Initialize on DOM ready
+setTimeout(() => {
+    document.querySelectorAll('.site-msg-container').forEach(container => {
+        // Prevent double injection if run twice
+        if (!container.parentNode.classList.contains('site-msg-wrapper')) {
+            new FoxPet(container);
+        }
+    });
+}, 1500);
