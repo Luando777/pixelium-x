@@ -3324,8 +3324,8 @@ class FoxPet {
     }
 
     getSolidElements() {
-        // Only solid blocks! Exclude generic p, h3 to prevent floating inside cards.
-        const selectors = '.product-card, .site-msg-container, .section-title, .stat-item, .filter-btn, .search-box input, .btn-primary, .social-btn, .pixel-stair-step';
+        // ONLY select the cards and the banner as solids, so the fox doesn't walk on invisible title boxes!
+        const selectors = '.product-card, .site-msg-container';
         const elements = document.querySelectorAll(selectors);
         const solids = [];
         for (let el of elements) {
