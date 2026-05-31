@@ -3312,37 +3312,56 @@ class FoxPet {
                 }
             }
         } else if (this.state === 'walk') {
-            // Ledge detection
+            // Ledge detection: stay on the current surface!
             let onGround = false;
+            let nearLedge = false;
             const bottomY = this.y + this.height;
 
+            // Check Banner
             if (this.banner && this.banner.offsetParent !== null) {
                 const rect = this.banner.getBoundingClientRect();
                 const bannerY = rect.top + window.scrollY;
-                if (Math.abs(bottomY - bannerY) < 10) onGround = true;
+                if (Math.abs(bottomY - bannerY) < 10) {
+                    const bannerLeft = rect.left + window.scrollX;
+                    const bannerRight = rect.right + window.scrollX;
+                    if (this.x + this.width > bannerLeft && this.x < bannerRight) {
+                        onGround = true;
+                        if (this.x <= bannerLeft + 10 || this.x + this.width >= bannerRight - 10) nearLedge = true;
+                    }
+                }
             }
 
+            // Check Cards
             if (!onGround) {
                 const cards = document.querySelectorAll('.product-card');
                 for (let card of cards) {
                     if (card.offsetParent === null) continue;
                     const rect = card.getBoundingClientRect();
                     const cardTop = rect.top + window.scrollY;
-                    const cardLeft = rect.left + window.scrollX;
-                    const cardRight = rect.right + window.scrollX;
-
                     if (Math.abs(bottomY - cardTop) < 10) {
+                        const cardLeft = rect.left + window.scrollX;
+                        const cardRight = rect.right + window.scrollX;
                         if (this.x + this.width > cardLeft && this.x < cardRight) {
                             onGround = true;
+                            if (this.x <= cardLeft + 5 || this.x + this.width >= cardRight - 5) nearLedge = true;
                             break;
                         }
                     }
                 }
             }
 
-            if (Math.abs(bottomY - floorLimit) < 10) onGround = true;
+            // Check Floor
+            if (Math.abs(bottomY - floorLimit) < 10) {
+                onGround = true;
+                // If on floor, force jump frequently
+                if (Math.random() < 0.1) this.jump(true);
+            }
 
-            if (!onGround) {
+            if (nearLedge && onGround && bottomY < floorLimit - 50) {
+                // Turn around to avoid falling off the card!
+                this.direction *= -1;
+                this.x += 5 * this.direction; // Step back
+            } else if (!onGround) {
                 this.drop();
             }
         } else if (this.state === 'hang') {
