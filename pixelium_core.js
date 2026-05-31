@@ -3090,6 +3090,9 @@ class FoxPet {
         this.isHovered = false;
         this.lastActionTime = Date.now();
         this.audioCtx = null;
+        this.isDragging = false;
+        this.dragOffsetX = 0;
+        this.dragOffsetY = 0;
 
         this.initEvents();
         this.startEngine();
@@ -3170,14 +3173,53 @@ class FoxPet {
     }
 
     initEvents() {
-        this.petElement.addEventListener('click', (e) => {
+        let startX, startY;
+
+        this.petElement.addEventListener('mousedown', (e) => {
+            e.preventDefault(); // Prevent image drag ghost
             e.stopPropagation();
             this.initAudio();
-            this.setAngry();
+
+            this.isDragging = true;
+            this.state = 'hang'; 
+            this.vy = 0;
+            this.vx = 0;
+            
+            startX = e.clientX;
+            startY = e.clientY;
+
+            const rect = this.petElement.getBoundingClientRect();
+            this.dragOffsetX = e.clientX - rect.left;
+            this.dragOffsetY = e.clientY - rect.top;
+        });
+
+        document.addEventListener('mousemove', (e) => {
+            if (!this.isDragging) return;
+            
+            this.x = e.clientX + window.scrollX - this.dragOffsetX;
+            this.y = e.clientY + window.scrollY - this.dragOffsetY;
+            this.petElement.style.left = this.x + 'px';
+            this.petElement.style.top = this.y + 'px';
+        });
+
+        document.addEventListener('mouseup', (e) => {
+            if (this.isDragging) {
+                this.isDragging = false;
+                
+                const dist = Math.hypot(e.clientX - startX, e.clientY - startY);
+                if (dist < 5) {
+                    // It was just a click
+                    this.setAngry();
+                } else {
+                    // It was a drag and drop
+                    this.drop();
+                }
+                this.lastActionTime = Date.now();
+            }
         });
 
         this.petElement.addEventListener('mouseenter', () => {
-            if (this.state !== 'angry' && this.state !== 'jump') {
+            if (this.state !== 'angry' && this.state !== 'jump' && !this.isDragging) {
                 this.isHovered = true;
                 this.state = 'idle';
                 this.lastActionTime = Date.now();
@@ -3187,7 +3229,7 @@ class FoxPet {
         this.petElement.addEventListener('mouseleave', () => {
             this.isHovered = false;
             this.lastActionTime = Date.now();
-            if (this.state !== 'angry' && this.state !== 'jump') {
+            if (this.state !== 'angry' && this.state !== 'jump' && !this.isDragging) {
                 this.state = 'walk';
             }
         });
@@ -3351,6 +3393,8 @@ class FoxPet {
     }
 
     updatePhysics() {
+        if (this.isDragging) return;
+
         const now = Date.now();
         const timeSinceLastAction = now - this.lastActionTime;
 
