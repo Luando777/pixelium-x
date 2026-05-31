@@ -3324,8 +3324,8 @@ class FoxPet {
     }
 
     getSolidElements() {
-        // ONLY select the cards and the banner as solids, so the fox doesn't walk on invisible title boxes!
-        const selectors = '.product-card, .site-msg-container';
+        // .card is the correct class for products! Added back texts and buttons per user request.
+        const selectors = '.card, .site-msg-container, .section-title, .stat-item, .filter-btn, .search-box input, .btn-primary, .social-btn';
         const elements = document.querySelectorAll(selectors);
         const solids = [];
         for (let el of elements) {
