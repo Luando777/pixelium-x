@@ -3089,9 +3089,61 @@ class FoxPet {
 
         this.isHovered = false;
         this.lastActionTime = Date.now();
+        this.audioCtx = null;
 
         this.initEvents();
         this.startEngine();
+    }
+
+    initAudio() {
+        if (!this.audioCtx) {
+            this.audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        }
+        if (this.audioCtx.state === 'suspended') {
+            this.audioCtx.resume();
+        }
+    }
+
+    playSound(type) {
+        if (!this.audioCtx || this.audioCtx.state === 'suspended') return;
+
+        const oscillator = this.audioCtx.createOscillator();
+        const gainNode = this.audioCtx.createGain();
+
+        oscillator.connect(gainNode);
+        gainNode.connect(this.audioCtx.destination);
+
+        const now = this.audioCtx.currentTime;
+
+        if (type === 'jump') {
+            // Retro Mario-like jump: fast frequency slide up
+            oscillator.type = 'square';
+            oscillator.frequency.setValueAtTime(150, now);
+            oscillator.frequency.exponentialRampToValueAtTime(600, now + 0.1);
+            gainNode.gain.setValueAtTime(0.05, now);
+            gainNode.gain.exponentialRampToValueAtTime(0.001, now + 0.1);
+            oscillator.start(now);
+            oscillator.stop(now + 0.1);
+        } else if (type === 'angry') {
+            // Low growl
+            oscillator.type = 'sawtooth';
+            oscillator.frequency.setValueAtTime(100, now);
+            oscillator.frequency.linearRampToValueAtTime(50, now + 0.3);
+            gainNode.gain.setValueAtTime(0.08, now);
+            gainNode.gain.exponentialRampToValueAtTime(0.001, now + 0.3);
+            oscillator.start(now);
+            oscillator.stop(now + 0.3);
+        } else if (type === 'sleep') {
+            // Soft snore: low sine wave pulsing
+            oscillator.type = 'sine';
+            oscillator.frequency.setValueAtTime(100, now);
+            oscillator.frequency.linearRampToValueAtTime(150, now + 0.4);
+            gainNode.gain.setValueAtTime(0.0, now);
+            gainNode.gain.linearRampToValueAtTime(0.05, now + 0.2);
+            gainNode.gain.linearRampToValueAtTime(0.001, now + 0.4);
+            oscillator.start(now);
+            oscillator.stop(now + 0.4);
+        }
     }
 
     preload() {
@@ -3108,6 +3160,7 @@ class FoxPet {
     initEvents() {
         this.petElement.addEventListener('click', (e) => {
             e.stopPropagation();
+            this.initAudio();
             this.setAngry();
         });
 
@@ -3126,6 +3179,11 @@ class FoxPet {
                 this.state = 'walk';
             }
         });
+
+        // Initialize audio on first click anywhere
+        document.body.addEventListener('click', () => {
+            this.initAudio();
+        }, { once: true });
     }
 
     setAngry() {
@@ -3133,6 +3191,7 @@ class FoxPet {
         this.state = 'angry';
         this.currentFrameIndex = 0;
         this.lastActionTime = Date.now();
+        this.playSound('angry');
         setTimeout(() => {
             if (this.state === 'angry') {
                 this.state = this.isHovered ? 'idle' : 'walk';
@@ -3154,23 +3213,35 @@ class FoxPet {
         
         if (rand < 0.25 && this.state !== 'hang') {
             // Check if on floor to do a super jump
-            let floorLimit = this.getFloorLimit();
-            let isOnFloor = Math.abs(this.y - floorLimit) < 20;
-            this.jump(isOnFloor); 
-        } 
-        else if (rand < 0.20 && this.state === 'hang') {
-            this.drop(); // drop if hanging
-        }
-        else if (rand < 0.4) {
-            this.direction *= -1; // change direction
-            if (this.state !== 'sleep') this.state = 'walk';
+            let floorLimit = document.documentElement.scrollHeight - this.height;
+            const productsSection = document.getElementById('products');
+            if (productsSection) {
+                const rect = productsSection.getBoundingClientRect();
+                const productsBottom = rect.bottom + window.scrollY;
+                if (productsBottom < floorLimit) {
+                    floorLimit = productsBottom;
+                }
+            }
+
+            const bottomY = this.y + this.height;
+            const superJump = Math.abs(bottomY - floorLimit) < 20;
+
+            this.jump(superJump); 
+        } else if (rand < 0.3) {
+            this.direction *= -1; // 5% chance to turn around
+            if (this.state !== 'hang') {
+                this.x += 5 * this.direction; // Step forward when turning to avoid edge glitch
+            }
         }
     }
 
     jump(superJump = false) {
+        if (this.state === 'jump') return; // Already jumping
         this.state = 'jump';
-        this.vy = superJump ? -26 : -16; // Strong jump
-        this.vx = this.direction * 4; 
+        this.vy = superJump ? -20 : -10; // Extra strong jump if on the floor!
+        this.vx = this.direction * 3;
+        this.lastActionTime = Date.now();
+        this.playSound('jump');
     }
 
     drop() {
@@ -3205,7 +3276,7 @@ class FoxPet {
     teleportToSafety() {
         // Instead of teleporting to a specific solid, fall from the sky!
         this.y = window.scrollY - 100; // Above the viewport
-        this.x = window.innerWidth / 2; // Center
+        this.x = Math.random() * (window.innerWidth - this.width); // Center
         this.state = 'jump';
         this.vy = 0; // Reset vertical velocity to fall gently
     }
@@ -3214,7 +3285,12 @@ class FoxPet {
         let frameList = this.frames.walk; 
         
         if (this.state === 'angry') frameList = this.frames.angry;
-        else if (this.state === 'sleep') frameList = this.frames.sleep;
+        else if (this.state === 'sleep') {
+            frameList = this.frames.sleep;
+            if (this.currentFrameIndex === 0) {
+                this.playSound('sleep');
+            }
+        }
         else if (this.state === 'idle' || this.state === 'hang') {
             this.petElement.style.backgroundImage = `url('${this.frames.walk[0]}')`;
             return; 
