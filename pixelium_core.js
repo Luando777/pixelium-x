@@ -3179,29 +3179,43 @@ class FoxPet {
         this.vx = this.direction * 2;
     }
 
-    getFloorLimit() {
-        let floorLimit = document.documentElement.scrollHeight - this.height;
-        const productsSection = document.getElementById('products');
-        if (productsSection) {
-            const rect = productsSection.getBoundingClientRect();
-            // Restrict floor to the bottom of the products section
-            const productsBottom = rect.bottom + window.scrollY;
-            if (productsBottom < floorLimit) {
-                floorLimit = productsBottom;
+    getSolidElements() {
+        const selectors = '.product-card, .site-msg-container, h1, h2, h3, h4, p, .stat-item, .filter-btn, .search-box input, .btn-primary, .social-btn';
+        const elements = document.querySelectorAll(selectors);
+        const solids = [];
+        for (let el of elements) {
+            // Ignore hidden elements
+            if (el.offsetParent === null || window.getComputedStyle(el).display === 'none') continue;
+            
+            const rect = el.getBoundingClientRect();
+            // Filter out tiny elements
+            if (rect.width > 20 && rect.height > 10) {
+                solids.push({
+                    top: rect.top + window.scrollY,
+                    bottom: rect.bottom + window.scrollY,
+                    left: rect.left + window.scrollX,
+                    right: rect.right + window.scrollX
+                });
             }
         }
-        return floorLimit;
+        return solids;
     }
 
-    teleportToBanner() {
-        this.banner = document.querySelector('.site-msg-container');
-        if (this.banner && this.banner.offsetParent !== null) {
-            const rect = this.banner.getBoundingClientRect();
-            this.x = rect.left + (rect.width / 2);
-            this.y = rect.top + window.scrollY - this.height;
+    teleportToSafety() {
+        const solids = this.getSolidElements();
+        // Find a solid element that is currently visible in the viewport
+        const visibleSolids = solids.filter(s => s.top >= window.scrollY && s.top <= window.scrollY + window.innerHeight - 100);
+        
+        let target = visibleSolids.length > 0 ? visibleSolids[0] : (solids.length > 0 ? solids[0] : null);
+
+        if (target) {
+            this.x = target.left + (target.right - target.left) / 2 - this.width / 2;
+            this.y = target.top - this.height;
         } else {
-            this.y = 100;
+            this.x = window.innerWidth / 2;
+            this.y = window.scrollY + 100;
         }
+        
         this.vy = 0;
         this.vx = 0;
         this.state = 'walk';
@@ -3251,42 +3265,24 @@ class FoxPet {
             if (this.state === 'jump') this.vx *= -1;
         }
 
-        let floorLimit = this.getFloorLimit();
+        const solids = this.getSolidElements();
 
         if (this.state === 'jump') {
             this.vy += this.gravity;
             this.y += this.vy;
 
             let landed = false;
-            let targetY = floorLimit;
+            let targetY = this.y;
 
             if (this.vy > 0) {
-                // Falling down
-                this.banner = document.querySelector('.site-msg-container');
-                if (this.banner && this.banner.offsetParent !== null) {
-                    const rect = this.banner.getBoundingClientRect();
-                    const bannerY = rect.top + window.scrollY;
-                    if (this.y + this.height >= bannerY && this.y + this.height - this.vy <= bannerY) {
-                        targetY = bannerY - this.height;
-                        landed = true;
-                    }
-                }
-                
-                if (!landed) {
-                    const cards = document.querySelectorAll('.product-card');
-                    for (let card of cards) {
-                        if (card.offsetParent === null) continue; // invisible
-                        const rect = card.getBoundingClientRect();
-                        const cardTop = rect.top + window.scrollY;
-                        const cardLeft = rect.left + window.scrollX;
-                        const cardRight = rect.right + window.scrollX;
-
-                        if (this.x + this.width > cardLeft && this.x < cardRight) {
-                            if (this.y + this.height >= cardTop && this.y + this.height - this.vy <= cardTop + 10) {
-                                targetY = cardTop - this.height;
-                                landed = true;
-                                break;
-                            }
+                // Falling down: check landing on ANY solid
+                for (let solid of solids) {
+                    if (this.x + this.width > solid.left && this.x < solid.right) {
+                        // If feet passed through the solid top in this frame
+                        if (this.y + this.height >= solid.top && this.y + this.height - this.vy <= solid.top + 15) {
+                            targetY = solid.top - this.height;
+                            landed = true;
+                            break;
                         }
                     }
                 }
@@ -3297,25 +3293,18 @@ class FoxPet {
                     this.vy = 0;
                     this.vx = 0;
                     this.lastActionTime = Date.now();
-                } else if (this.y + this.height >= floorLimit) {
-                    // Reached the absolute bottom without landing! Teleport back to top!
-                    this.teleportToBanner();
+                } else if (this.y > window.scrollY + window.innerHeight + 200) { 
+                    // Fell completely out of the viewport!
+                    this.teleportToSafety();
                     return;
                 }
-
             } else if (this.vy < 0) {
-                // Jumping up (Checking for bottom of cards to hang)
-                const cards = document.querySelectorAll('.product-card');
-                for (let card of cards) {
-                    if (card.offsetParent === null) continue;
-                    const rect = card.getBoundingClientRect();
-                    const cardBottom = rect.bottom + window.scrollY;
-                    const cardLeft = rect.left + window.scrollX;
-                    const cardRight = rect.right + window.scrollX;
-
-                    if (this.x + this.width > cardLeft && this.x < cardRight) {
-                        if (this.y <= cardBottom && this.y - this.vy >= cardBottom - 10) {
-                            this.y = cardBottom;
+                // Jumping up: check hanging on ANY solid
+                for (let solid of solids) {
+                    if (this.x + this.width > solid.left && this.x < solid.right) {
+                        // If head hits the solid bottom
+                        if (this.y <= solid.bottom && this.y - this.vy >= solid.bottom - 15) {
+                            this.y = solid.bottom;
                             this.state = 'hang';
                             this.vy = 0;
                             this.vx = 0;
@@ -3325,78 +3314,54 @@ class FoxPet {
                 }
             }
         } else if (this.state === 'walk') {
-            // Ledge detection: stay on the current surface!
             let onGround = false;
             let nearLedge = false;
+            let hitWall = false;
             const bottomY = this.y + this.height;
 
-            // Check Banner
-            if (this.banner && this.banner.offsetParent !== null) {
-                const rect = this.banner.getBoundingClientRect();
-                const bannerY = rect.top + window.scrollY;
-                if (Math.abs(bottomY - bannerY) < 10) {
-                    const bannerLeft = rect.left + window.scrollX;
-                    const bannerRight = rect.right + window.scrollX;
-                    if (this.x + this.width > bannerLeft && this.x < bannerRight) {
+            for (let solid of solids) {
+                // 1. Check Wall collisions
+                if (this.y + this.height > solid.top + 10 && this.y < solid.bottom - 10) {
+                    if (this.direction === 1 && this.x + this.width >= solid.left && this.x + this.width <= solid.left + 5) {
+                        hitWall = true;
+                    }
+                    if (this.direction === -1 && this.x <= solid.right && this.x >= solid.right - 5) {
+                        hitWall = true;
+                    }
+                }
+
+                // 2. Check Ground and Ledges
+                if (Math.abs(bottomY - solid.top) < 15) {
+                    if (this.x + this.width > solid.left && this.x < solid.right) {
                         onGround = true;
-                        if (this.x <= bannerLeft + 10 || this.x + this.width >= bannerRight - 10) nearLedge = true;
-                    }
-                }
-            }
-
-            // Check Cards
-            if (!onGround) {
-                const cards = document.querySelectorAll('.product-card');
-                for (let card of cards) {
-                    if (card.offsetParent === null) continue;
-                    const rect = card.getBoundingClientRect();
-                    const cardTop = rect.top + window.scrollY;
-                    if (Math.abs(bottomY - cardTop) < 10) {
-                        const cardLeft = rect.left + window.scrollX;
-                        const cardRight = rect.right + window.scrollX;
-                        if (this.x + this.width > cardLeft && this.x < cardRight) {
-                            onGround = true;
-                            if (this.x <= cardLeft + 5 || this.x + this.width >= cardRight - 5) nearLedge = true;
-                            break;
+                        // Are we about to fall off this specific solid?
+                        if (this.x <= solid.left + 5 || this.x + this.width >= solid.right - 5) {
+                            nearLedge = true;
                         }
+                        break; 
                     }
                 }
             }
 
-            // Check Floor
-            if (Math.abs(bottomY - floorLimit) < 10) {
-                onGround = true;
-                // If on floor, force jump frequently
-                if (Math.random() < 0.1) this.jump(true);
-            }
-
-            if (nearLedge && onGround && bottomY < floorLimit - 50) {
-                // Turn around to avoid falling off the card!
+            if (hitWall) {
                 this.direction *= -1;
-                this.x += 5 * this.direction; // Step back
+                this.x += 5 * this.direction;
+            } else if (nearLedge && onGround) {
+                this.direction *= -1;
+                this.x += 5 * this.direction;
             } else if (!onGround) {
                 this.drop();
             }
         } else if (this.state === 'hang') {
-             // Ledge detection for hanging
              let onCeiling = false;
-             
-             const cards = document.querySelectorAll('.product-card');
-             for (let card of cards) {
-                 if (card.offsetParent === null) continue;
-                 const rect = card.getBoundingClientRect();
-                 const cardBottom = rect.bottom + window.scrollY;
-                 const cardLeft = rect.left + window.scrollX;
-                 const cardRight = rect.right + window.scrollX;
-
-                 if (Math.abs(this.y - cardBottom) < 10) {
-                     if (this.x + this.width > cardLeft && this.x < cardRight) {
+             for (let solid of solids) {
+                 if (Math.abs(this.y - solid.bottom) < 15) {
+                     if (this.x + this.width > solid.left && this.x < solid.right) {
                          onCeiling = true;
                          break;
                      }
                  }
              }
-             
              if (!onCeiling) {
                  this.drop();
              }
