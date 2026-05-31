@@ -3180,7 +3180,8 @@ class FoxPet {
     }
 
     getSolidElements() {
-        const selectors = '.product-card, .site-msg-container, h1, h2, h3, h4, p, .stat-item, .filter-btn, .search-box input, .btn-primary, .social-btn, .pixel-stair-step';
+        // Only solid blocks! Exclude generic p, h3 to prevent floating inside cards.
+        const selectors = '.product-card, .site-msg-container, .section-title, .stat-item, .filter-btn, .search-box input, .btn-primary, .social-btn, .pixel-stair-step';
         const elements = document.querySelectorAll(selectors);
         const solids = [];
         for (let el of elements) {
@@ -3202,23 +3203,11 @@ class FoxPet {
     }
 
     teleportToSafety() {
-        const solids = this.getSolidElements();
-        // Find a solid element that is currently visible in the viewport
-        const visibleSolids = solids.filter(s => s.top >= window.scrollY && s.top <= window.scrollY + window.innerHeight - 100);
-        
-        let target = visibleSolids.length > 0 ? visibleSolids[0] : (solids.length > 0 ? solids[0] : null);
-
-        if (target) {
-            this.x = target.left + (target.right - target.left) / 2 - this.width / 2;
-            this.y = target.top - this.height;
-        } else {
-            this.x = window.innerWidth / 2;
-            this.y = window.scrollY + 100;
-        }
-        
-        this.vy = 0;
-        this.vx = 0;
-        this.state = 'walk';
+        // Instead of teleporting to a specific solid, fall from the sky!
+        this.y = window.scrollY - 100; // Above the viewport
+        this.x = window.innerWidth / 2; // Center
+        this.state = 'jump';
+        this.vy = 0; // Reset vertical velocity to fall gently
     }
 
     updateFrame() {
