@@ -3134,26 +3134,27 @@ class FoxPet {
             oscillator.start(now);
             oscillator.stop(now + 0.3);
         } else if (type === 'sleep') {
-            // Authentic Purr: Very low frequency sawtooth acts as rapid clicks (15 clicks/sec for a slower purr)
+            // Deep, relaxed breath/purr: 2.4 seconds long cycle
             oscillator.type = 'sawtooth';
-            oscillator.frequency.setValueAtTime(15, now); 
-
-            // Muffle the clicks heavily so it sounds soft and breathy, not harsh
+            oscillator.frequency.setValueAtTime(10, now); // 10Hz = very deep slow rumble
+            
             const filter = this.audioCtx.createBiquadFilter();
             filter.type = 'lowpass';
-            filter.frequency.setValueAtTime(120, now); 
+            filter.frequency.setValueAtTime(80, now); 
+            filter.frequency.linearRampToValueAtTime(150, now + 1.2); // Peak of inhale
+            filter.frequency.linearRampToValueAtTime(80, now + 2.4); // Exhale
 
             oscillator.disconnect();
             oscillator.connect(filter);
             filter.connect(gainNode);
 
-            // Volume swell for breathing rhythm
+            // Volume swell for deep breathing rhythm (2.4s total)
             gainNode.gain.setValueAtTime(0.0, now);
-            gainNode.gain.linearRampToValueAtTime(0.4, now + 0.2); 
-            gainNode.gain.linearRampToValueAtTime(0.001, now + 0.4); 
+            gainNode.gain.linearRampToValueAtTime(0.5, now + 1.2); 
+            gainNode.gain.linearRampToValueAtTime(0.001, now + 2.4); 
 
             oscillator.start(now);
-            oscillator.stop(now + 0.4);
+            oscillator.stop(now + 2.4);
         }
     }
 
@@ -3224,6 +3225,7 @@ class FoxPet {
             // Chance to wake up naturally
             if (Math.random() < 0.2) {
                 this.state = 'walk';
+                this.sleepTick = 0;
                 this.lastActionTime = Date.now();
             }
             return; // Don't do anything else while sleeping!
@@ -3235,6 +3237,7 @@ class FoxPet {
         if (rand < 0.15 && this.state === 'walk') {
             this.state = 'sleep';
             this.currentFrameIndex = 0;
+            this.sleepTick = 0;
             this.playSound('sleep');
             return;
         }
@@ -3311,15 +3314,28 @@ class FoxPet {
 
     updateFrame() {
         let frameList = this.frames.walk; 
+        let shouldAdvanceFrame = true;
         
         if (this.state === 'angry') frameList = this.frames.angry;
         else if (this.state === 'sleep') {
             frameList = this.frames.sleep;
-            if (this.currentFrameIndex === 0) {
-                this.playSound('sleep');
+            if (!this.sleepTick) this.sleepTick = 0;
+            this.sleepTick++;
+            
+            // Advance frame every 6 ticks (600ms per frame = 2.4s per breath cycle!)
+            if (this.sleepTick % 6 !== 0) {
+                shouldAdvanceFrame = false;
+            } else {
+                // If it is about to wrap around to frame 0, play the sound for the new breath!
+                if (this.currentFrameIndex === 3) {
+                    this.playSound('sleep');
+                }
             }
+        } else {
+            this.sleepTick = 0;
         }
-        else if (this.state === 'idle' || this.state === 'hang') {
+
+        if (this.state === 'idle' || this.state === 'hang') {
             this.petElement.style.backgroundImage = `url('${this.frames.walk[0]}')`;
             return; 
         }
@@ -3328,8 +3344,10 @@ class FoxPet {
             return;
         }
 
-        this.currentFrameIndex = (this.currentFrameIndex + 1) % frameList.length;
-        this.petElement.style.backgroundImage = `url('${frameList[this.currentFrameIndex]}')`;
+        if (shouldAdvanceFrame) {
+            this.currentFrameIndex = (this.currentFrameIndex + 1) % frameList.length;
+            this.petElement.style.backgroundImage = `url('${frameList[this.currentFrameIndex]}')`;
+        }
     }
 
     updatePhysics() {
