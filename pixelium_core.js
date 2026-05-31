@@ -3134,15 +3134,25 @@ class FoxPet {
             oscillator.start(now);
             oscillator.stop(now + 0.3);
         } else if (type === 'sleep') {
-            // Audible Zzz snore (Triangle wave at 300Hz is much easier to hear)
-            oscillator.type = 'triangle';
-            oscillator.frequency.setValueAtTime(400, now);
-            oscillator.frequency.linearRampToValueAtTime(250, now + 0.5);
+            // Soft snore/purr using a lowpass filter
+            oscillator.type = 'sawtooth';
+            oscillator.frequency.setValueAtTime(50, now); // Deep rumble
+
+            const filter = this.audioCtx.createBiquadFilter();
+            filter.type = 'lowpass';
+            filter.frequency.setValueAtTime(200, now); 
+            filter.frequency.linearRampToValueAtTime(100, now + 0.4);
+
+            oscillator.disconnect();
+            oscillator.connect(filter);
+            filter.connect(gainNode);
+
             gainNode.gain.setValueAtTime(0.0, now);
-            gainNode.gain.linearRampToValueAtTime(0.1, now + 0.25);
-            gainNode.gain.linearRampToValueAtTime(0.001, now + 0.5);
+            gainNode.gain.linearRampToValueAtTime(0.15, now + 0.2); // Gentle inhale
+            gainNode.gain.linearRampToValueAtTime(0.001, now + 0.4); // Gentle exhale
+
             oscillator.start(now);
-            oscillator.stop(now + 0.5);
+            oscillator.stop(now + 0.4);
         }
     }
 
