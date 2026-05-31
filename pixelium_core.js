@@ -3134,9 +3134,9 @@ class FoxPet {
             oscillator.start(now);
             oscillator.stop(now + 0.3);
         } else if (type === 'sleep') {
-            // Authentic Purr: Very low frequency sawtooth acts as rapid clicks (28 clicks/sec)
+            // Authentic Purr: Very low frequency sawtooth acts as rapid clicks (15 clicks/sec for a slower purr)
             oscillator.type = 'sawtooth';
-            oscillator.frequency.setValueAtTime(28, now); 
+            oscillator.frequency.setValueAtTime(15, now); 
 
             // Muffle the clicks heavily so it sounds soft and breathy, not harsh
             const filter = this.audioCtx.createBiquadFilter();
