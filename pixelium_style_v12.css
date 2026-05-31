@@ -2021,24 +2021,3 @@ body {
     /* Magic CSS: Rotate 180 degrees to hang like a bat */
     transform: rotate(180deg);
 }
-
-/* --- PIXEL STAIRS --- */
-.pixel-stairs-container {
-    position: relative; 
-    height: 180px; 
-    width: 100%; 
-    overflow: visible; 
-    z-index: 1000; 
-    margin-top: 60px;
-}
-
-.pixel-stair-step {
-    position: absolute;
-    width: 80px;
-    height: 25px;
-    background-color: #F5E6D3; /* Cream color */
-    border: 3px solid #000; /* Retro pixel outline */
-    box-shadow: inset -3px -3px 0px rgba(0,0,0,0.3), inset 3px 3px 0px rgba(255,255,255,0.7), 0 5px 15px rgba(0, 243, 255, 0.3);
-    /* Make it look like a rigid retro platform */
-    border-radius: 2px;
-}
