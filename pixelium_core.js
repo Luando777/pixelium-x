@@ -3312,7 +3312,7 @@ class FoxPet {
         if (this.state === 'jump') return; // Already jumping
         this.state = 'jump';
         this.vy = superJump ? -20 : -10; // Extra strong jump if on the floor!
-        this.vx = this.direction * 3;
+        this.vx = this.direction * 5; // Faster horizontal jump to easily clear gaps between cards!
         this.lastActionTime = Date.now();
         this.playSound('jump');
     }
@@ -3502,8 +3502,8 @@ class FoxPet {
                 this.direction *= -1;
                 this.x += 5 * this.direction;
             } else if (nearLedge && onGround) {
-                this.direction *= -1;
-                this.x += 5 * this.direction;
+                // Jump to the next card instead of turning around!
+                this.jump();
             } else if (!onGround) {
                 this.drop();
             }
