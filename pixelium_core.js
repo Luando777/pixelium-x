@@ -3152,8 +3152,11 @@ class FoxPet {
         
         const rand = Math.random();
         
-        if (rand < 0.15 && this.state !== 'hang') {
-            this.jump(); // 15% chance to jump
+        if (rand < 0.25 && this.state !== 'hang') {
+            // Check if on floor to do a super jump
+            let floorLimit = this.getFloorLimit();
+            let isOnFloor = Math.abs(this.y - floorLimit) < 20;
+            this.jump(isOnFloor); 
         } 
         else if (rand < 0.20 && this.state === 'hang') {
             this.drop(); // drop if hanging
@@ -3164,9 +3167,9 @@ class FoxPet {
         }
     }
 
-    jump() {
+    jump(superJump = false) {
         this.state = 'jump';
-        this.vy = -16; // Strong jump
+        this.vy = superJump ? -26 : -16; // Strong jump
         this.vx = this.direction * 4; 
     }
 
@@ -3174,6 +3177,20 @@ class FoxPet {
         this.state = 'jump';
         this.vy = 0; 
         this.vx = this.direction * 2;
+    }
+
+    getFloorLimit() {
+        let floorLimit = document.documentElement.scrollHeight - this.height;
+        const productsSection = document.getElementById('products');
+        if (productsSection) {
+            const rect = productsSection.getBoundingClientRect();
+            // Restrict floor to the bottom of the products section
+            const productsBottom = rect.bottom + window.scrollY;
+            if (productsBottom < floorLimit) {
+                floorLimit = productsBottom;
+            }
+        }
+        return floorLimit;
     }
 
     updateFrame() {
@@ -3220,7 +3237,7 @@ class FoxPet {
             if (this.state === 'jump') this.vx *= -1;
         }
 
-        let floorLimit = document.documentElement.scrollHeight - this.height;
+        let floorLimit = this.getFloorLimit();
 
         if (this.state === 'jump') {
             this.vy += this.gravity;
