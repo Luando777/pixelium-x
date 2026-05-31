@@ -3193,6 +3193,20 @@ class FoxPet {
         return floorLimit;
     }
 
+    teleportToBanner() {
+        this.banner = document.querySelector('.site-msg-container');
+        if (this.banner && this.banner.offsetParent !== null) {
+            const rect = this.banner.getBoundingClientRect();
+            this.x = rect.left + (rect.width / 2);
+            this.y = rect.top + window.scrollY - this.height;
+        } else {
+            this.y = 100;
+        }
+        this.vy = 0;
+        this.vx = 0;
+        this.state = 'walk';
+    }
+
     updateFrame() {
         let frameList = this.frames.walk; 
         
@@ -3277,17 +3291,16 @@ class FoxPet {
                     }
                 }
 
-                if (!landed && this.y >= floorLimit) {
-                    targetY = floorLimit;
-                    landed = true;
-                }
-
                 if (landed) {
                     this.y = targetY;
                     this.state = 'walk';
                     this.vy = 0;
                     this.vx = 0;
                     this.lastActionTime = Date.now();
+                } else if (this.y + this.height >= floorLimit) {
+                    // Reached the absolute bottom without landing! Teleport back to top!
+                    this.teleportToBanner();
+                    return;
                 }
 
             } else if (this.vy < 0) {
