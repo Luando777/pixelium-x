@@ -3134,22 +3134,23 @@ class FoxPet {
             oscillator.start(now);
             oscillator.stop(now + 0.3);
         } else if (type === 'sleep') {
-            // Soft snore/purr using a lowpass filter
+            // Authentic Purr: Very low frequency sawtooth acts as rapid clicks (28 clicks/sec)
             oscillator.type = 'sawtooth';
-            oscillator.frequency.setValueAtTime(50, now); // Deep rumble
+            oscillator.frequency.setValueAtTime(28, now); 
 
+            // Muffle the clicks heavily so it sounds soft and breathy, not harsh
             const filter = this.audioCtx.createBiquadFilter();
             filter.type = 'lowpass';
-            filter.frequency.setValueAtTime(200, now); 
-            filter.frequency.linearRampToValueAtTime(100, now + 0.4);
+            filter.frequency.setValueAtTime(120, now); 
 
             oscillator.disconnect();
             oscillator.connect(filter);
             filter.connect(gainNode);
 
+            // Volume swell for breathing rhythm
             gainNode.gain.setValueAtTime(0.0, now);
-            gainNode.gain.linearRampToValueAtTime(0.15, now + 0.2); // Gentle inhale
-            gainNode.gain.linearRampToValueAtTime(0.001, now + 0.4); // Gentle exhale
+            gainNode.gain.linearRampToValueAtTime(0.4, now + 0.2); 
+            gainNode.gain.linearRampToValueAtTime(0.001, now + 0.4); 
 
             oscillator.start(now);
             oscillator.stop(now + 0.4);
