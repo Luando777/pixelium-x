@@ -3180,7 +3180,7 @@ class FoxPet {
     }
 
     getSolidElements() {
-        const selectors = '.product-card, .site-msg-container, h1, h2, h3, h4, p, .stat-item, .filter-btn, .search-box input, .btn-primary, .social-btn';
+        const selectors = '.product-card, .site-msg-container, h1, h2, h3, h4, p, .stat-item, .filter-btn, .search-box input, .btn-primary, .social-btn, .pixel-stair-step';
         const elements = document.querySelectorAll(selectors);
         const solids = [];
         for (let el of elements) {
