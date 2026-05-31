@@ -2002,19 +2002,22 @@ body {
     transform: scale(1.05);
 }
 
-/* --- VIRTUAL PET (ZORRITO JS) --- */
+/* --- VIRTUAL PET (ZORRITO JS EXPLORADOR) --- */
 .virtual-pet {
     position: absolute;
-    bottom: 100%; /* Sits on top of the banner wrapper */
-    left: 50%;
-    transform: translateX(-50%);
+    z-index: 9999;
     width: 60px;
     height: 60px;
-    z-index: 9999;
     cursor: pointer;
     background-size: contain;
     background-position: center;
     background-repeat: no-repeat;
     /* Drop shadow to fit the neon theme */
     filter: drop-shadow(0 0 5px rgba(0, 243, 255, 0.8));
+    transition: transform 0.1s ease;
+}
+
+.virtual-pet.hanging {
+    /* Magic CSS: Rotate 180 degrees to hang like a bat */
+    transform: rotate(180deg);
 }

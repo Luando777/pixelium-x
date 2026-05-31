@@ -3048,10 +3048,12 @@ if (targetGrid) {
     observer.observe(targetGrid, { childList: true });
 }
 
-// --- ZORRITO INTERACTIVO (JS ENGINE) ---
+// --- ZORRITO INTERACTIVO (JS ENGINE AVANZADO) ---
 class FoxPet {
-    constructor(container) {
-        // Preload frames
+    constructor() {
+        if (window._foxPetRunning) return;
+        window._foxPetRunning = true;
+
         this.frames = {
             walk: Array.from({length: 8}, (_, i) => `zorrito/caminar ${i+1}.png`),
             sleep: Array.from({length: 4}, (_, i) => `zorrito/dormido ${i+1}.png`),
@@ -3060,35 +3062,34 @@ class FoxPet {
         this.preloadedImages = {};
         this.preload();
 
-        // DOM Injection
-        this.container = container; 
-        
-        // Wrap the container so the pet sits on top without breaking mobile overflow
-        this.wrapper = document.createElement('div');
-        this.wrapper.className = 'site-msg-wrapper';
-        this.wrapper.style.position = 'relative';
-        this.wrapper.style.width = '100%';
-        
-        this.container.parentNode.insertBefore(this.wrapper, this.container);
-        this.wrapper.appendChild(this.container);
-
         this.petElement = document.createElement('div');
         this.petElement.className = 'virtual-pet';
-        this.wrapper.appendChild(this.petElement);
+        document.body.appendChild(this.petElement);
 
-        // State
-        this.state = 'walk'; // walk, sleep, angry, idle
+        this.state = 'walk'; // walk, sleep, angry, idle, jump, hang
         this.currentFrameIndex = 0;
-        this.positionX = 50; // percentage
-        this.direction = 1; // 1 (right), -1 (left)
-        this.isHovered = false;
         
+        // Physics
+        this.width = 60;
+        this.height = 60;
+        this.x = window.innerWidth / 2;
+        this.y = -100; // start off screen, then jump to banner
+        this.vx = 0;
+        this.vy = 0;
+        this.gravity = 0.8;
+        this.direction = 1; 
+
+        this.banner = document.querySelector('.site-msg-container');
+        
+        if (this.banner) {
+            const rect = this.banner.getBoundingClientRect();
+            this.x = rect.left + (rect.width / 2);
+            this.y = rect.top + window.scrollY - this.height;
+        }
+
+        this.isHovered = false;
         this.lastActionTime = Date.now();
 
-        // Initial Styles
-        this.petElement.style.left = `${this.positionX}%`;
-        this.petElement.style.backgroundImage = `url('${this.frames.walk[0]}')`;
-        
         this.initEvents();
         this.startEngine();
     }
@@ -3111,7 +3112,7 @@ class FoxPet {
         });
 
         this.petElement.addEventListener('mouseenter', () => {
-            if (this.state !== 'angry') {
+            if (this.state !== 'angry' && this.state !== 'jump') {
                 this.isHovered = true;
                 this.state = 'idle';
                 this.lastActionTime = Date.now();
@@ -3121,27 +3122,58 @@ class FoxPet {
         this.petElement.addEventListener('mouseleave', () => {
             this.isHovered = false;
             this.lastActionTime = Date.now();
-            if (this.state !== 'angry') {
+            if (this.state !== 'angry' && this.state !== 'jump') {
                 this.state = 'walk';
             }
         });
     }
 
     setAngry() {
+        if (this.state === 'jump') return; 
         this.state = 'angry';
         this.currentFrameIndex = 0;
         this.lastActionTime = Date.now();
         setTimeout(() => {
-            this.state = this.isHovered ? 'idle' : 'walk';
-            this.lastActionTime = Date.now();
+            if (this.state === 'angry') {
+                this.state = this.isHovered ? 'idle' : 'walk';
+                this.lastActionTime = Date.now();
+            }
         }, 3000);
     }
 
     startEngine() {
-        // Animation loop (100ms per frame = 10 fps)
         setInterval(() => this.updateFrame(), 100);
-        // Physics / Logic loop (50ms)
-        setInterval(() => this.updateLogic(), 50);
+        setInterval(() => this.updatePhysics(), 30); // 30ms for smoother physics
+        setInterval(() => this.makeDecision(), 3000);
+    }
+
+    makeDecision() {
+        if (this.state === 'jump' || this.state === 'angry') return;
+        
+        const rand = Math.random();
+        
+        if (rand < 0.15 && this.state !== 'hang') {
+            this.jump(); // 15% chance to jump
+        } 
+        else if (rand < 0.20 && this.state === 'hang') {
+            this.drop(); // drop if hanging
+        }
+        else if (rand < 0.4) {
+            this.direction *= -1; // change direction
+            if (this.state !== 'sleep') this.state = 'walk';
+        }
+    }
+
+    jump() {
+        this.state = 'jump';
+        this.vy = -16; // Strong jump
+        this.vx = this.direction * 4; 
+    }
+
+    drop() {
+        this.state = 'jump';
+        this.vy = 0; 
+        this.vx = this.direction * 2;
     }
 
     updateFrame() {
@@ -3149,50 +3181,191 @@ class FoxPet {
         
         if (this.state === 'angry') frameList = this.frames.angry;
         else if (this.state === 'sleep') frameList = this.frames.sleep;
-        else if (this.state === 'idle') {
+        else if (this.state === 'idle' || this.state === 'hang') {
             this.petElement.style.backgroundImage = `url('${this.frames.walk[0]}')`;
-            this.petElement.style.transform = `translateX(-50%) scaleX(${this.direction})`;
+            return; 
+        }
+        else if (this.state === 'jump') {
+            this.petElement.style.backgroundImage = `url('${this.frames.walk[1]}')`;
             return;
         }
 
         this.currentFrameIndex = (this.currentFrameIndex + 1) % frameList.length;
         this.petElement.style.backgroundImage = `url('${frameList[this.currentFrameIndex]}')`;
-        this.petElement.style.transform = `translateX(-50%) scaleX(${this.direction})`;
     }
 
-    updateLogic() {
+    updatePhysics() {
         const now = Date.now();
         const timeSinceLastAction = now - this.lastActionTime;
 
-        // Auto-sleep after 10 seconds of inactivity
-        if (this.state !== 'sleep' && this.state !== 'angry' && !this.isHovered && timeSinceLastAction > 10000) {
+        if (this.state !== 'sleep' && this.state !== 'angry' && this.state !== 'jump' && !this.isHovered && timeSinceLastAction > 15000) {
             this.state = 'sleep';
             this.currentFrameIndex = 0;
         }
 
-        // Movement
-        if (this.state === 'walk') {
-            this.positionX += 0.2 * this.direction; // Speed
+        if (this.state === 'walk' || this.state === 'hang') {
+            this.x += 2 * this.direction; 
+        } else if (this.state === 'jump') {
+            this.x += this.vx;
+        }
 
-            if (this.positionX > 90) {
-                this.direction = -1;
-                this.positionX = 90;
-            } else if (this.positionX < 10) {
-                this.direction = 1;
-                this.positionX = 10;
+        // Screen boundaries
+        if (this.x < 0) {
+            this.x = 0;
+            this.direction = 1;
+            if (this.state === 'jump') this.vx *= -1;
+        } else if (this.x > window.innerWidth - this.width) {
+            this.x = window.innerWidth - this.width;
+            this.direction = -1;
+            if (this.state === 'jump') this.vx *= -1;
+        }
+
+        let floorLimit = document.documentElement.scrollHeight - this.height;
+
+        if (this.state === 'jump') {
+            this.vy += this.gravity;
+            this.y += this.vy;
+
+            let landed = false;
+            let targetY = floorLimit;
+
+            if (this.vy > 0) {
+                // Falling down
+                this.banner = document.querySelector('.site-msg-container');
+                if (this.banner && this.banner.offsetParent !== null) {
+                    const rect = this.banner.getBoundingClientRect();
+                    const bannerY = rect.top + window.scrollY;
+                    if (this.y + this.height >= bannerY && this.y + this.height - this.vy <= bannerY) {
+                        targetY = bannerY - this.height;
+                        landed = true;
+                    }
+                }
+                
+                if (!landed) {
+                    const cards = document.querySelectorAll('.product-card');
+                    for (let card of cards) {
+                        if (card.offsetParent === null) continue; // invisible
+                        const rect = card.getBoundingClientRect();
+                        const cardTop = rect.top + window.scrollY;
+                        const cardLeft = rect.left + window.scrollX;
+                        const cardRight = rect.right + window.scrollX;
+
+                        if (this.x + this.width > cardLeft && this.x < cardRight) {
+                            if (this.y + this.height >= cardTop && this.y + this.height - this.vy <= cardTop + 10) {
+                                targetY = cardTop - this.height;
+                                landed = true;
+                                break;
+                            }
+                        }
+                    }
+                }
+
+                if (!landed && this.y >= floorLimit) {
+                    targetY = floorLimit;
+                    landed = true;
+                }
+
+                if (landed) {
+                    this.y = targetY;
+                    this.state = 'walk';
+                    this.vy = 0;
+                    this.vx = 0;
+                    this.lastActionTime = Date.now();
+                }
+
+            } else if (this.vy < 0) {
+                // Jumping up (Checking for bottom of cards to hang)
+                const cards = document.querySelectorAll('.product-card');
+                for (let card of cards) {
+                    if (card.offsetParent === null) continue;
+                    const rect = card.getBoundingClientRect();
+                    const cardBottom = rect.bottom + window.scrollY;
+                    const cardLeft = rect.left + window.scrollX;
+                    const cardRight = rect.right + window.scrollX;
+
+                    if (this.x + this.width > cardLeft && this.x < cardRight) {
+                        if (this.y <= cardBottom && this.y - this.vy >= cardBottom - 10) {
+                            this.y = cardBottom;
+                            this.state = 'hang';
+                            this.vy = 0;
+                            this.vx = 0;
+                            break;
+                        }
+                    }
+                }
+            }
+        } else if (this.state === 'walk') {
+            // Ledge detection
+            let onGround = false;
+            const bottomY = this.y + this.height;
+
+            if (this.banner && this.banner.offsetParent !== null) {
+                const rect = this.banner.getBoundingClientRect();
+                const bannerY = rect.top + window.scrollY;
+                if (Math.abs(bottomY - bannerY) < 10) onGround = true;
             }
 
-            this.petElement.style.left = `${this.positionX}%`;
+            if (!onGround) {
+                const cards = document.querySelectorAll('.product-card');
+                for (let card of cards) {
+                    if (card.offsetParent === null) continue;
+                    const rect = card.getBoundingClientRect();
+                    const cardTop = rect.top + window.scrollY;
+                    const cardLeft = rect.left + window.scrollX;
+                    const cardRight = rect.right + window.scrollX;
+
+                    if (Math.abs(bottomY - cardTop) < 10) {
+                        if (this.x + this.width > cardLeft && this.x < cardRight) {
+                            onGround = true;
+                            break;
+                        }
+                    }
+                }
+            }
+
+            if (Math.abs(bottomY - floorLimit) < 10) onGround = true;
+
+            if (!onGround) {
+                this.drop();
+            }
+        } else if (this.state === 'hang') {
+             // Ledge detection for hanging
+             let onCeiling = false;
+             
+             const cards = document.querySelectorAll('.product-card');
+             for (let card of cards) {
+                 if (card.offsetParent === null) continue;
+                 const rect = card.getBoundingClientRect();
+                 const cardBottom = rect.bottom + window.scrollY;
+                 const cardLeft = rect.left + window.scrollX;
+                 const cardRight = rect.right + window.scrollX;
+
+                 if (Math.abs(this.y - cardBottom) < 10) {
+                     if (this.x + this.width > cardLeft && this.x < cardRight) {
+                         onCeiling = true;
+                         break;
+                     }
+                 }
+             }
+             
+             if (!onCeiling) {
+                 this.drop();
+             }
         }
+
+        // Apply
+        this.petElement.style.left = `${this.x}px`;
+        this.petElement.style.top = `${this.y}px`;
+        
+        let tf = `scaleX(${this.direction})`;
+        if (this.state === 'hang') {
+            tf += ` rotate(180deg)`;
+        }
+        this.petElement.style.transform = tf;
     }
 }
 
-// Initialize on DOM ready
+// Initialize
 setTimeout(() => {
-    document.querySelectorAll('.site-msg-container').forEach(container => {
-        // Prevent double injection if run twice
-        if (!container.parentNode.classList.contains('site-msg-wrapper')) {
-            new FoxPet(container);
-        }
-    });
+    new FoxPet();
 }, 1500);
