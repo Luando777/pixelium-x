@@ -3175,8 +3175,8 @@ class FoxPet {
     initEvents() {
         let startX, startY;
 
-        this.petElement.addEventListener('mousedown', (e) => {
-            e.preventDefault(); // Prevent image drag ghost
+        const handleStart = (e) => {
+            e.preventDefault(); 
             e.stopPropagation();
             this.initAudio();
 
@@ -3185,38 +3185,56 @@ class FoxPet {
             this.vy = 0;
             this.vx = 0;
             
-            startX = e.clientX;
-            startY = e.clientY;
+            const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+            const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+
+            startX = clientX;
+            startY = clientY;
 
             const rect = this.petElement.getBoundingClientRect();
-            this.dragOffsetX = e.clientX - rect.left;
-            this.dragOffsetY = e.clientY - rect.top;
-        });
+            this.dragOffsetX = clientX - rect.left;
+            this.dragOffsetY = clientY - rect.top;
+        };
 
-        document.addEventListener('mousemove', (e) => {
+        const handleMove = (e) => {
             if (!this.isDragging) return;
+            if (e.touches) e.preventDefault(); // Stop page scroll while dragging fox
             
-            this.x = e.clientX + window.scrollX - this.dragOffsetX;
-            this.y = e.clientY + window.scrollY - this.dragOffsetY;
+            const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+            const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+
+            this.x = clientX + window.scrollX - this.dragOffsetX;
+            this.y = clientY + window.scrollY - this.dragOffsetY;
             this.petElement.style.left = this.x + 'px';
             this.petElement.style.top = this.y + 'px';
-        });
+        };
 
-        document.addEventListener('mouseup', (e) => {
+        const handleEnd = (e) => {
             if (this.isDragging) {
                 this.isDragging = false;
                 
-                const dist = Math.hypot(e.clientX - startX, e.clientY - startY);
+                const clientX = e.changedTouches ? e.changedTouches[0].clientX : e.clientX;
+                const clientY = e.changedTouches ? e.changedTouches[0].clientY : e.clientY;
+
+                const dist = Math.hypot(clientX - startX, clientY - startY);
                 if (dist < 5) {
-                    // It was just a click
                     this.setAngry();
                 } else {
-                    // It was a drag and drop
                     this.drop();
                 }
                 this.lastActionTime = Date.now();
             }
-        });
+        };
+
+        // Desktop Mouse
+        this.petElement.addEventListener('mousedown', handleStart);
+        document.addEventListener('mousemove', handleMove, { passive: false });
+        document.addEventListener('mouseup', handleEnd);
+
+        // Mobile Touch
+        this.petElement.addEventListener('touchstart', handleStart, { passive: false });
+        document.addEventListener('touchmove', handleMove, { passive: false });
+        document.addEventListener('touchend', handleEnd);
 
         this.petElement.addEventListener('mouseenter', () => {
             if (this.state !== 'angry' && this.state !== 'jump' && !this.isDragging) {
@@ -3234,10 +3252,9 @@ class FoxPet {
             }
         });
 
-        // Initialize audio on first click anywhere
-        document.body.addEventListener('click', () => {
-            this.initAudio();
-        }, { once: true });
+        // Initialize audio on first click/touch anywhere
+        document.body.addEventListener('click', () => { this.initAudio(); }, { once: true });
+        document.body.addEventListener('touchstart', () => { this.initAudio(); }, { once: true });
     }
 
     setAngry() {
