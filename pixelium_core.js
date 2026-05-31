@@ -3134,15 +3134,15 @@ class FoxPet {
             oscillator.start(now);
             oscillator.stop(now + 0.3);
         } else if (type === 'sleep') {
-            // Soft snore: low sine wave pulsing
-            oscillator.type = 'sine';
-            oscillator.frequency.setValueAtTime(100, now);
-            oscillator.frequency.linearRampToValueAtTime(150, now + 0.4);
+            // Audible Zzz snore (Triangle wave at 300Hz is much easier to hear)
+            oscillator.type = 'triangle';
+            oscillator.frequency.setValueAtTime(400, now);
+            oscillator.frequency.linearRampToValueAtTime(250, now + 0.5);
             gainNode.gain.setValueAtTime(0.0, now);
-            gainNode.gain.linearRampToValueAtTime(0.05, now + 0.2);
-            gainNode.gain.linearRampToValueAtTime(0.001, now + 0.4);
+            gainNode.gain.linearRampToValueAtTime(0.1, now + 0.25);
+            gainNode.gain.linearRampToValueAtTime(0.001, now + 0.5);
             oscillator.start(now);
-            oscillator.stop(now + 0.4);
+            oscillator.stop(now + 0.5);
         }
     }
 
@@ -3209,9 +3209,26 @@ class FoxPet {
     makeDecision() {
         if (this.state === 'jump' || this.state === 'angry') return;
         
+        if (this.state === 'sleep') {
+            // Chance to wake up naturally
+            if (Math.random() < 0.2) {
+                this.state = 'walk';
+                this.lastActionTime = Date.now();
+            }
+            return; // Don't do anything else while sleeping!
+        }
+
         const rand = Math.random();
         
-        if (rand < 0.25 && this.state !== 'hang') {
+        // 15% chance to fall asleep randomly if walking on ground
+        if (rand < 0.15 && this.state === 'walk') {
+            this.state = 'sleep';
+            this.currentFrameIndex = 0;
+            this.playSound('sleep');
+            return;
+        }
+
+        if (rand < 0.40 && this.state !== 'hang') {
             // Check if on floor to do a super jump
             let floorLimit = document.documentElement.scrollHeight - this.height;
             const productsSection = document.getElementById('products');
@@ -3227,8 +3244,8 @@ class FoxPet {
             const superJump = Math.abs(bottomY - floorLimit) < 20;
 
             this.jump(superJump); 
-        } else if (rand < 0.3) {
-            this.direction *= -1; // 5% chance to turn around
+        } else if (rand < 0.6) {
+            this.direction *= -1; // change direction
             if (this.state !== 'hang') {
                 this.x += 5 * this.direction; // Step forward when turning to avoid edge glitch
             }
