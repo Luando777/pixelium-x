@@ -45,6 +45,26 @@ firebase.initializeApp(firebaseConfig);
 const auth = firebase.auth();
 const db = firebase.firestore();
 
+window.isFoxMuted = false;
+
+window.toggleFoxMute = () => {
+    window.isFoxMuted = !window.isFoxMuted;
+    const btn = document.getElementById('floating-mute-btn');
+    const icon = document.getElementById('mute-icon');
+    if (window.isFoxMuted) {
+        btn.classList.add('muted');
+        icon.classList.remove('fa-volume-up');
+        icon.classList.add('fa-volume-mute');
+    } else {
+        btn.classList.remove('muted');
+        icon.classList.remove('fa-volume-mute');
+        icon.classList.add('fa-volume-up');
+    }
+};
+
+// Global State
+let productsCache = [];
+
 // --- AUTH LOGIC ---
 // --- SPA NAVIGATION LOGIC ---
 // --- SPA NAVIGATION LOGIC ---
@@ -3166,7 +3186,7 @@ class FoxPet {
     }
 
     playSound(type) {
-        if (!this.audioCtx || this.audioCtx.state === 'suspended') return;
+        if (!this.audioCtx || window.isFoxMuted || this.audioCtx.state === 'suspended') return;
 
         const oscillator = this.audioCtx.createOscillator();
         const gainNode = this.audioCtx.createGain();
