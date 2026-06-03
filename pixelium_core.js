@@ -134,13 +134,17 @@ window.openAuthModal = (tab) => {
     const modal = document.getElementById('auth-modal');
     if (modal) {
         modal.style.display = 'block';
+        if (window.showAuthMainView) window.showAuthMainView();
         switchTab(tab);
     }
 };
 
 window.closeAuthModal = () => {
     const modal = document.getElementById('auth-modal');
-    if (modal) modal.style.display = 'none';
+    if (modal) {
+        modal.style.display = 'none';
+        if (window.showAuthMainView) window.showAuthMainView();
+    }
 };
 
 // --- SOCIAL LOGIN LOGIC ---
@@ -203,6 +207,60 @@ window.switchTab = (tab) => {
         tabs[1].classList.add('active');
     }
 };
+
+window.showResetPasswordView = () => {
+    document.getElementById('auth-main-view').style.display = 'none';
+    document.getElementById('auth-reset-view').style.display = 'block';
+    
+    // Auto-fill email if entered in login
+    const loginEmail = document.getElementById('login-email').value;
+    if (loginEmail) {
+        document.getElementById('reset-email').value = loginEmail;
+    }
+    
+    document.getElementById('reset-error').textContent = '';
+    document.getElementById('reset-success').style.display = 'none';
+};
+
+window.showAuthMainView = () => {
+    document.getElementById('auth-main-view').style.display = 'block';
+    document.getElementById('auth-reset-view').style.display = 'none';
+};
+
+document.addEventListener('DOMContentLoaded', () => {
+    const btnResetAction = document.getElementById('btn-reset-action');
+    if (btnResetAction) {
+        btnResetAction.addEventListener('click', async () => {
+            const email = document.getElementById('reset-email').value.trim();
+            const errorEl = document.getElementById('reset-error');
+            const successEl = document.getElementById('reset-success');
+            
+            errorEl.textContent = '';
+            successEl.style.display = 'none';
+            
+            if (!email) {
+                errorEl.textContent = "Por favor ingresa tu correo.";
+                return;
+            }
+            
+            try {
+                // Send reset email using Firebase Auth
+                await auth.sendPasswordResetEmail(email);
+                successEl.textContent = "Enlace enviado. Revisa tu bandeja de entrada o spam.";
+                successEl.style.display = 'block';
+            } catch (error) {
+                console.error("Error sending reset email:", error);
+                if (error.code === 'auth/user-not-found') {
+                    errorEl.textContent = "No existe una cuenta con este correo.";
+                } else if (error.code === 'auth/invalid-email') {
+                    errorEl.textContent = "El correo no es válido.";
+                } else {
+                    errorEl.textContent = "Error al enviar el enlace. Intenta de nuevo.";
+                }
+            }
+        });
+    }
+});
 
 // Login Action
 document.addEventListener('DOMContentLoaded', () => {

@@ -256,6 +256,9 @@
                     </div>
                     <button type="button" class="btn-primary full-width" id="btn-login-action">Entrar</button>
                     <p class="auth-error" id="login-error"></p>
+                    <div style="text-align: right; margin-top: 10px;">
+                        <a href="#" onclick="showResetPasswordView(); return false;" style="color: var(--neon-cyan); font-size: 0.9rem; text-decoration: none;">¿Olvidaste tu contraseña?</a>
+                    </div>
                 </form>
 
                 <!-- Register Form -->
@@ -269,6 +272,19 @@
                     </div>
                     <button type="button" class="btn-primary full-width" id="btn-register-action">Registrarse</button>
                     <p class="auth-error" id="register-error"></p>
+                </form>
+            </div>
+
+            <!-- Reset Password View -->
+            <div id="auth-reset-view" style="display: none;">
+                <h2 style="border:none; margin-bottom:10px; font-size: 1.8rem;">Recuperar Contraseña</h2>
+                <p style="color:var(--text-secondary); text-align:center; margin-bottom:25px;">Ingresa tu correo para recibir un enlace de recuperación.</p>
+                <form id="reset-password-form" class="auth-form" onsubmit="event.preventDefault();">
+                    <input type="email" id="reset-email" placeholder="Correo electrónico" class="neon-input">
+                    <button type="button" class="btn-primary full-width" id="btn-reset-action">Enviar enlace</button>
+                    <button type="button" class="btn-secondary full-width" style="margin-top: 10px; background: transparent; border: 1px solid var(--neon-cyan); color: var(--neon-cyan);" onclick="showAuthMainView()">Volver</button>
+                    <p class="auth-error" id="reset-error"></p>
+                    <p class="auth-success" id="reset-success" style="color: #00ffcc; text-align: center; margin-top: 10px; display: none;"></p>
                 </form>
             </div>
         </div>
@@ -548,7 +564,7 @@
     </div>
 
     <!-- Main Logic (Moved to bottom so all DOM is parsed) -->
-    <script src="pixelium_core.js?v=47"></script>
+    <script src="pixelium_core.js?v=48"></script>
 </body>
 
 </html>
