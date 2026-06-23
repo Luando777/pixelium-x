@@ -1602,7 +1602,7 @@ document.addEventListener('DOMContentLoaded', () => {
         // FILTER 2: Exclude GHOSTS (Items with "(Original)" suffix created by old sync)
 
         const visibleProducts = customProducts.filter(p => {
-            const isHidden = hiddenProducts.includes(p.title);
+            const isHidden = hiddenProducts.includes(p.title) || p.visible === false;
             const isGhost = p.title.includes('(Original)');
             return !isHidden && !isGhost;
         });
@@ -1984,7 +1984,8 @@ document.addEventListener('DOMContentLoaded', () => {
                     warranty: document.getElementById('new-prod-warranty').value,
                     image: base64Image, // SAVED DIRECTLY IN DB
                     badge: document.getElementById('new-prod-badge').value,
-                    note: document.getElementById('new-prod-note').value
+                    note: document.getElementById('new-prod-note').value,
+                    visible: true
                 };
 
                 // Save to Firestore
@@ -2026,6 +2027,12 @@ document.addEventListener('DOMContentLoaded', () => {
             // const isCustom = card.id.startsWith('custom_'); // REMOVED
 
             // 1. Hide ONLY if explicitly hidden by Admin
+            const prod = customProducts.find(p => p.title === title || p.id === card.id);
+            if (prod && prod.visible === false) {
+                card.style.display = 'none';
+                return;
+            }
+
             if (hiddenProducts.includes(title)) {
                 card.style.display = 'none';
                 const customExists = customProducts.some(p => p.title === title);
@@ -2050,6 +2057,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
 
         customProducts.forEach(prod => {
+            if (prod.visible === false) return;
             // Deduplication Logic REMOVED (Static HTML deleted, so DB is source of truth)
 
             if (document.getElementById(prod.id)) return;
@@ -2146,6 +2154,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const uniqueItems = [];
 
         products.forEach(p => {
+            if (p.visible === false) return; // Skip hidden products
             const titleLower = p.title.toLowerCase();
             // Find brand key
             const brandKey = Object.keys(brandMap).find(k => titleLower.includes(k));
@@ -2237,8 +2246,8 @@ document.addEventListener('DOMContentLoaded', () => {
         // 1. Clear Grid
         grid.innerHTML = '';
 
-        // 2. Find ALL matched products
-        const matches = customProducts.filter(p => p.title.toLowerCase().includes(brandKey.toLowerCase()));
+        // 2. Find ALL matched products (excluding hidden ones)
+        const matches = customProducts.filter(p => p.title.toLowerCase().includes(brandKey.toLowerCase()) && p.visible !== false);
 
 
 
@@ -2340,8 +2349,8 @@ document.addEventListener('DOMContentLoaded', () => {
         // 2. Find target product
         const target = customProducts.find(p => p.id === prodId);
 
-        if (!target) {
-            grid.innerHTML = '<p style="grid-column: 1/-1; text-align: center;">Producto no encontrado.</p>';
+        if (!target || target.visible === false) {
+            grid.innerHTML = '<p style="grid-column: 1/-1; text-align: center;">Producto no disponible.</p>';
             return;
         }
 
@@ -2846,18 +2855,24 @@ window.renderAdminProductList = function () {
             row.style.border = '1px solid rgba(255, 0, 255, 0.2)';
 
             const stockVal = stockState[prod.title] !== undefined ? stockState[prod.title] : prod.stock;
+            const isVisible = prod.visible !== false;
+            const eyeIcon = isVisible ? 'fa-eye' : 'fa-eye-slash';
+            const eyeColor = isVisible ? '#00f3ff' : '#888';
 
             row.innerHTML = `
                 <div style="display:flex; align-items:center; gap: 12px; flex: 1;">
                     <img src="${prod.image}" style="width: 40px; height: 40px; border-radius: 4px; object-fit: cover; border: 1px solid #333;" onerror="this.src='logo.png'">
                     <div style="display:flex; flex-direction:column;">
-                        <span style="color:white; font-weight:bold; font-size: 0.95rem;">${prod.title}</span>
+                        <span style="color:${isVisible ? 'white' : '#888'}; text-decoration:${isVisible ? 'none' : 'line-through'}; font-weight:bold; font-size: 0.95rem;">${prod.title}</span>
                         <span style="color:#aaa; font-size:0.75rem;">ID: ${prod.id}</span>
                     </div>
                 </div>
-                <div style="display:flex; gap:12px; align-items:center;">
-                    <span style="color:${stockVal > 0 ? '#00ff88' : '#ff4444'}; font-weight: bold; font-size: 0.9rem;">${stockVal}</span>
-                    <button onclick="deleteCustomProductAction('${prod.id}')" style="background:#ff0055; color:white; border:none; padding:8px 12px; border-radius:6px; cursor:pointer; transition: all 0.2s;" onmouseover="this.style.opacity='0.8'" onmouseout="this.style.opacity='1'">
+                <div style="display:flex; gap:10px; align-items:center;">
+                    <span style="color:${stockVal > 0 ? '#00ff88' : '#ff4444'}; font-weight: bold; font-size: 0.9rem; margin-right: 5px;">${stockVal}</span>
+                    <button onclick="toggleCustomProductVisibility('${prod.id}')" style="background:transparent; color:${eyeColor}; border:1px solid ${eyeColor}; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; border-radius:6px; cursor:pointer; transition: all 0.2s;" title="Ocultar/Mostrar">
+                        <i class="fas ${eyeIcon}"></i>
+                    </button>
+                    <button onclick="deleteCustomProductAction('${prod.id}')" style="background:#ff0055; color:white; border:none; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; border-radius:6px; cursor:pointer; transition: all 0.2s;" title="Eliminar">
                         <i class="fas fa-trash-alt"></i>
                     </button>
                 </div>
@@ -2899,6 +2914,20 @@ window.deleteCustomProductAction = async function (id) {
     } catch (e) {
         console.error(e);
         alert("Error al eliminar: " + e.message);
+    }
+};
+
+window.toggleCustomProductVisibility = async function (id) {
+    const prod = customProducts.find(p => p.id === id);
+    if (!prod) return;
+    const currentVisibility = prod.visible !== false;
+    try {
+        await db.collection('products').doc(id).update({
+            visible: !currentVisibility
+        });
+    } catch (e) {
+        console.error(e);
+        alert("Error al cambiar visibilidad: " + e.message);
     }
 };
 
