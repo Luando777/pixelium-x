@@ -2040,6 +2040,47 @@ body {
     transform: scale(1.05);
 }
 
+/* --- GOLDEN CONTRAENTREGA CATEGORY BUTTON --- */
+.filter-btn-gold,
+.filter-btn[data-category="contraentrega"] {
+    background: rgba(255, 191, 0, 0.15) !important;
+    border: 2px solid #ffd700 !important;
+    color: #ffd700 !important;
+    box-shadow: 0 0 14px rgba(255, 215, 0, 0.6), inset 0 0 8px rgba(255, 215, 0, 0.25) !important;
+    animation: goldGlowPulse 2.5s infinite alternate ease-in-out;
+    text-shadow: 0 0 8px rgba(255, 215, 0, 0.8);
+}
+
+.filter-btn-gold:hover,
+.filter-btn[data-category="contraentrega"]:hover {
+    background: rgba(255, 215, 0, 0.3) !important;
+    border-color: #ffffff !important;
+    color: #ffffff !important;
+    box-shadow: 0 0 25px rgba(255, 215, 0, 0.95), inset 0 0 15px rgba(255, 215, 0, 0.5) !important;
+    transform: translateY(-2px) scale(1.05) !important;
+}
+
+.filter-btn-gold.active,
+.filter-btn[data-category="contraentrega"].active {
+    background: linear-gradient(135deg, #ffd700, #ff9900) !important;
+    border-color: #ffffff !important;
+    color: #000000 !important;
+    font-weight: 800 !important;
+    box-shadow: 0 0 35px rgba(255, 215, 0, 1), inset 0 0 12px rgba(255, 255, 255, 0.8) !important;
+    transform: scale(1.08) !important;
+    text-shadow: none !important;
+}
+
+@keyframes goldGlowPulse {
+    0% {
+        box-shadow: 0 0 10px rgba(255, 215, 0, 0.4), inset 0 0 5px rgba(255, 215, 0, 0.2);
+    }
+    100% {
+        box-shadow: 0 0 24px rgba(255, 215, 0, 0.9), inset 0 0 12px rgba(255, 215, 0, 0.4);
+    }
+}
+
+
 /* --- VIRTUAL PET (ZORRITO JS EXPLORADOR) --- */
 .virtual-pet {
     position: absolute;
