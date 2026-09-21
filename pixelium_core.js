@@ -3096,10 +3096,17 @@ function initNewFeatures() {
     let currentSearch = '';
     let currentCat = 'all';
 
+    function isContraentrega(title) {
+        const t = title.toLowerCase();
+        return t.includes('canva') || 
+               t.includes('autodesk') || t.includes('autocad') || t.includes('revit') || t.includes('maya') || t.includes('3ds') || t.includes('inventor') ||
+               t.includes('gemini') || 
+               t.includes('google one') || t.includes('google 1') || (t.includes('google') && t.includes('one'));
+    }
+
     function getCategory(title) {
         const t = title.toLowerCase();
         if (t.includes('netflix') || t.includes('prime') || t.includes('disney') || t.includes('hbo') || t.includes('crunchyroll') || t.includes('paramount') || t.includes('spotify') || t.includes('youtube') || t.includes('max')) return 'streaming';
-        // Diseño is a subset, we must evaluate it explicitly for the UI
         if (t.includes('canva') || t.includes('adobe') || t.includes('capcut') || t.includes('autocad')) return 'diseño';
         if (t.includes('autodesk') || t.includes('office') || t.includes('windows') || t.includes('gemini') || t.includes('chatgpt') || t.includes('perplexity') || t.includes('google')) return 'software';
         return 'otros';
@@ -3114,7 +3121,15 @@ function initNewFeatures() {
             const cat = getCategory(title);
 
             const matchesSearch = currentSearch === '' || title.includes(currentSearch);
-            const matchesCat = currentCat === 'all' || cat === currentCat;
+            
+            let matchesCat = false;
+            if (currentCat === 'all') {
+                matchesCat = true;
+            } else if (currentCat === 'contraentrega') {
+                matchesCat = isContraentrega(title);
+            } else {
+                matchesCat = (cat === currentCat);
+            }
 
             if (matchesSearch && matchesCat) {
                 card.style.display = '';
