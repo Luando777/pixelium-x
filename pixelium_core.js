@@ -17,21 +17,23 @@ let currentSearch = '';
 let currentCat = 'all';
 window.isFilteredView = false;
 
-function isContraentrega(title) {
+function isContraentrega(title, prod) {
+    if (prod && (prod.isContraentrega || prod.category === 'contraentrega')) return true;
     if (!title) return false;
     const t = title.toLowerCase();
     return t.includes('canva') || 
-           t.includes('autodesk') || t.includes('autocad') || t.includes('revit') || t.includes('maya') || t.includes('3ds') || t.includes('inventor') ||
+           t.includes('autodesk') || t.includes('autocad') || t.includes('revit') || t.includes('maya') || t.includes('3ds') || t.includes('inventor') || t.includes('civil') ||
            t.includes('gemini') || 
            t.includes('google one') || t.includes('google 1') || (t.includes('google') && t.includes('one'));
 }
 
-function getCategory(title) {
+function getCategory(title, prod) {
+    if (prod && prod.category && prod.category !== 'all') return prod.category.toLowerCase();
     if (!title) return 'otros';
     const t = title.toLowerCase();
-    if (t.includes('netflix') || t.includes('prime') || t.includes('disney') || t.includes('hbo') || t.includes('crunchyroll') || t.includes('paramount') || t.includes('spotify') || t.includes('youtube') || t.includes('max')) return 'streaming';
-    if (t.includes('canva') || t.includes('adobe') || t.includes('capcut') || t.includes('autocad')) return 'diseño';
-    if (t.includes('autodesk') || t.includes('office') || t.includes('windows') || t.includes('gemini') || t.includes('chatgpt') || t.includes('perplexity') || t.includes('google')) return 'software';
+    if (t.includes('netflix') || t.includes('prime') || t.includes('disney') || t.includes('hbo') || t.includes('max') || t.includes('crunchyroll') || t.includes('paramount') || t.includes('spotify') || t.includes('youtube') || t.includes('iptv') || t.includes('magis') || t.includes('apple music') || t.includes('tidal') || t.includes('deezer') || t.includes('star') || t.includes('vix') || t.includes('tv')) return 'streaming';
+    if (t.includes('canva') || t.includes('adobe') || t.includes('photoshop') || t.includes('illustrator') || t.includes('premiere') || t.includes('capcut') || t.includes('autocad') || t.includes('corel') || t.includes('indesign') || t.includes('lightroom') || t.includes('freepik') || t.includes('envato') || t.includes('midjourney') || t.includes('leonardo') || t.includes('3ds') || t.includes('revit') || t.includes('maya') || t.includes('blender')) return 'diseño';
+    if (t.includes('autodesk') || t.includes('office') || t.includes('windows') || t.includes('gemini') || t.includes('chatgpt') || t.includes('perplexity') || t.includes('google') || t.includes('antivirus') || t.includes('vpn') || t.includes('claude') || t.includes('microsoft')) return 'software';
     return 'otros';
 }
 
@@ -47,26 +49,33 @@ window.resetCategoryButtonsUI = function() {
 };
 
 window.selectCategoryFilter = function(element, catName) {
-    const btns = document.querySelectorAll('.filter-btn');
-    btns.forEach(b => b.classList.remove('active'));
-    if (element) {
-        element.classList.add('active');
-    } else {
-        const targetBtn = document.querySelector(`.filter-btn[data-category="${catName}"]`);
-        if (targetBtn) targetBtn.classList.add('active');
-    }
+    const btnEl = (element && element.getAttribute) ? (element.closest('.filter-btn') || element) : (catName ? document.querySelector(`.filter-btn[data-category="${catName}"]`) : null);
+    const targetCat = catName || (btnEl ? btnEl.getAttribute('data-category') : 'all') || 'all';
     
-    currentCat = catName || 'all';
+    currentCat = targetCat;
     window.isFilteredView = false;
     
+    const btns = document.querySelectorAll('.filter-btn');
+    btns.forEach(b => {
+        if (b.getAttribute('data-category') === currentCat) {
+            b.classList.add('active');
+        } else {
+            b.classList.remove('active');
+        }
+    });
+
     const sectionTitle = document.querySelector('.section-title');
     if (sectionTitle) sectionTitle.innerText = "Nuestros Productos";
     
     const grid = document.querySelector('.services-grid');
     if (grid) {
-        grid.innerHTML = '';
-        if (typeof window.renderCustomProductsOnGrid === 'function') {
-            window.renderCustomProductsOnGrid();
+        const cards = grid.querySelectorAll('.card');
+        const expectedCount = (typeof customProducts !== 'undefined' && customProducts) ? customProducts.length : 0;
+        if (cards.length === 0 || cards.length < expectedCount || grid.querySelector('.single-product-view')) {
+            grid.innerHTML = '';
+            if (typeof window.renderCustomProductsOnGrid === 'function') {
+                window.renderCustomProductsOnGrid();
+            }
         }
     }
     
@@ -83,17 +92,18 @@ function applyFilters() {
         const titleElement = card.querySelector('h3');
         if (!titleElement) return;
         const title = titleElement.innerText.toLowerCase();
-        const cat = getCategory(title);
+        const prod = (typeof customProducts !== 'undefined' && customProducts) ? customProducts.find(p => p.id === card.id || (p.title && p.title.toLowerCase() === title)) : null;
+        const cat = getCategory(title, prod);
 
         const matchesSearch = currentSearch === '' || title.includes(currentSearch);
         
         let matchesCat = false;
-        if (currentCat === 'all') {
+        if (!currentCat || currentCat === 'all') {
             matchesCat = true;
         } else if (currentCat === 'contraentrega') {
-            matchesCat = isContraentrega(title);
+            matchesCat = isContraentrega(title, prod);
         } else {
-            matchesCat = (cat === currentCat);
+            matchesCat = (cat === currentCat || (prod && prod.category === currentCat));
         }
 
         if (matchesSearch && matchesCat) {
@@ -3183,18 +3193,9 @@ function initNewFeatures() {
     const filterBtns = document.querySelectorAll('.filter-btn');
     filterBtns.forEach(btn => {
         btn.addEventListener('click', (e) => {
-            filterBtns.forEach(b => b.classList.remove('active'));
-            e.target.classList.add('active');
-            currentCat = e.target.getAttribute('data-category');
-
-            if (window.isFilteredView || document.querySelectorAll('.services-grid .card').length < (customProducts ? customProducts.length : 1)) {
-                window.isFilteredView = false;
-                const sectionTitle = document.querySelector('.section-title');
-                if (sectionTitle) sectionTitle.innerText = "Nuestros Productos";
-                renderCustomProductsOnGrid();
-            }
-
-            applyFilters();
+            const btnEl = e.currentTarget || e.target.closest('.filter-btn');
+            const catName = btnEl ? btnEl.getAttribute('data-category') : 'all';
+            window.selectCategoryFilter(btnEl, catName);
         });
     });
 
