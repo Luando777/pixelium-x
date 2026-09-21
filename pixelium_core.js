@@ -65,10 +65,14 @@ window.selectCategoryFilter = function(element, catName) {
     const grid = document.querySelector('.services-grid');
     if (grid) {
         grid.innerHTML = '';
-        renderCustomProductsOnGrid();
+        if (typeof window.renderCustomProductsOnGrid === 'function') {
+            window.renderCustomProductsOnGrid();
+        }
     }
     
-    applyFilters();
+    if (typeof applyFilters === 'function') {
+        applyFilters();
+    }
 };
 
 function applyFilters() {
@@ -2135,7 +2139,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // --- LOGIC: RENDER CUSTOMS ON GRID ---
-    function renderCustomProductsOnGrid() {
+    window.renderCustomProductsOnGrid = function() {
         const grid = document.querySelector('.services-grid');
         if (!grid) return;
 
