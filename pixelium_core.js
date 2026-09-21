@@ -13,6 +13,68 @@ const firebaseConfig = {
 // --- GLOBAL STATE ---
 let hiddenProducts = [];
 let customProducts = [];
+let currentSearch = '';
+let currentCat = 'all';
+window.isFilteredView = false;
+
+function isContraentrega(title) {
+    if (!title) return false;
+    const t = title.toLowerCase();
+    return t.includes('canva') || 
+           t.includes('autodesk') || t.includes('autocad') || t.includes('revit') || t.includes('maya') || t.includes('3ds') || t.includes('inventor') ||
+           t.includes('gemini') || 
+           t.includes('google one') || t.includes('google 1') || (t.includes('google') && t.includes('one'));
+}
+
+function getCategory(title) {
+    if (!title) return 'otros';
+    const t = title.toLowerCase();
+    if (t.includes('netflix') || t.includes('prime') || t.includes('disney') || t.includes('hbo') || t.includes('crunchyroll') || t.includes('paramount') || t.includes('spotify') || t.includes('youtube') || t.includes('max')) return 'streaming';
+    if (t.includes('canva') || t.includes('adobe') || t.includes('capcut') || t.includes('autocad')) return 'diseño';
+    if (t.includes('autodesk') || t.includes('office') || t.includes('windows') || t.includes('gemini') || t.includes('chatgpt') || t.includes('perplexity') || t.includes('google')) return 'software';
+    return 'otros';
+}
+
+window.resetCategoryButtonsUI = function() {
+    currentSearch = '';
+    currentCat = 'all';
+    const searchInput = document.getElementById('input-buscar-px');
+    if (searchInput) searchInput.value = '';
+    const btns = document.querySelectorAll('.filter-btn');
+    btns.forEach(b => b.classList.remove('active'));
+    const allBtn = document.querySelector('.filter-btn[data-category="all"]');
+    if (allBtn) allBtn.classList.add('active');
+};
+
+function applyFilters() {
+    if (window.isFilteredView) return;
+
+    const cards = document.querySelectorAll('.services-grid .card');
+    cards.forEach(card => {
+        const titleElement = card.querySelector('h3');
+        if (!titleElement) return;
+        const title = titleElement.innerText.toLowerCase();
+        const cat = getCategory(title);
+
+        const matchesSearch = currentSearch === '' || title.includes(currentSearch);
+        
+        let matchesCat = false;
+        if (currentCat === 'all') {
+            matchesCat = true;
+        } else if (currentCat === 'contraentrega') {
+            matchesCat = isContraentrega(title);
+        } else {
+            matchesCat = (cat === currentCat);
+        }
+
+        if (matchesSearch && matchesCat) {
+            card.style.display = '';
+        } else {
+            card.style.display = 'none';
+        }
+    });
+}
+window.applySearchFilters = applyFilters;
 
 // --- CART LOGIC ---
 let cart = JSON.parse(localStorage.getItem('cart')) || [];
@@ -3071,71 +3133,12 @@ function initNewFeatures() {
                     setTimeout(() => saveSiteMsgBtn.innerText = "💾 Guardar Oferta", 3000);
                 });
         });
+    }
+
     // 2. Search & Category Filters
     const searchInput = document.getElementById('input-buscar-px');
     if (searchInput) {
         setTimeout(() => { searchInput.value = ''; }, 50);
-    }
-    const filterBtns = document.querySelectorAll('.filter-btn');
-    let currentSearch = '';
-    let currentCat = 'all';
-
-    window.resetCategoryButtonsUI = function() {
-        currentSearch = '';
-        currentCat = 'all';
-        if (searchInput) searchInput.value = '';
-        const btns = document.querySelectorAll('.filter-btn');
-        btns.forEach(b => b.classList.remove('active'));
-        const allBtn = document.querySelector('.filter-btn[data-category="all"]');
-        if (allBtn) allBtn.classList.add('active');
-    };
-
-    function isContraentrega(title) {
-        const t = title.toLowerCase();
-        return t.includes('canva') || 
-               t.includes('autodesk') || t.includes('autocad') || t.includes('revit') || t.includes('maya') || t.includes('3ds') || t.includes('inventor') ||
-               t.includes('gemini') || 
-               t.includes('google one') || t.includes('google 1') || (t.includes('google') && t.includes('one'));
-    }
-
-    function getCategory(title) {
-        const t = title.toLowerCase();
-        if (t.includes('netflix') || t.includes('prime') || t.includes('disney') || t.includes('hbo') || t.includes('crunchyroll') || t.includes('paramount') || t.includes('spotify') || t.includes('youtube') || t.includes('max')) return 'streaming';
-        if (t.includes('canva') || t.includes('adobe') || t.includes('capcut') || t.includes('autocad')) return 'diseño';
-        if (t.includes('autodesk') || t.includes('office') || t.includes('windows') || t.includes('gemini') || t.includes('chatgpt') || t.includes('perplexity') || t.includes('google')) return 'software';
-        return 'otros';
-    }
-
-    function applyFilters() {
-        if (window.isFilteredView) return;
-
-        const cards = document.querySelectorAll('.services-grid .card');
-        cards.forEach(card => {
-            const titleElement = card.querySelector('h3');
-            if (!titleElement) return;
-            const title = titleElement.innerText.toLowerCase();
-            const cat = getCategory(title);
-
-            const matchesSearch = currentSearch === '' || title.includes(currentSearch);
-            
-            let matchesCat = false;
-            if (currentCat === 'all') {
-                matchesCat = true;
-            } else if (currentCat === 'contraentrega') {
-                matchesCat = isContraentrega(title);
-            } else {
-                matchesCat = (cat === currentCat);
-            }
-
-            if (matchesSearch && matchesCat) {
-                card.style.display = '';
-            } else {
-                card.style.display = 'none';
-            }
-        });
-    }
-
-    if (searchInput) {
         searchInput.addEventListener('input', (e) => {
             currentSearch = e.target.value.toLowerCase().trim();
             if (window.isFilteredView) {
@@ -3148,6 +3151,7 @@ function initNewFeatures() {
         });
     }
 
+    const filterBtns = document.querySelectorAll('.filter-btn');
     filterBtns.forEach(btn => {
         btn.addEventListener('click', (e) => {
             filterBtns.forEach(b => b.classList.remove('active'));
