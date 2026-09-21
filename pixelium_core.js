@@ -2240,6 +2240,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- FILTER GRID BY BRAND (SHOW VARIATIONS) ---
     window.filterGridByBrand = (brandKey) => {
+        window.isFilteredView = true;
+        const searchInput = document.getElementById('input-buscar-px');
+        if (searchInput) searchInput.value = '';
+        if (typeof window.resetCategoryButtonsUI === 'function') window.resetCategoryButtonsUI();
+
         const grid = document.querySelector('.services-grid');
         if (!grid) return;
 
@@ -2248,8 +2253,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // 2. Find ALL matched products (excluding hidden ones)
         const matches = customProducts.filter(p => p.title.toLowerCase().includes(brandKey.toLowerCase()) && p.visible !== false);
-
-
 
         if (matches.length === 0) {
             grid.innerHTML = '<p style="grid-column: 1/-1; text-align: center;">No hay productos disponibles para esta marca.</p>';
@@ -2274,18 +2277,12 @@ document.addEventListener('DOMContentLoaded', () => {
             const btnState = currentStock > 0 ? '' : 'disabled';
             const btnText = currentStock > 0 ? 'Agregar al Carrito' : 'Agotado';
 
-            // IMAGE LOGIC:
-            // 1. Try Specific Image (prod.image)
-            // 2. Fallback to Brand (carrusel/...)
-            // 3. Fallback to Logo (logo.png)
-
             let brandIcon = 'logo.png';
             const mapKey = Object.keys(brandMap).find(k => prod.title.toLowerCase().includes(k));
             if (mapKey) {
                 brandIcon = `carrusel/carrucel-${brandMap[mapKey]}.png`;
             }
 
-            // OnError Script: If specific image fails, try brand icon. If that fails, show logo.
             const imgOnError = `this.onerror=null; this.src='${brandIcon}'; this.addEventListener('error', function(){this.src='logo.png'});`;
 
             card.innerHTML = `
@@ -2310,7 +2307,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 <button class="btn-add" onclick="addToCart('${prod.title}', ${prod.price})" ${btnState}>${btnText}</button>
             `;
 
-            // Click image to detail
             const newImg = card.querySelector('.product-img');
             newImg.addEventListener('click', () => {
                 filterGridByProduct(prod.id);
@@ -2331,15 +2327,16 @@ document.addEventListener('DOMContentLoaded', () => {
         `;
         grid.appendChild(backBtnContainer);
 
-        // Scroll
         grid.scrollIntoView({ behavior: 'smooth', block: 'start' });
-
-        // Apply price overrides after rendering (REMOVED: System unified with products DB)
     };
 
     // --- FILTER GRID LOGIC (ROUTING VIEW) ---
-    // --- FILTER GRID LOGIC (ROUTING VIEW) ---
     window.filterGridByProduct = (prodId) => {
+        window.isFilteredView = true;
+        const searchInput = document.getElementById('input-buscar-px');
+        if (searchInput) searchInput.value = '';
+        if (typeof window.resetCategoryButtonsUI === 'function') window.resetCategoryButtonsUI();
+
         const grid = document.querySelector('.services-grid');
         if (!grid) return;
 
@@ -2361,8 +2358,6 @@ document.addEventListener('DOMContentLoaded', () => {
         const p = target;
         let displayImage = p.image || 'logo.png';
 
-
-        // FIX: Define imgOnError which was missing
         let brandIconForError = 'logo.png';
         const brandKey = Object.keys(brandMap).find(k => p.title.toLowerCase().includes(k));
         if (brandKey) {
@@ -2370,7 +2365,6 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         const imgOnError = `this.onerror=null; this.src='${brandIconForError}'; this.addEventListener('error', function(){this.src='logo.png'});`;
 
-        // 4. Render SINGLE Card
         const cardClass = p.isSpecial ? `card ${p.specialClass || 'special-card'}` : 'card';
         const badgeHtml = p.badge ? `<p class="gold-text">${p.badge}</p>` : '';
         const noteHtml = p.note ? `<p class="activation-note">${p.note}</p>` : '';
@@ -2379,7 +2373,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const html = `
             <div class="${cardClass}" style="margin: 0 auto; max-width: 500px; grid-column: 1 / -1; position: relative; overflow: hidden;">
-                <!-- Glowing Backdrop for filtered view -->
                 <div style="position: absolute; top:0; left:0; width:100%; height:100%; background: radial-gradient(circle at center, rgba(0,243,255,0.1) 0%, transparent 70%); pointer-events:none;"></div>
                 
                 <div class="card-icon" style="height: auto; min-height: 300px; padding: 20px; background: rgba(0, 0, 0, 0.4);">
@@ -2438,10 +2431,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
         grid.innerHTML = html;
 
-        // Trigger Stock Update for single item
         setTimeout(updateStockUI, 500);
 
-        // ENABLE LIGHTBOX (Zoom) logic for this single view
         const singleImg = grid.querySelector('.product-img');
         if (singleImg) {
             singleImg.addEventListener('click', () => {
@@ -2454,28 +2445,24 @@ document.addEventListener('DOMContentLoaded', () => {
             });
         }
 
-        // Scroll to grid
         grid.scrollIntoView({ behavior: 'smooth', block: 'start' });
-
-        // Apply price overrides after rendering
-        if (typeof applyPriceOverrides === 'function') {
-            applyPriceOverrides();
-        }
     };
 
     window.restoreFullCatalog = () => {
-        // Clear URL param
+        window.isFilteredView = false;
         const newUrl = window.location.pathname;
         window.history.pushState({ path: newUrl }, '', newUrl);
 
-        // Reset Title
         const sectionTitle = document.querySelector('.section-title');
         if (sectionTitle) sectionTitle.innerText = "Nuestros Productos";
 
-        // Re-render Full Grid
         const grid = document.querySelector('.services-grid');
         if (grid) grid.innerHTML = '';
         renderCustomProductsOnGrid();
+
+        if (typeof window.resetCategoryButtonsUI === 'function') {
+            window.resetCategoryButtonsUI();
+        }
     };
 
     // Listen for PopState (Browser Back Button)
@@ -3084,17 +3071,24 @@ function initNewFeatures() {
                     setTimeout(() => saveSiteMsgBtn.innerText = "💾 Guardar Oferta", 3000);
                 });
         });
-    }
-
     // 2. Search & Category Filters
     const searchInput = document.getElementById('input-buscar-px');
     if (searchInput) {
-        // Defeat Chrome autofill by clearing value on load
         setTimeout(() => { searchInput.value = ''; }, 50);
     }
     const filterBtns = document.querySelectorAll('.filter-btn');
     let currentSearch = '';
     let currentCat = 'all';
+
+    window.resetCategoryButtonsUI = function() {
+        currentSearch = '';
+        currentCat = 'all';
+        if (searchInput) searchInput.value = '';
+        const btns = document.querySelectorAll('.filter-btn');
+        btns.forEach(b => b.classList.remove('active'));
+        const allBtn = document.querySelector('.filter-btn[data-category="all"]');
+        if (allBtn) allBtn.classList.add('active');
+    };
 
     function isContraentrega(title) {
         const t = title.toLowerCase();
@@ -3113,6 +3107,8 @@ function initNewFeatures() {
     }
 
     function applyFilters() {
+        if (window.isFilteredView) return;
+
         const cards = document.querySelectorAll('.services-grid .card');
         cards.forEach(card => {
             const titleElement = card.querySelector('h3');
@@ -3142,6 +3138,12 @@ function initNewFeatures() {
     if (searchInput) {
         searchInput.addEventListener('input', (e) => {
             currentSearch = e.target.value.toLowerCase().trim();
+            if (window.isFilteredView) {
+                window.isFilteredView = false;
+                const sectionTitle = document.querySelector('.section-title');
+                if (sectionTitle) sectionTitle.innerText = "Nuestros Productos";
+                renderCustomProductsOnGrid();
+            }
             applyFilters();
         });
     }
@@ -3151,6 +3153,14 @@ function initNewFeatures() {
             filterBtns.forEach(b => b.classList.remove('active'));
             e.target.classList.add('active');
             currentCat = e.target.getAttribute('data-category');
+
+            if (window.isFilteredView || document.querySelectorAll('.services-grid .card').length < (customProducts ? customProducts.length : 1)) {
+                window.isFilteredView = false;
+                const sectionTitle = document.querySelector('.section-title');
+                if (sectionTitle) sectionTitle.innerText = "Nuestros Productos";
+                renderCustomProductsOnGrid();
+            }
+
             applyFilters();
         });
     });
