@@ -46,6 +46,31 @@ window.resetCategoryButtonsUI = function() {
     if (allBtn) allBtn.classList.add('active');
 };
 
+window.selectCategoryFilter = function(element, catName) {
+    const btns = document.querySelectorAll('.filter-btn');
+    btns.forEach(b => b.classList.remove('active'));
+    if (element) {
+        element.classList.add('active');
+    } else {
+        const targetBtn = document.querySelector(`.filter-btn[data-category="${catName}"]`);
+        if (targetBtn) targetBtn.classList.add('active');
+    }
+    
+    currentCat = catName || 'all';
+    window.isFilteredView = false;
+    
+    const sectionTitle = document.querySelector('.section-title');
+    if (sectionTitle) sectionTitle.innerText = "Nuestros Productos";
+    
+    const grid = document.querySelector('.services-grid');
+    if (grid) {
+        grid.innerHTML = '';
+        renderCustomProductsOnGrid();
+    }
+    
+    applyFilters();
+};
+
 function applyFilters() {
     if (window.isFilteredView) return;
 
