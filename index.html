@@ -196,11 +196,11 @@
                     </form>
                 </div>
                 <div class="category-filters" id="category-filters">
-                    <button class="filter-btn active" data-category="all">Todos</button>
-                    <button class="filter-btn filter-btn-gold" data-category="contraentrega">🤝 Contraentrega</button>
-                    <button class="filter-btn" data-category="streaming">Streaming</button>
-                    <button class="filter-btn" data-category="software">Software</button>
-                    <button class="filter-btn" data-category="diseño">Diseño</button>
+                    <button class="filter-btn active" data-category="all" onclick="selectCategoryFilter(this, 'all')">Todos</button>
+                    <button class="filter-btn filter-btn-gold" data-category="contraentrega" onclick="selectCategoryFilter(this, 'contraentrega')">🤝 Contraentrega</button>
+                    <button class="filter-btn" data-category="streaming" onclick="selectCategoryFilter(this, 'streaming')">Streaming</button>
+                    <button class="filter-btn" data-category="software" onclick="selectCategoryFilter(this, 'software')">Software</button>
+                    <button class="filter-btn" data-category="diseño" onclick="selectCategoryFilter(this, 'diseño')">Diseño</button>
                 </div>
             </div>
 
@@ -570,7 +570,7 @@
     </button>
 
     <!-- Main Logic (Moved to bottom so all DOM is parsed) -->
-    <script src="pixelium_core.js?v=100"></script>
+    <script src="pixelium_core.js?v=300"></script>
 </body>
 
 </html>
