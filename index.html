@@ -49,7 +49,10 @@
     <nav class="navbar">
         <div class="logo">
             <img src="logo.png" alt="Pixelium X Logo" class="nav-logo">
-            PIXELIUM <span class="highlight">X</span>
+            <div class="logo-text-wrapper">
+                <span class="logo-brand">PIXELIUM <span class="highlight">X</span></span>
+                <span class="black-friday-badge" id="black-friday-badge">BLACK FRIDAY</span>
+            </div>
         </div>
         <div class="menu-toggle" id="mobile-menu">
             <span class="bar"></span>
@@ -78,6 +81,9 @@
                     </div>
                     <div id="banner-admin-btn-container" style="display: none;">
                         <button id="btn-banner-admin" class="btn-admin">📢 Oferta</button>
+                    </div>
+                    <div id="bf-admin-btn-container" style="display: none;">
+                        <button id="btn-bf-admin" class="btn-admin" style="border-color: #ff0055; color: #ff0055;">🏷️ 50% OFF</button>
                     </div>
                 </div>
             </li>
@@ -570,7 +576,7 @@
     </button>
 
     <!-- Main Logic (Moved to bottom so all DOM is parsed) -->
-    <script src="pixelium_core.js?v=501"></script>
+    <script src="pixelium_core.js?v=502"></script>
 </body>
 
 </html>
