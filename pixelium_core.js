@@ -26,14 +26,13 @@ function getFinalPrice(originalPrice) {
     return p;
 }
 
-function renderPriceTagHtml(originalPrice, priceAlt) {
+function renderPriceTagHtml(originalPrice) {
     const p = parseFloat(originalPrice) || 0;
-    const altHtml = priceAlt ? ` <span class="price-alt">($${priceAlt})</span>` : '';
     if (window.isBlackFriday) {
         const discounted = (p * 0.5).toFixed(2);
-        return `<div class="price-tag"><span class="price-old-striked">S/${p.toFixed(2)}</span><span class="price-discounted">S/${discounted}</span>${altHtml}</div>`;
+        return `<div class="price-tag"><span class="price-old-striked">S/${p.toFixed(2)}</span><span class="price-discounted">S/${discounted}</span></div>`;
     }
-    return `<div class="price-tag">S/${p.toFixed(2)}${altHtml}</div>`;
+    return `<div class="price-tag">S/${p.toFixed(2)}</div>`;
 }
 
 function isContraentrega(title, prod) {
@@ -2280,7 +2279,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 <span>${prod.warranty}</span>
             </div>` : ''}
             
-            ${renderPriceTagHtml(prod.price, prod.priceAlt)}
+            ${renderPriceTagHtml(prod.price)}
             <button class="btn-add" onclick="addToCart('${prod.title}', ${prod.price})" ${btnState}>${btnText}</button>
             `;
 
@@ -2490,7 +2489,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     <span>${prod.warranty}</span>
                 </div>` : ''}
                 
-                ${renderPriceTagHtml(prod.price, prod.priceAlt)}
+                ${renderPriceTagHtml(prod.price)}
                 <button class="btn-add" onclick="addToCart('${prod.title}', ${prod.price})" ${btnState}>${btnText}</button>
             `;
 
@@ -2555,7 +2554,6 @@ document.addEventListener('DOMContentLoaded', () => {
         const cardClass = p.isSpecial ? `card ${p.specialClass || 'special-card'}` : 'card';
         const badgeHtml = p.badge ? `<p class="gold-text">${p.badge}</p>` : '';
         const noteHtml = p.note ? `<p class="activation-note">${p.note}</p>` : '';
-        const priceAltHtml = p.priceAlt ? `<span class="price-alt">($${p.priceAlt})</span>` : '';
         const pid = p.id;
 
         const html = `
@@ -2599,9 +2597,9 @@ document.addEventListener('DOMContentLoaded', () => {
                     <span>${p.warranty}</span>
                 </div>
 
-                ${p.isSpecial ? '' : renderPriceTagHtml(p.price, p.priceAlt)}
+                ${p.isSpecial ? '' : renderPriceTagHtml(p.price)}
                 
-                ${p.id === 'panel-canva' || p.title === 'Panel Canva PRO' ? renderPriceTagHtml(p.price, p.priceAlt) : ''}
+                ${p.id === 'panel-canva' || p.title === 'Panel Canva PRO' ? renderPriceTagHtml(p.price) : ''}
 
                 <button id="btn-${pid}" class="btn-primary btn-add" style="width:100%; margin-top:15px; font-size:1.1rem;"
                     onclick="addToCart('${p.title}', ${p.price})">
