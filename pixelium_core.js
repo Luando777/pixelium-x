@@ -16,6 +16,25 @@ let customProducts = [];
 let currentSearch = '';
 let currentCat = 'all';
 window.isFilteredView = false;
+window.isBlackFriday = false;
+
+function getFinalPrice(originalPrice) {
+    const p = parseFloat(originalPrice) || 0;
+    if (window.isBlackFriday) {
+        return Math.round((p * 0.5) * 100) / 100;
+    }
+    return p;
+}
+
+function renderPriceTagHtml(originalPrice, priceAlt) {
+    const p = parseFloat(originalPrice) || 0;
+    const altHtml = priceAlt ? ` <span class="price-alt">($${priceAlt})</span>` : '';
+    if (window.isBlackFriday) {
+        const discounted = (p * 0.5).toFixed(2);
+        return `<div class="price-tag"><span class="price-old-striked">S/${p.toFixed(2)}</span><span class="price-discounted">S/${discounted}</span>${altHtml}</div>`;
+    }
+    return `<div class="price-tag">S/${p.toFixed(2)}${altHtml}</div>`;
+}
 
 function isContraentrega(title, prod) {
     if (prod && (prod.isContraentrega || prod.category === 'contraentrega')) return true;
@@ -918,11 +937,13 @@ document.addEventListener('DOMContentLoaded', () => {
             return;
         }
 
+        const effectivePrice = getFinalPrice(price);
         const existingItem = cart.find(item => item.name === name);
         if (existingItem) {
             existingItem.quantity = (existingItem.quantity || 1) + 1;
+            existingItem.price = effectivePrice;
         } else {
-            cart.push({ name, price, quantity: 1 });
+            cart.push({ name, price: effectivePrice, quantity: 1 });
         }
 
         updateCartCount();
@@ -1377,6 +1398,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const pricesAdminBtnContainer = document.getElementById('prices-admin-btn-container');
             const themesAdminBtnContainer = document.getElementById('themes-admin-btn-container');
             const bannerAdminBtnContainer = document.getElementById('banner-admin-btn-container');
+            const bfAdminBtnContainer = document.getElementById('bf-admin-btn-container');
 
             if (user.email === 'caproprimero@gmail.com') {
                 if (adminBtnContainer) adminBtnContainer.style.display = 'block';
@@ -1385,6 +1407,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (pricesAdminBtnContainer) pricesAdminBtnContainer.style.display = 'block';
                 if (themesAdminBtnContainer) themesAdminBtnContainer.style.display = 'block';
                 if (bannerAdminBtnContainer) bannerAdminBtnContainer.style.display = 'block';
+                if (bfAdminBtnContainer) bfAdminBtnContainer.style.display = 'block';
             } else {
                 if (adminBtnContainer) adminBtnContainer.style.display = 'none';
                 if (stockAdminBtnContainer) stockAdminBtnContainer.style.display = 'none';
@@ -1392,6 +1415,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (pricesAdminBtnContainer) pricesAdminBtnContainer.style.display = 'none';
                 if (themesAdminBtnContainer) themesAdminBtnContainer.style.display = 'none';
                 if (bannerAdminBtnContainer) bannerAdminBtnContainer.style.display = 'none';
+                if (bfAdminBtnContainer) bfAdminBtnContainer.style.display = 'none';
             }
 
             closeAuthModal();
@@ -1417,6 +1441,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
             const themesAdminBtnContainer = document.getElementById('themes-admin-btn-container');
             if (themesAdminBtnContainer) themesAdminBtnContainer.style.display = 'none';
+
+            const bfAdminBtnContainer = document.getElementById('bf-admin-btn-container');
+            if (bfAdminBtnContainer) bfAdminBtnContainer.style.display = 'none';
 
 
 
@@ -1906,6 +1933,65 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     initVisibilitySystem();
 
+    // --- BLACK FRIDAY 50% OFF SYSTEM ---
+    function initBlackFridaySystem() {
+        db.collection('settings').doc('blackfriday').onSnapshot(doc => {
+            if (doc.exists) {
+                window.isBlackFriday = !!doc.data().active;
+            } else {
+                window.isBlackFriday = false;
+                db.collection('settings').doc('blackfriday').set({ active: false });
+            }
+
+            // Update Admin Button visual feedback if present
+            const btnBf = document.getElementById('btn-bf-admin');
+            if (btnBf) {
+                if (window.isBlackFriday) {
+                    btnBf.innerText = '🔥 50% ACTIVO';
+                    btnBf.style.background = '#ff0055';
+                    btnBf.style.color = '#fff';
+                    btnBf.style.borderColor = '#ff0055';
+                } else {
+                    btnBf.innerText = '🏷️ 50% OFF';
+                    btnBf.style.background = 'transparent';
+                    btnBf.style.color = '#ff0055';
+                    btnBf.style.borderColor = '#ff0055';
+                }
+            }
+
+            // Re-render Products on Grid if already loaded
+            if (typeof renderCustomProductsOnGrid === 'function' && customProducts && customProducts.length > 0) {
+                renderCustomProductsOnGrid();
+                if (typeof window.applySearchFilters === 'function') {
+                    window.applySearchFilters();
+                }
+            }
+        });
+
+        const btnBfAdmin = document.getElementById('btn-bf-admin');
+        if (btnBfAdmin) {
+            btnBfAdmin.addEventListener('click', async () => {
+                const newState = !window.isBlackFriday;
+                const confirmMsg = newState 
+                    ? '¿Deseas ACTIVAR el 50% de descuento en todos los productos para todos los clientes?' 
+                    : '¿Deseas DESACTIVAR el 50% de descuento y volver a los precios normales?';
+                if (!confirm(confirmMsg)) return;
+
+                btnBfAdmin.disabled = true;
+                btnBfAdmin.innerText = '⏳ Guardando...';
+                try {
+                    await db.collection('settings').doc('blackfriday').set({ active: newState }, { merge: true });
+                } catch (e) {
+                    console.error("Error setting Black Friday:", e);
+                    alert("Error: " + e.message);
+                } finally {
+                    btnBfAdmin.disabled = false;
+                }
+            });
+        }
+    }
+    initBlackFridaySystem();
+
     if (btnProductsAdmin) {
         btnProductsAdmin.addEventListener('click', () => {
             productModal.style.display = 'block';
@@ -2194,7 +2280,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 <span>${prod.warranty}</span>
             </div>` : ''}
             
-            <div class="price-tag">S/${prod.price.toFixed(2)}</div>
+            ${renderPriceTagHtml(prod.price, prod.priceAlt)}
             <button class="btn-add" onclick="addToCart('${prod.title}', ${prod.price})" ${btnState}>${btnText}</button>
             `;
 
@@ -2404,7 +2490,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     <span>${prod.warranty}</span>
                 </div>` : ''}
                 
-                <div class="price-tag">S/${prod.price.toFixed(2)} ${prod.priceAlt ? `<span class="price-alt">($${prod.priceAlt})</span>` : ''}</div>
+                ${renderPriceTagHtml(prod.price, prod.priceAlt)}
                 <button class="btn-add" onclick="addToCart('${prod.title}', ${prod.price})" ${btnState}>${btnText}</button>
             `;
 
@@ -2513,9 +2599,9 @@ document.addEventListener('DOMContentLoaded', () => {
                     <span>${p.warranty}</span>
                 </div>
 
-                ${p.isSpecial ? '' : `<div class="price-tag">S/${p.price.toFixed(2)} ${priceAltHtml}</div>`}
+                ${p.isSpecial ? '' : renderPriceTagHtml(p.price, p.priceAlt)}
                 
-                ${p.id === 'panel-canva' || p.title === 'Panel Canva PRO' ? `<div class="price-tag">S/${p.price.toFixed(2)} ${priceAltHtml}</div>` : ''}
+                ${p.id === 'panel-canva' || p.title === 'Panel Canva PRO' ? renderPriceTagHtml(p.price, p.priceAlt) : ''}
 
                 <button id="btn-${pid}" class="btn-primary btn-add" style="width:100%; margin-top:15px; font-size:1.1rem;"
                     onclick="addToCart('${p.title}', ${p.price})">
